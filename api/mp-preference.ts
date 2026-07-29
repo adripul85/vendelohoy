@@ -6,7 +6,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { title, price, quantity, productId, sellerId } = req.body;
+    const { title, price, quantity, productId, sellerId, transactionId } = req.body;
     console.log(`[MP API] Initiating preference for: Product: ${productId}, Seller: ${sellerId}, Price: ${price}`);
 
     try {
@@ -21,28 +21,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Fallo interno de servidor: Credenciales de Base de Datos ausentes.' });
         }
 
-        // Buscar las credenciales de Mercado Pago del vendedor
-        console.log(`[MP API] Fetching seller doc from Firestore: ${sellerId}`);
-        const sellerDoc = await adminDb.collection('users').doc(sellerId).get();
-        if (!sellerDoc.exists) {
-            console.error(`[MP API] Error: Seller ${sellerId} not found in Firestore`);
-            return res.status(404).json({ error: 'Vendedor no encontrado' });
-        }
-        
-        const sellerData = sellerDoc.data();
-        const sellerOAuth = sellerData?.mercadoPagoOAuth;
-        
-        if (!sellerOAuth || !sellerOAuth.accessToken) {
-            console.error(`[MP API] Error: Seller ${sellerId} has no MP OAuth Access Token linked`);
-            return res.status(400).json({ error: 'El vendedor no tiene vinculada su cuenta de Mercado Pago. (Modo Testing Válido)' });
+        if (!process.env.MP_ACCESS_TOKEN) {
+            console.error("[MP API] Error: Platform MP_ACCESS_TOKEN not set in environment.");
+            return res.status(500).json({ error: 'Falta configurar la pasarela de pagos de la plataforma.' });
         }
 
-        console.log(`[MP API] Seller OK. Calculating Fees. AccessToken prefix: ${sellerOAuth.accessToken.substring(0, 15)}...`);
-
-        // COMISIÓN VENDELO YA! (Ejemplo: 7%)
-        const platformFeePercentage = 0.07;
-        const totalAmmount = Number(price) * Number(quantity);
-        const marketplaceFee = Math.round(totalAmmount * platformFeePercentage);
+        console.log(`[MP API] Seller OK. Using Platform Escrow Token.`);
 
         const isLocalHost = req.headers.host?.includes('localhost');
         
@@ -55,12 +39,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     currency_id: 'ARS'
                 }
             ],
-            marketplace_fee: marketplaceFee,
             external_reference: productId,
             metadata: {
                 seller_id: sellerId,
                 product_id: productId,
-                platform_fee: marketplaceFee
+                transaction_id: transactionId
             },
             back_urls: {
                 success: `https://${req.headers.host}/payment/success`,
@@ -80,8 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
             headers: {
-                // USAMOS EL TOKEN DEL VENDEDOR para que la plata vaya a él...
-                'Authorization': `Bearer ${sellerOAuth.accessToken}`,
+                // USAMOS EL TOKEN DE LA PLATAFORMA (ESCROW)
+                'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(mpPayload)

@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, updateDoc, serverTimestamp, doc, getDoc, getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db } from "./firebase";
 import { getSystemAdminId } from "./admin";
@@ -23,16 +23,28 @@ export interface TransactionData {
     itemId: string;
     itemTitle: string;
     itemImage?: string;
+    quantity?: number;          // Quantity of items bought
     amount: number;             // Legacy compatibility (maps to amountProduct)
     amountProduct: number;      // Item price
     amountGatewayFee: number;   // Processor fee (MP, etc.)
     amountPlatformFee: number;  // Fixed Escrow protection fee ($2500)
+    shippingCost?: number;      // Shipping fee paid by buyer
     amountTotal: number;        // Final paid amount
     platformFee: number;        // Legacy compatibility (maps to amountPlatformFee)
     total: number;              // Legacy compatibility (maps to amountTotal)
     status: TransactionStatus;
     paymentMethod: PaymentMethod;
     deliveryMethod: 'correo_argentino' | 'en_mano' | 'acordar' | 'domicilio';
+    shippingProvider?: 'correo_argentino' | 'moova' | 'andreani';
+    deliveryAddress?: {
+        street: string;
+        number: string;
+        floor?: string;
+        city: string;
+        province: string;
+        zipCode: string;
+    };
+    trackingNumber?: string;
     trackingId?: string;
     courier?: string;
     qrCode?: string;
@@ -148,12 +160,21 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
         };
 
         if (status === 'DELIVERED_PENDING_REVIEW') {
-            const now = new Date();
-            const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 hours
-            updateData.deliveredAt = serverTimestamp();
-            updateData.inspectionDeadline = deadline;
+            const { auth } = await import("./firebase");
+            if (!auth.currentUser) return { success: false, error: 'No autorizado' };
+            const idToken = await auth.currentUser.getIdToken();
+            const response = await fetch('/api/confirm-receipt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ transactionId: id })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Error al confirmar recepción');
+            return { success: true };
         }
-
         if (status === 'DISPUTED') {
             updateData.disputeStartedAt = serverTimestamp();
         }
@@ -181,6 +202,29 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
                     itemTitle: tx.itemTitle,
                     description: `Fondos en garantía: ${tx.itemTitle}`
                 });
+                
+                // ACTUALIZAR BASE DE DATOS CONTABLE:
+                const sellerRef = doc(db, "users", tx.sellerId);
+                await import("firebase/firestore").then(async ({ updateDoc, increment, getDoc }) => {
+                    await updateDoc(sellerRef, {
+                        "wallet.inEscrow": increment(tx.amountProduct)
+                    });
+                    
+                    // Deduct stock
+                    if (tx.itemId && !tx.itemId.startsWith('cart-')) {
+                        const itemRef = doc(db, "items", tx.itemId);
+                        const itemSnap = await getDoc(itemRef);
+                        if (itemSnap.exists()) {
+                            const currentQty = itemSnap.data().quantity || 1;
+                            const txQty = tx.quantity || 1;
+                            const newQty = Math.max(0, currentQty - txQty);
+                            await updateDoc(itemRef, {
+                                quantity: newQty,
+                                status: newQty === 0 ? 'SOLD' : itemSnap.data().status
+                            });
+                        }
+                    }
+                });
             }
         }
 
@@ -195,146 +239,44 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
 };
 
 /**
- * SECURE: Release funds (Hybrid: Cloud Function with Direct Fallback)
- * Diverts 10% to Admin, Remainder to Seller.
- */
-export const releaseFunds = async (id: string, qrToken?: string) => {
+ * SECURE: Release funds to seller and platform.
+ * Distributes: Product price to Seller, Protection fee to Admin. */export const releaseFunds = async (id: string, qrToken?: string) => {
     try {
-        // 1. Try Cloud Function first
-        throw new Error("Skipping function call - using direct fallback");
-    } catch (error) {
-        // Fallback directo a Firestore
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) return { success: false, error: 'No autorizado' };
 
         try {
-            // 2. Direct Firestore Fallback
-            const docRef = doc(db, "transactions", id);
-            const docSnap = await getDoc(docRef);
-
-            if (!docSnap.exists()) return { success: false, error: 'Transacción no encontrada' };
-
-            const data = docSnap.data() as TransactionData;
-
-            // QR Validation (Client-Side) - OPTIONAL NOW
-            if (data.deliveryMethod === 'en_mano' && qrToken) {
-                if (data.qrCode !== qrToken) {
-                    return { success: false, error: 'Token de seguridad inválido' };
-                }
-            }
-
-            if (data.status === 'COMPLETED') return { success: true }; // Idempotency check
-
-            // Update Status
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(docRef, {
-                    status: 'COMPLETED',
-                    escrowReleased: true,
-                    updatedAt: serverTimestamp()
-                })
-            );
-
-            // Increment successful sales for seller
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(sellerRef, {
-                    successfulSales: increment(1)
-                })
-            );
-
-            // Trigger reputation recalculation
-            const { recalculateReputation } = await import("./users");
-            await recalculateReputation(data.sellerId);
-
-            // 3. DISTRIBUTE FUNDS
-            const { getSystemAdminId } = await import('./admin');
-            const adminId = await getSystemAdminId();
-
-            const sellerRef = doc(db, "users", data.sellerId);
-
-            // In the new model, amountProduct is what the seller receives.
-            // amountPlatformFee is the protection fee that goes to Admin.
-            const baseSellerProceeds = data.amountProduct || data.amount;
-            const basePlatformRevenue = data.amountPlatformFee || data.platformFee;
-
-            // Apply Flash Deal Commission (if applicable)
-            const featuredCommission = data.featuredFeeApplied ? Math.round(baseSellerProceeds * data.featuredFeeApplied) : 0;
-
-            const sellerProceeds = baseSellerProceeds - featuredCommission;
-            const platformRevenue = basePlatformRevenue + featuredCommission;
-
-            // A. Pay Seller (Product Price)
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(sellerRef, { "wallet.available": increment(sellerProceeds) })
-            );
-
-            // B. Pay Admin (Protection Fee)
-            if (adminId && platformRevenue > 0) {
-                const adminRef = doc(db, "users", adminId);
-                await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                    updateDoc(adminRef, { "wallet.available": increment(platformRevenue) })
-                );
-
-                // D. LOG REVENUE (Admin)
-                await addDoc(collection(db, "financial_logs"), {
+            const idToken = await auth.currentUser.getIdToken();
+            const response = await fetch('/api/release-funds', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
                     transactionId: id,
-                    type: 'platform_fee',
-                    amount: platformRevenue,
-                    currency: 'ARS',
-                    relatedUser: data.sellerId,
-                    timestamp: serverTimestamp()
-                });
+                    qrToken: qrToken
+                })
+            });
 
-                const { logWalletMovement } = await import('./users');
-
-                // NEW: Admin Wallet Movement
-                await logWalletMovement({
-                    uid: adminId,
-                    type: 'PLATFORM_REVENUE',
-                    amount: platformRevenue,
-                    referenceId: id,
-                    itemTitle: data.itemTitle,
-                    description: `Comisión Pago Protegido: ${data.itemTitle}`
-                });
-
-                // E. LOG WALLET MOVEMENTS (Seller)
-
-                // 1. Release from Escrow (Sign: - because it leaves the "inEscrow" state)
-                await logWalletMovement({
-                    uid: data.sellerId,
-                    type: 'ESCROW_RELEASE',
-                    amount: data.amountProduct,
-                    referenceId: id,
-                    itemTitle: data.itemTitle,
-                    description: `Liberación de garantía: ${data.itemTitle}`
-                });
-
-                // 2. Add to Available Revenue
-                await logWalletMovement({
-                    uid: data.sellerId,
-                    type: 'SALE_REVENUE',
-                    amount: sellerProceeds,
-                    referenceId: id,
-                    itemTitle: data.itemTitle,
-                    description: `Ganancia por venta: ${data.itemTitle}`
-                });
-
-                // 3. Log Feature Commission (if any)
-                if (featuredCommission > 0) {
-                    await logWalletMovement({
-                        uid: data.sellerId,
-                        type: 'PENALTY', // Categorized as penalty/fee
-                        amount: featuredCommission,
-                        referenceId: id,
-                        itemTitle: data.itemTitle,
-                        description: `Comisión por producto destacado`
-                    });
-                }
+            if (response.ok) {
+                return { success: true };
             }
-
-            return { success: true };
-
-        } catch (fbError: any) {
-            console.error("Direct fallback failed:", fbError);
-            return { success: false, error: fbError.message };
+            console.warn("API release-funds returned error, attempting Firestore fallback...");
+        } catch (apiErr) {
+            console.warn("API unreachable, attempting Firestore fallback...", apiErr);
         }
+
+        // Fallback: update Firestore directly (permitted for buyer in firestore.rules)
+        const docRef = doc(db, "transactions", id);
+        await updateDoc(docRef, {
+            status: 'COMPLETED',
+            updatedAt: serverTimestamp()
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Network or execution error releasing funds:", error);
+        return { success: false, error: error.message || 'Error de conexión' };
     }
 };
 
@@ -361,17 +303,53 @@ export const acceptAmicableReturn = async (id: string, sellerId: string) => {
 
 /**
  * Seller confirms receipt of the returned item.
+ * Refunds the buyer's product amount.
  */
 export const confirmReturnReceipt = async (id: string, sellerId: string) => {
     try {
         const docRef = doc(db, "transactions", id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return { success: false, error: 'Transacción no encontrada' };
+
+        const data = docSnap.data() as TransactionData;
+
+        // Update status
         await import("firebase/firestore").then(({ updateDoc }) =>
             updateDoc(docRef, {
                 status: 'REFUNDED',
+                escrowReleased: true,
                 lastSystemMessage: '📦 El vendedor ha confirmado la recepción del retorno. Reembolso procesado.',
                 updatedAt: serverTimestamp()
             })
         );
+
+        // Refund buyer the product amount
+        const productAmount = data.amountProduct || data.amount;
+        const buyerRef = doc(db, "users", data.buyerId);
+        await import("firebase/firestore").then(({ updateDoc, increment }) =>
+            updateDoc(buyerRef, { "wallet.available": increment(productAmount) })
+        );
+
+        // Log wallet movements
+        const { logWalletMovement } = await import('./users');
+        await logWalletMovement({
+            uid: data.buyerId,
+            type: 'ESCROW_RELEASE',
+            amount: productAmount,
+            referenceId: id,
+            itemTitle: data.itemTitle,
+            description: `Reembolso por devolución amigable: ${data.itemTitle}`
+        });
+
+        await logWalletMovement({
+            uid: data.sellerId,
+            type: 'ESCROW_RELEASE',
+            amount: productAmount,
+            referenceId: id,
+            itemTitle: data.itemTitle,
+            description: `Fondos liberados del escrow por devolución: ${data.itemTitle}`
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Error confirming return receipt:", error);
@@ -381,17 +359,66 @@ export const confirmReturnReceipt = async (id: string, sellerId: string) => {
 
 /**
  * ADMIN: Refund funds to buyer (Official resolution)
+ * Actually moves money: returns product price to buyer, logs everything.
  */
 export const adminRefundFunds = async (id: string, adminId: string) => {
     try {
         const docRef = doc(db, "transactions", id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return { success: false, error: 'Transacción no encontrada' };
+
+        const data = docSnap.data() as TransactionData;
+
+        // Update status
         await import("firebase/firestore").then(({ updateDoc }) =>
             updateDoc(docRef, {
                 status: 'REFUNDED',
+                escrowReleased: true,
                 lastSystemMessage: `⚖️ Resolución Administrativa: Reembolso completo emitido al Comprador por el administrador #${adminId?.slice(0, 5)}.`,
                 updatedAt: serverTimestamp()
             })
         );
+
+        // Refund buyer the product amount
+        const productAmount = data.amountProduct || data.amount;
+        const buyerRef = doc(db, "users", data.buyerId);
+        await import("firebase/firestore").then(({ updateDoc, increment }) =>
+            updateDoc(buyerRef, { "wallet.available": increment(productAmount) })
+        );
+
+        // Log wallet movements
+        const { logWalletMovement } = await import('./users');
+
+        // Buyer: refund received
+        await logWalletMovement({
+            uid: data.buyerId,
+            type: 'ESCROW_RELEASE',
+            amount: productAmount,
+            referenceId: id,
+            itemTitle: data.itemTitle,
+            description: `Reembolso administrativo: ${data.itemTitle}`
+        });
+
+        // Seller: escrow released (no payout)
+        await logWalletMovement({
+            uid: data.sellerId,
+            type: 'ESCROW_RELEASE',
+            amount: productAmount,
+            referenceId: id,
+            itemTitle: data.itemTitle,
+            description: `Escrow devuelto al comprador por resolución admin: ${data.itemTitle}`
+        });
+
+        // Log financial event
+        await addDoc(collection(db, "financial_logs"), {
+            transactionId: id,
+            type: 'admin_refund' as any,
+            amount: productAmount,
+            currency: 'ARS',
+            relatedUser: data.buyerId,
+            timestamp: serverTimestamp()
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Error in admin refund:", error);
@@ -404,116 +431,26 @@ export const adminRefundFunds = async (id: string, adminId: string) => {
  */
 export const cancelTransaction = async (id: string, cancelledByUid: string) => {
     try {
-        const docRef = doc(db, "transactions", id);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) return { success: false, error: 'Transaction not found' };
-
-        const data = docSnap.data() as TransactionData;
-
-        // Define Fee
-        const penaltyRate = 0.03;
-        const penaltyAmount = data.amount * penaltyRate;
-        const refundAmount = data.amount - penaltyAmount;
-        const isSeller = cancelledByUid === data.sellerId;
-
-        // Message
-        const systemMessage = isSeller
-            ? `Cancelado por el vendedor. Se aplicó una penalización del 3% ($${penaltyAmount}).`
-            : `Cancelado por el comprador. Se descontó 3% ($${penaltyAmount}) por gastos de servicio escrow.`;
-
-        // Update Transaction
-        await import("firebase/firestore").then(({ updateDoc }) =>
-            updateDoc(docRef, {
-                status: 'CANCELLED',
-                updatedAt: serverTimestamp(),
-                lastSystemMessage: systemMessage
-            })
-        );
-
-        // MONEY MOVEMENT
-        const { getSystemAdminId } = await import('./admin');
-        const adminId = await getSystemAdminId();
-        const adminRef = adminId ? doc(db, "users", adminId) : null;
-
-        if (isSeller) {
-            // SELLER CANCELLED: Full Refund to Buyer, Penalty to Seller
-            // 1. Refund Buyer 100%
-            const buyerRef = doc(db, "users", data.buyerId);
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(buyerRef, { "wallet.available": increment(data.amount) })
-            );
-
-            // 2. Charge Seller Penalty
-            const sellerRef = doc(db, "users", data.sellerId);
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(sellerRef, { "wallet.available": increment(-penaltyAmount) })
-            );
-
-            // 3. Credit Admin
-            if (adminRef) {
-                await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                    updateDoc(adminRef, { "wallet.available": increment(penaltyAmount) })
-                );
-
-                // LOG PENALTY
-                await addDoc(collection(db, "financial_logs"), {
-                    transactionId: id,
-                    type: 'cancellation_penalty',
-                    amount: penaltyAmount,
-                    currency: 'ARS',
-                    relatedUser: data.sellerId,
-                    timestamp: serverTimestamp()
-                });
-
-                // NEW: Admin Wallet Movement (Penalty)
-                const { logWalletMovement } = await import('./users');
-                await logWalletMovement({
-                    uid: adminId,
-                    type: 'PLATFORM_REVENUE',
-                    amount: penaltyAmount,
-                    referenceId: id,
-                    itemTitle: data.itemTitle,
-                    description: `Penalización Cancelación Vent.: ${data.itemTitle}`
-                });
-            }
-
-        } else {
-            // BUYER CANCELLED: Refund - Penalty
-            // 1. Refund Buyer (97%)
-            const buyerRef = doc(db, "users", data.buyerId);
-            await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                updateDoc(buyerRef, { "wallet.available": increment(refundAmount) })
-            );
-
-            // 2. Credit Admin (3% Fee from Escrow)
-            if (adminRef) {
-                await import("firebase/firestore").then(({ updateDoc, increment }) =>
-                    updateDoc(adminRef, { "wallet.available": increment(penaltyAmount) })
-                );
-
-                // LOG PENALTY
-                await addDoc(collection(db, "financial_logs"), {
-                    transactionId: id,
-                    type: 'cancellation_penalty',
-                    amount: penaltyAmount,
-                    currency: 'ARS',
-                    relatedUser: data.buyerId,
-                    timestamp: serverTimestamp()
-                });
-
-                // NEW: Admin Wallet Movement (Penalty)
-                const { logWalletMovement } = await import('./users');
-                await logWalletMovement({
-                    uid: adminId,
-                    type: 'PLATFORM_REVENUE',
-                    amount: penaltyAmount,
-                    referenceId: id,
-                    itemTitle: data.itemTitle,
-                    description: `Penalización Cancelación Compr.: ${data.itemTitle}`
-                });
-            }
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) return { success: false, error: 'No autorizado' };
+        
+        const idToken = await auth.currentUser.getIdToken();
+        
+        const response = await fetch('/api/cancel-transaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ transactionId: id })
+        });
+        
+        const result = await response.json();
+        if (!response.ok) {
+            console.error("API Error cancelling transaction:", result);
+            return { success: false, error: result.error || 'Error al cancelar' };
         }
-
+        
         return { success: true };
     } catch (error: any) {
         console.error("Error cancelling transaction:", error);

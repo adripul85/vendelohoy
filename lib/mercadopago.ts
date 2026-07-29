@@ -27,7 +27,7 @@ export const createPaymentPreference = async (data: PaymentPreferenceData) => {
                 {
                     id: data.transactionId,
                     title: data.itemTitle,
-                    description: `Compra protegida con escrow - Vendelo Ya!`,
+                    description: `Compra protegida con escrow - Vendelo Hoy!`,
                     quantity: 1,
                     unit_price: data.total,
                     currency_id: 'ARS'
@@ -40,7 +40,7 @@ export const createPaymentPreference = async (data: PaymentPreferenceData) => {
             },
             auto_return: 'approved',
             external_reference: data.transactionId,
-            statement_descriptor: 'VENDELO YA',
+            statement_descriptor: 'VENDELO HOY',
             notification_url: undefined, // For production: add webhook URL
             metadata: {
                 transaction_id: data.transactionId,

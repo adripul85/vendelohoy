@@ -86,7 +86,7 @@ const PaymentMethods = () => {
                                 <div className="w-0.5 h-6 bg-white/10 ml-4"></div>
                                 <div className="flex items-center gap-4">
                                     <span className="size-8 rounded-full bg-red-600 text-white flex items-center justify-center font-black text-xs">2</span>
-                                    <p className="text-xs font-bold">Vendelo Ya! custodia el dinero.</p>
+                                    <p className="text-xs font-bold">Vendelo Hoy! custodia el dinero.</p>
                                 </div>
                                 <div className="w-0.5 h-6 bg-white/10 ml-4"></div>
                                 <div className="flex items-center gap-4">

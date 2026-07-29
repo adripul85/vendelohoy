@@ -24,7 +24,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
     const notify = useCallback((n: Omit<Notification, 'id'>) => {
-        setNotifications(prev => [...prev, { ...n, id: Date.now() }]);
+        setNotifications(prev => {
+            if (prev.some(item => item.title === n.title && item.message === n.message)) {
+                return prev;
+            }
+            return [...prev, { ...n, id: Date.now() + Math.floor(Math.random() * 1000) }];
+        });
     }, []);
 
     const dismiss = useCallback((id: number) => {

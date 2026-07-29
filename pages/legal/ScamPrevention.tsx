@@ -10,7 +10,7 @@ const ScamPrevention = () => {
             <h1 className="text-4xl md:text-5xl font-black mb-6 text-dark-900 font-display">CONSEJOS PARA EVITAR ESTAFAS</h1>
 
             <p className="text-xl text-gray-600 font-medium mb-12">
-                Vendelo Ya! es una plataforma que conecta compradores y vendedores. Para realizar transacciones seguras recomendamos seguir estas buenas prácticas.
+                Vendelo Hoy! es una plataforma que conecta compradores y vendedores. Para realizar transacciones seguras recomendamos seguir estas buenas prácticas.
             </p>
 
             <div className="space-y-6">
@@ -82,7 +82,7 @@ const ScamPrevention = () => {
                     Importante
                 </h3>
                 <div className="space-y-4 text-slate-300">
-                    <p>Vendelo Ya! no participa en las transacciones entre usuarios y no puede garantizar la veracidad de todos los anuncios publicados.</p>
+                    <p>Vendelo Hoy! no participa en las transacciones entre usuarios y no puede garantizar la veracidad de todos los anuncios publicados.</p>
                     <p className="font-bold text-white">La responsabilidad de la compra y venta recae exclusivamente en las personas involucradas en la operación.</p>
                 </div>
             </div>

@@ -34,7 +34,7 @@ export default function About() {
                         transition={{ delay: 0.2 }}
                         className="text-xl text-gray-400 font-bold leading-relaxed max-w-2xl mx-auto"
                     >
-                        Vendelo Ya! nació de una frustración compartida: ver cómo las grandes plataformas se quedaban con el esfuerzo de los argentinos.
+                        Vendelo Hoy! nació de una frustración compartida: ver cómo las grandes plataformas se quedaban con el esfuerzo de los argentinos.
                     </motion.p>
                 </div>
             </div>
@@ -61,20 +61,20 @@ export default function About() {
                         </div>
                     </section>
 
-                    {/* Por qué Vendelo Ya */}
+                    {/* Por qué Vendelo Hoy */}
                     <section className="space-y-6">
                         <div className="flex items-center gap-4 mb-8">
                             <div className="size-12 rounded-2xl bg-primary-50 text-primary-vibrant flex items-center justify-center">
                                 <span className="material-symbols-outlined font-black">rocket_launch</span>
                             </div>
-                            <h2 className="text-2xl lg:text-3xl font-black uppercase tracking-tight">Por qué creamos Vendelo Ya!</h2>
+                            <h2 className="text-2xl lg:text-3xl font-black uppercase tracking-tight">Por qué creamos Vendelo Hoy!</h2>
                         </div>
                         <div className="text-gray-600 font-bold text-lg leading-relaxed space-y-6">
                             <p>
                                 Queríamos crear un lugar donde la tecnología esté al servicio de la gente, no al revés. Una plataforma pensada para el mercado argentino actual: ágil, segura y, sobre todo, transparente.
                             </p>
                             <p>
-                                Vendelo Ya! es un punto de encuentro. Eliminamos las capas de burocracia y las comisiones abusivas para que el dinero circule entre quienes producen y quienes consumen, sin intermediarios que se queden con "la parte del león".
+                                Vendelo Hoy! es un punto de encuentro. Eliminamos las capas de burocracia y las comisiones abusivas para que el dinero circule entre quienes producen y quienes consumen, sin intermediarios que se queden con "la parte del león".
                             </p>
                         </div>
                     </section>

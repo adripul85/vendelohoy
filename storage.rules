@@ -54,6 +54,12 @@ service firebase.storage {
       allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
     }
 
+    // --- Marketing (Heros y Banners) ---
+    match /marketing/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && isLessThan5MB();
+    }
+
     // --- Perfiles y Portadas ---
     match /profiles/{userId}/{allPaths=**} {
       allow read: if true;

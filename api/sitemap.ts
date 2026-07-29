@@ -23,7 +23,7 @@ const db = getFirestore(app);
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         // En Vercel, req.headers.host te da el dominio actual exacto
-        const host = req.headers.host || 'vendelo-ya.vercel.app';
+        const host = req.headers.host || 'vendelohoy.vercel.app';
         const protocol = host.includes('localhost') ? 'http' : 'https';
         const baseUrl = `${protocol}://${host}`;
 

@@ -12,7 +12,7 @@ const CookiesPolicy = () => {
 
             <div className="prose prose-slate max-w-none space-y-10">
                 <p className="text-lg text-gray-600 font-medium">
-                    Vendelo Ya! utiliza cookies para mejorar la experiencia de navegación de los usuarios.
+                    Vendelo Hoy! utiliza cookies para mejorar la experiencia de navegación de los usuarios.
                 </p>
 
                 <section>
@@ -59,7 +59,7 @@ const CookiesPolicy = () => {
                 <section>
                     <h2 className="text-xl font-bold text-dark-800 mb-4">Cambios en la política de cookies</h2>
                     <p className="text-gray-600">
-                        Vendelo Ya! puede actualizar esta política en cualquier momento para reflejar cambios en el funcionamiento del sitio.
+                        Vendelo Hoy! puede actualizar esta política en cualquier momento para reflejar cambios en el funcionamiento del sitio.
                     </p>
                 </section>
             </div>

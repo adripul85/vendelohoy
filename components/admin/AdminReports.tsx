@@ -21,21 +21,36 @@ export default function AdminReports() {
             }
 
             // 2. Mapeamos los datos para que sean legibles para el contador
-            const reportData = sales.map((sale: any) => ({
-                Fecha: sale.createdAt?.toDate ? sale.createdAt.toDate().toLocaleDateString() : 'N/A',
-                ID_Operacion: sale.id,
-                Vendedor_ID: sale.sellerId,
-                Comprador_ID: sale.buyerId,
-                Monto_Total: sale.amountTotal || sale.total || sale.amount,
-                Comision_VendeloYa: sale.amountPlatformFee || sale.platformFee || 0, // Tu ganancia
-                Monto_a_Liquidar: sale.amountProduct || sale.amount, // Lo que va al vendedor
-                Estado: sale.status
-            }));
+            const reportData = sales.map((sale: any) => {
+                const productPrice = sale.amountProduct || sale.amount || 0;
+                const escrowFee = sale.amountPlatformFee || sale.platformFee || Math.round(productPrice * 0.05);
+                
+                let promoFee = 0;
+                if (sale.isFlashSale || (sale.featuredFeeApplied && (sale.featuredFeeApplied === 0.1 || sale.featuredFeeApplied === 10 || sale.featuredFeeApplied >= 0.08))) {
+                    promoFee = (sale.featuredFeeApplied && sale.featuredFeeApplied > 1) ? sale.featuredFeeApplied : Math.round(productPrice * 0.10);
+                } else if (sale.isFeatured || (sale.featuredFeeApplied && sale.featuredFeeApplied > 0)) {
+                    promoFee = (sale.featuredFeeApplied && sale.featuredFeeApplied > 1) ? sale.featuredFeeApplied : Math.round(productPrice * 0.05);
+                }
+                const totalAdminFee = escrowFee + promoFee;
+
+                return {
+                    Fecha: sale.createdAt?.toDate ? sale.createdAt.toDate().toLocaleDateString() : 'N/A',
+                    ID_Operacion: sale.id,
+                    Vendedor_ID: sale.sellerId,
+                    Comprador_ID: sale.buyerId,
+                    Monto_Trato: productPrice,
+                    Comision_Escrow: escrowFee,
+                    Comision_Destacado_Flash: promoFee,
+                    Comision_VendeloHoy: totalAdminFee, // Tu ganancia total (Escrow + Promos)
+                    Monto_a_Liquidar: productPrice, // Lo que va al vendedor
+                    Estado: sale.status
+                };
+            });
 
             // 3. Convertimos a CSV y descargamos
             const csv = json2csv(reportData);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, `VendeloYa_Reporte_${month.replace(' ', '_')}.csv`);
+            saveAs(blob, `VendeloHoy_Reporte_${month.replace(' ', '_')}.csv`);
 
             notify({ type: 'success', title: 'Reporte Generado', message: 'El archivo está listo para tu contador.', icon: 'info' });
         } catch (error) {
@@ -49,28 +64,36 @@ export default function AdminReports() {
     const currentMonthLabel = new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
 
     return (
-        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm mt-10">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <div className="bg-surface p-8 md:p-10 rounded-3xl border border-outline-variant/30 shadow-2xs">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6">
                 <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase">Reportes Impositivos y Liquidaciones</h3>
-                    <p className="text-sm text-slate-500 font-medium mt-1 text-balance">Exportá la actividad financiera (ventas completadas) para presentar ante ARCA. Ideal para trazabilidad en cuenta corriente de terceros.</p>
+                    <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-3 py-1 rounded-full mb-3">
+                        <span className="material-symbols-outlined text-xs font-black">account_balance</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest">Auditoría Fiscal & AFIP/ARCA</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-on-surface tracking-tight font-display">Reportes Impositivos y Liquidaciones</h3>
+                    <p className="text-xs text-on-surface-variant font-medium mt-1 max-w-2xl text-balance leading-relaxed">Exportá la actividad financiera (ventas completadas) para presentar ante ARCA. Trazabilidad en cuenta corriente de terceros sin sobrecarga tributaria.</p>
                 </div>
                 <button
                     onClick={() => exportMonthlyReport(currentMonthLabel)}
                     disabled={isGenerating}
-                    className="bg-primary-vibrant text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary-600 transition-all disabled:opacity-50 min-w-[250px] shadow-lg shadow-primary-500/20 active:scale-95"
+                    className="bg-primary hover:bg-primary/90 text-on-primary px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 min-w-[240px] shadow-sm active:scale-95 shrink-0"
                 >
-                    <span className="material-symbols-outlined text-sm">download</span>
+                    <span className="material-symbols-outlined text-base">{isGenerating ? 'sync' : 'download'}</span>
                     {isGenerating ? 'Generando y calculando...' : `Descargar ${currentMonthLabel}`}
                 </button>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex gap-3 shadow-inner">
-                <span className="material-symbols-outlined text-amber-500">priority_high</span>
-                <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                    <strong className="block mb-1 text-sm uppercase">Nota Contable - Facturación:</strong>
-                    Recuerda que debes emitir <b>Factura C (o A/B según tu condición)</b> únicamente por la suma declarada en la columna <b>"Comision_VendeloYa"</b>. El resto del dinero ("Monto_a_Liquidar") se considera legalmente como "fondos de terceros en tránsito" asociados a operaciones de Escrow.
-                </p>
+            <div className="bg-surface-container-low border-l-4 border-primary p-6 rounded-r-2xl border-y border-r border-outline-variant/30 flex flex-col sm:flex-row gap-4 items-start">
+                <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="material-symbols-outlined font-black">info</span>
+                </div>
+                <div>
+                    <h4 className="text-xs font-black uppercase text-on-surface tracking-wider font-display mb-1">Protocolo Contable — Facturación de Intermediación</h4>
+                    <p className="text-xs text-on-surface-variant leading-relaxed font-medium">
+                        Recuerda que debes emitir <strong className="text-on-surface font-black">Factura C (o A/B según tu condición fiscal)</strong> únicamente por la suma declarada en la columna <strong className="text-primary font-black">"Comision_VendeloHoy"</strong>. El resto del dinero (<span className="font-mono text-[11px] bg-surface px-1.5 py-0.5 rounded border border-outline-variant/30">Monto_a_Liquidar</span>) se considera legalmente como <em className="text-on-surface font-semibold">"fondos de terceros en tránsito"</em> asociados al protocolo de Escrow.
+                    </p>
+                </div>
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 
 import React, { useState, createContext, useContext, useCallback, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { FaInstagram, FaFacebookF, FaXTwitter, FaTiktok, FaWhatsapp } from 'react-icons/fa6';
 import Home from './pages/marketplace/Home';
 import Dashboard from './pages/Dashboard';
 import Dispute from './pages/transactions/Dispute';
@@ -41,40 +42,129 @@ import CookiesPolicy from './pages/legal/CookiesPolicy';
 import ScamPrevention from './pages/legal/ScamPrevention';
 
 import Header from './components/Header';
+import Logo from './components/Logo';
 import Deals from './pages/Deals';
 import Cart from './pages/Cart';
 import Shop from './pages/marketplace/Shop';
 import About from './pages/About';
 import SecurityInfo from './pages/SecurityInfo';
+import GamificationRules from './pages/GamificationRules';
+import Favorites from './pages/Favorites';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // --- App Infrastructure ---
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' as any });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [pathname]);
   return null;
 };
 
+const PageProgressBar = () => {
+  const { pathname } = useLocation();
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    setIsAnimating(true);
+    const timer = setTimeout(() => setIsAnimating(false), 550);
+    return () => clearTimeout(timer);
+  }, [pathname]);
+
+  return (
+    <AnimatePresence>
+      {isAnimating && (
+        <motion.div
+          initial={{ scaleX: 0, opacity: 1 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          style={{ originX: 0 }}
+          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-orange-500 z-[9999] shadow-[0_0_15px_rgba(249,115,22,0.8)] pointer-events-none"
+        />
+      )}
+    </AnimatePresence>
+  );
+};
+
 const Footer = () => (
-  <footer className="mt-40 py-24 bg-white border-t border-light-200">
-    <div className="max-w-[1440px] mx-auto px-6 flex flex-col items-center">
-      <div className="flex items-center gap-2 mb-10 opacity-40 grayscale group-hover:grayscale-0 transition-all">
-        <span className="material-symbols-outlined text-3xl font-black text-primary-600">bolt</span>
-        <h2 className="text-xl font-black tracking-tighter text-slate-900">Vendelo <span className="text-primary-600">Ya!</span></h2>
+  <footer className="mt-20 pt-20 pb-10 bg-surface border-t border-outline-variant/30 relative">
+    <div className="max-w-7xl mx-auto px-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
+        {/* Brand Section */}
+        <div className="lg:col-span-2">
+          <div className="mb-6">
+            <Logo size="lg" />
+          </div>
+          <p className="text-sm font-medium text-on-surface-variant max-w-sm mb-8 leading-relaxed">
+            La plataforma de compra y venta más segura. Unimos compradores y vendedores a través de tecnología de vanguardia y protección total.
+          </p>
+          <div className="flex items-center gap-3">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-pink-600 hover:text-white transition-all shadow-sm">
+              <FaInstagram className="text-lg" />
+            </a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+              <FaFacebookF className="text-lg" />
+            </a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-black hover:text-white transition-all shadow-sm">
+              <FaXTwitter className="text-lg" />
+            </a>
+            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-slate-900 hover:text-white transition-all shadow-sm">
+              <FaTiktok className="text-lg" />
+            </a>
+            <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+              <FaWhatsapp className="text-lg" />
+            </a>
+          </div>
+        </div>
+
+        {/* Links: Navegación */}
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Navegación</h4>
+          <ul className="space-y-4">
+            <li><Link to="/" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Inicio</Link></li>
+            <li><Link to="/search" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Explorar Productos</Link></li>
+            <li><Link to="/deals" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Ofertas del Día</Link></li>
+            <li><Link to="/publish" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Vender un Producto</Link></li>
+          </ul>
+        </div>
+
+        {/* Links: Ayuda */}
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Ayuda</h4>
+          <ul className="space-y-4">
+            <li><Link to="/resolution-center" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Ayuda</Link></li>
+            <li><Link to="/escrow-info" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">¿Cómo funciona?</Link></li>
+            <li><Link to="/security" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Consejos de Seguridad</Link></li>
+            <li><Link to="/reputacion" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Sistema de Puntos</Link></li>
+            <li><Link to="/about" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Acerca de VendeloHoy</Link></li>
+          </ul>
+        </div>
+
+        {/* Links: Legal */}
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Legal</h4>
+          <ul className="space-y-4">
+            <li><Link to="/legal/terms" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Términos y Condiciones</Link></li>
+            <li><Link to="/legal/privacy" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Políticas de Privacidad</Link></li>
+            <li><Link to="/legal/prohibited" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Artículos Prohibidos</Link></li>
+            <li><Link to="/legal/scam-prevention" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Prevención de Fraudes</Link></li>
+          </ul>
+        </div>
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 mb-12">
-        <Link className="hover:text-dark-800 transition-colors" to="/about">Sobre Nosotros</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/security">Seguridad</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/escrow-info">Cómo Funciona (Pago Protegido)</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/legal/terms">Términos y Condiciones</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/legal/notice">Aviso Legal</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/legal/privacy">Política de Privacidad</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/legal/cookies">Política de Cookies</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/legal/scam-prevention">Evitar Estafas</Link>
-        <Link className="hover:text-dark-800 transition-colors" to="/resolution-center">Centro de Ayuda</Link>
+
+      <div className="border-t border-outline-variant/30 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center md:text-left">
+          © {new Date().getFullYear()} Vendelo Hoy. Todos los derechos reservados.
+        </p>
+        <div className="flex items-center gap-2 text-on-surface-variant">
+          <span className="material-symbols-outlined text-sm text-secondary">verified_user</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Plataforma Segura</span>
+        </div>
       </div>
-      <p className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.4em] text-center">
-        © 2026 Vendelo Ya! Transacciones seguras mediante protocolos encriptados.
-      </p>
     </div>
   </footer>
 );
@@ -82,11 +172,26 @@ const Footer = () => (
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   return (
-    <div key={location.pathname} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {children}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+        transition={{
+          duration: 0.32,
+          ease: [0.22, 1, 0.36, 1]
+        }}
+        className="w-full flex-grow flex flex-col"
+      >
+        {React.isValidElement(children) ? React.cloneElement(children as React.ReactElement, { location } as any) : children}
+      </motion.div>
+    </AnimatePresence>
   );
 };
+
+import { BroadcastBar } from './components/BroadcastBar';
+import { BottomNav } from './components/BottomNav';
 
 function App() {
   return (
@@ -95,7 +200,9 @@ function App() {
         <CartProvider>
           <BrowserRouter>
             <ScrollToTop />
-            <div className="flex flex-col min-h-screen relative font-body text-dark-charcoal overflow-x-hidden w-full">
+            <PageProgressBar />
+            <div className="flex flex-col min-h-screen relative font-body text-dark-charcoal overflow-x-hidden w-full pb-20 md:pb-0">
+              <BroadcastBar />
               <Header />
               <main className="flex-grow">
                 <PageTransition>
@@ -109,15 +216,17 @@ function App() {
                     <Route path="/search" element={<Search />} />
                     <Route path="/deals" element={<Deals />} />
                     <Route path="/cart" element={<Cart />} />
-                    <Route path="/shop/:uid" element={<Shop />} />
+                    <Route path="/shop/:slug" element={<Shop />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/publish" element={<RequireProfile><Publish /></RequireProfile>} />
                     <Route path="/transaction/:id" element={<RequireProfile><ESgrow /></RequireProfile>} />
+                    <Route path="/escrow/:id" element={<Navigate to="/dashboard" replace />} />
 
                     <Route path="/dashboard" element={<RequireProfile><Dashboard /></RequireProfile>} />
                     <Route path="/messages" element={<RequireProfile><Messages /></RequireProfile>} />
                     <Route path="/messages/:chatId" element={<RequireProfile><Messages /></RequireProfile>} />
                     <Route path="/wallet" element={<RequireProfile><Wallet /></RequireProfile>} />
+                    <Route path="/favorites" element={<RequireProfile><Favorites /></RequireProfile>} />
                     <Route path="/profile/:uid?" element={<Profile />} />
                     <Route path="/complete-profile" element={<CompleteProfile />} />
                     <Route path="/settings" element={<RequireProfile><Settings /></RequireProfile>} />
@@ -143,11 +252,13 @@ function App() {
                     <Route path="/verify-delivery" element={<VerifyDelivery />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/security" element={<SecurityInfo />} />
+                    <Route path="/reputacion" element={<GamificationRules />} />
                     <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
                   </Routes>
                 </PageTransition>
               </main>
               <Footer />
+              <BottomNav />
             </div>
           </BrowserRouter>
         </CartProvider>

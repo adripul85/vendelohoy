@@ -166,7 +166,7 @@ const ESgrow = () => {
           )}
 
           {/* BUYER VIEW: Confirm Receipt */}
-          {currentUserRole === 'COMPRADOR' && (status === 'PAID_HELD' || status === 'SHIPPED') && (
+          {currentUserRole === 'COMPRADOR' && (status === 'SHIPPED' || status === 'DELIVERED_PENDING_REVIEW') && (
             <div className="bg-white p-8 rounded-[32px] border border-light-200 shadow-premium mb-6 text-center animate-in fade-in zoom-in duration-500">
               <div className="size-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="material-symbols-outlined text-3xl">inventory_2</span>
@@ -174,7 +174,9 @@ const ESgrow = () => {
 
               <h3 className="text-sm font-black text-dark-800 uppercase tracking-widest mb-2">Confirmación de Recepción</h3>
               <p className="text-[10px] text-gray-500 mb-6 font-bold leading-relaxed max-w-xs mx-auto">
-                Cuando recibas el producto en las condiciones acordadas, confirmá la recepción para liberar los fondos al vendedor.
+                {status === 'SHIPPED' 
+                  ? 'Avisá cuando te llegue el paquete para iniciar tus 48hs de protección, o liberá los fondos directamente si está todo bien.' 
+                  : 'Estás dentro de tus 48hs de protección. Revisá el producto tranquilo y liberá los fondos cuando estés conforme.'}
               </p>
 
               <div className="flex flex-col gap-4">
@@ -192,10 +194,25 @@ const ESgrow = () => {
                   <span className="material-symbols-outlined">add_a_photo</span>
                   Subir Foto de Recepción (Opcional)
                 </button>
+
+                {status === 'SHIPPED' && (
+                  <button
+                    onClick={async () => {
+                      const res = await actions.updateStatus('DELIVERED_PENDING_REVIEW', '📦 El comprador confirmó que recibió el paquete. Inician 48hs de prueba.');
+                      if (res.success) {
+                        notify({ type: 'success', title: 'Paquete Recibido', message: 'Tenés 48hs para revisarlo.', icon: 'inventory_2' });
+                      }
+                    }}
+                    className="w-full bg-blue-50 text-blue-600 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                  >
+                    Ya me llegó (Iniciar 48hs de prueba)
+                  </button>
+                )}
+
                 <button
                   onClick={async () => {
-                    if (!window.confirm('¿Confirmás que recibiste el producto en las condiciones acordadas?\n\nEsta acción liberará los fondos al vendedor y no se puede deshacer.')) return;
-                    const res = await actions.updateStatus('COMPLETED', '✅ El comprador confirmó la recepción del producto.');
+                    if (!window.confirm('¿Confirmás que el producto está perfecto y querés liberar los fondos?\n\nEsta acción pagará al vendedor y NO se puede deshacer.')) return;
+                    const res = await actions.releaseEscrow();
                     if (res.success) {
                       triggerSuccessEffects();
                       notify({ type: 'success', title: '¡Trato Hecho!', message: 'Fondos liberados al vendedor.', icon: 'verified' });
@@ -204,7 +221,7 @@ const ESgrow = () => {
                   className="w-full btn-primary bg-emerald-600 py-5 flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 text-[11px] font-black uppercase tracking-widest"
                 >
                   <span className="material-symbols-outlined text-xl">check_circle</span>
-                  Ya recibí el producto
+                  Todo perfecto (Liberar Fondos)
                 </button>
               </div>
 
@@ -359,7 +376,7 @@ const ESgrow = () => {
             onConfirmReturnReceipt={actions.confirmReturnReceipt}
             onRequestMediation={() => actions.updateStatus('DISPUTED', '⚖️ Protocolo de mediación iniciado por el usuario.')}
             onCancel={() => {
-              if (window.confirm("⚠️ ¿Estás seguro de cancelar este trato?\n\nSi eres COMPRADOR: Se te devolverá el dinero MENOS una penalización del 3% ($" + (dealData.price * 0.03).toFixed(2) + ") por gastos administrativos.\n\nEsta acción es irreversible.")) {
+              if (window.confirm("🚨 ¿Estás seguro de cancelar este trato?\n\nSe reembolsará el 100% de los fondos.\n\nEsta acción es irreversible.")) {
                 actions.cancelEscrow();
               }
             }}

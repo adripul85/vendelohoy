@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useNotification } from '../../context/NotificationContext';
+import { FaWhatsapp, FaXTwitter, FaFacebookF } from 'react-icons/fa6';
 
 interface Props {
     isOpen: boolean;
@@ -26,9 +27,9 @@ const ShareModal: React.FC<Props> = ({ isOpen, onClose, title }) => {
     if (!isOpen) return null;
 
     const socialLinks = [
-        { name: 'WhatsApp', icon: 'chat', color: 'bg-[#25D366]', text: 'WHATSAPP', url: `https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}` },
-        { name: 'X', icon: 'close', color: 'bg-dark-900', text: 'X (TWITTER)', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}` },
-        { name: 'Facebook', icon: 'facebook', color: 'bg-[#1877F2]', text: 'FACEBOOK', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}` }
+        { name: 'WhatsApp', icon: <FaWhatsapp className="text-xl" />, color: 'bg-[#25D366]', text: 'WHATSAPP', url: `https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}` },
+        { name: 'X', icon: <FaXTwitter className="text-xl" />, color: 'bg-dark-900', text: 'X (TWITTER)', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}` },
+        { name: 'Facebook', icon: <FaFacebookF className="text-xl" />, color: 'bg-[#1877F2]', text: 'FACEBOOK', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}` }
     ];
 
     return (
@@ -62,7 +63,7 @@ const ShareModal: React.FC<Props> = ({ isOpen, onClose, title }) => {
                             className={`flex items-center gap-5 p-5 ${social.color} text-white rounded-3xl hover:translate-x-1 active:scale-95 transition-all shadow-xl shadow-black/5 group`}
                         >
                             <div className="size-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                <span className="material-symbols-outlined font-black">{social.icon}</span>
+                                {social.icon}
                             </div>
                             <span className="font-black text-[10px] uppercase tracking-[0.2em]">{social.text}</span>
                             <span className="material-symbols-outlined ml-auto opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward_ios</span>

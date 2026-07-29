@@ -12,7 +12,7 @@ const PrivacyPolicy = () => {
 
             <div className="prose prose-slate max-w-none space-y-10">
                 <p className="text-lg text-gray-600 font-medium">
-                    En Vendelo Ya! respetamos la privacidad de nuestros usuarios y nos comprometemos a proteger los datos personales que puedan ser recopilados a través del uso de la plataforma.
+                    En Vendelo Hoy! respetamos la privacidad de nuestros usuarios y nos comprometemos a proteger los datos personales que puedan ser recopilados a través del uso de la plataforma.
                 </p>
 
                 <div className="grid gap-6">
@@ -43,7 +43,7 @@ const PrivacyPolicy = () => {
                                 <li>prevenir actividades fraudulentas o abusivas</li>
                             </ul>
                             <div className="bg-primary-50 text-primary-800 p-4 rounded-xl font-bold">
-                                Vendelo Ya! no vende ni comparte información personal con terceros con fines comerciales.
+                                Vendelo Hoy! no vende ni comparte información personal con terceros con fines comerciales.
                             </div>
                         </div>
                     </section>
@@ -61,7 +61,7 @@ const PrivacyPolicy = () => {
                         <div className="absolute -right-4 -top-4 text-[120px] font-black leading-none text-light-200/50 pointer-events-none select-none z-0">4</div>
                         <div className="relative z-10">
                             <h2 className="text-xl font-bold text-dark-800 mb-4">Enlaces a terceros</h2>
-                            <p className="text-gray-600">El sitio puede contener enlaces a páginas externas. Vendelo Ya! no es responsable de las políticas de privacidad de esos sitios.</p>
+                            <p className="text-gray-600">El sitio puede contener enlaces a páginas externas. Vendelo Hoy! no es responsable de las políticas de privacidad de esos sitios.</p>
                         </div>
                     </section>
 
@@ -77,7 +77,7 @@ const PrivacyPolicy = () => {
                         <div className="absolute -right-4 -top-4 text-[120px] font-black leading-none text-light-200/50 pointer-events-none select-none z-0">6</div>
                         <div className="relative z-10">
                             <h2 className="text-xl font-bold text-dark-800 mb-4">Cambios en la política de privacidad</h2>
-                            <p className="text-gray-600">Vendelo Ya! podrá actualizar esta política cuando sea necesario para reflejar cambios en el servicio o en la legislación vigente.</p>
+                            <p className="text-gray-600">Vendelo Hoy! podrá actualizar esta política cuando sea necesario para reflejar cambios en el servicio o en la legislación vigente.</p>
                         </div>
                     </section>
                 </div>

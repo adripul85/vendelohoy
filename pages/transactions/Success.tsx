@@ -13,8 +13,11 @@ const Success = () => {
   const paymentMethod = queryParams.get('payment_method') || 'MERCADO_PAGO';
   const transactionId = queryParams.get('external_reference') || 'N/A';
   const [transactionData, setTransactionData] = React.useState<any>(null);
+  const { user, loading } = useAuth(); // Esperar a Firebase Auth
 
   React.useEffect(() => {
+    if (loading || !user) return; // Evitar la Race Condition de Auth
+
     if (transactionId && transactionId !== 'N/A') {
       import('../../lib/transactions').then(({ getTransaction, updateTransactionStatus }) => {
         import('../../lib/items').then(({ updateItem }) => {
@@ -25,7 +28,7 @@ const Success = () => {
               if (status === 'approved' && data.status === 'PENDING_PAYMENT') {
                 Promise.all([
                   updateTransactionStatus(transactionId, 'PAID_HELD'),
-                  updateItem(data.itemId, { status: 'SOLD' }) // Mark item as SOLD
+                  data.itemId ? updateItem(data.itemId, { status: 'SOLD' }).catch(() => {}) : Promise.resolve() // Fallback: webhook usually does this
                 ]).then(() => {
                   setTransactionData((prev: any) => ({ ...prev, status: 'PAID_HELD' }));
                   // Notify seller about the sale
@@ -33,13 +36,17 @@ const Success = () => {
                     import('../../lib/interactions').then(({ sendNotification }) => {
                       sendNotification(data.sellerId, {
                         title: '🎉 ¡Nueva Venta!',
-                        message: `Tu producto "${data.itemTitle || title}" se vendió por $${data.amount?.toLocaleString() || total?.toLocaleString()}. Los fondos están en garantía hasta que confirmes la entrega.`,
+                        message: `Tu producto "${data.itemTitle || 'Producto'}" se vendió por $${(data.amountTotal || data.amount || 0).toLocaleString()}. Los fondos están en garantía hasta que confirmes la entrega.`,
                         type: 'success',
-                        link: `/escrow/${transactionId}`
+                        link: `/dashboard`
                       });
                     });
                   }
-                });
+                }).catch(console.error);
+              } else if ((status === 'pending' || status === 'in_process') && data.status === 'PENDING_PAYMENT') {
+                // Si el pago está pendiente (Transferencia/Efectivo/MercadoPago en revisión)
+                // Ocultamos el producto pasándolo a PENDING_PAYMENT
+                updateItem(data.itemId, { status: 'PENDING_PAYMENT' }).catch(console.error);
               }
             }
           });
@@ -60,10 +67,10 @@ const Success = () => {
     }
   }, [status]);
 
-  const { title, total } = location.state || {
-    title: 'Objetivo de Adquisición',
-    total: 0
-  };
+  const { title: stateTitle, total: stateTotal } = location.state || {};
+  
+  const displayTitle = transactionData?.itemTitle || stateTitle || 'Producto Adquirido';
+  const displayTotal = transactionData?.amountTotal || transactionData?.total || stateTotal || 0;
 
   const isTransfer = paymentMethod === 'TRANSFER';
   const isCash = paymentMethod === 'CASH';
@@ -124,12 +131,12 @@ const Success = () => {
                 </div>
                 <div className="flex justify-between items-center px-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Nombre de la Entidad</span>
-                  <span className="text-sm font-black text-dark-800">Vendelo Ya! 🎯 S.A.</span>
+                  <span className="text-sm font-black text-dark-800">Vendelo Hoy! 🎯 S.A.</span>
                 </div>
               </div>
               <div className="mt-8 p-6 bg-red-50 rounded-2xl flex gap-4 text-red-950 text-[10px] font-bold border border-red-100/50 uppercase tracking-widest">
                 <span className="material-symbols-outlined text-lg">info</span>
-                <p>Envía el comprobante a <strong className="text-red-600">pagos@vendeloya.com</strong> con tu ID de Transacción.</p>
+                <p>Envía el comprobante a <strong className="text-red-600">pagos@vendelohoy.com</strong> con tu ID de Transacción.</p>
               </div>
             </div>
           )}
@@ -140,17 +147,17 @@ const Success = () => {
               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-300 mb-2">Código de Transacción</p>
               <h3 className="text-2xl font-black text-dark-800 font-mono tracking-tighter">{transactionId}</h3>
             </div>
-            {total > 0 && (
+            {displayTotal > 0 && (
               <div className="md:text-right">
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-300 mb-2">Total del Trato</p>
-                <h3 className="text-4xl font-black text-dark-800 tracking-tighter">$ {total.toLocaleString()}</h3>
+                <h3 className="text-4xl font-black text-dark-800 tracking-tighter">$ {displayTotal.toLocaleString()}</h3>
               </div>
             )}
           </div>
 
           <div className="p-10 md:p-14">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2 leading-none">Producto</h4>
-            <h4 className="text-xl font-black text-dark-800 tracking-tight mb-10">{title}</h4>
+            <h4 className="text-xl font-black text-dark-800 tracking-tight mb-10">{displayTitle}</h4>
 
             <div className={`p-8 rounded-[32px] border flex flex-col md:flex-row items-center gap-6 text-center md:text-left ${isTransfer ? 'bg-amber-50 border-amber-100' : 'bg-primary-50 border-primary-100'}`}>
               <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 ${isTransfer ? 'bg-white text-amber-500' : 'bg-white text-primary-vibrant'} shadow-sm`}>

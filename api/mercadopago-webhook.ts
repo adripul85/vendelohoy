@@ -44,35 +44,74 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const paymentData = await mpResponse.json();
 
             if (paymentData.status === 'approved') {
+                const transactionId = paymentData.metadata?.transaction_id;
                 const productId = paymentData.metadata?.product_id;
-                const buyerId = paymentData.metadata?.buyer_id || 'unknown';
-                const sellerId = paymentData.metadata?.seller_id || 'unknown';
-                const platformFee = paymentData.metadata?.platform_fee || 0;
-
-                if (productId) {
-                    // Actualizar estado del producto en Firestore usando ADMIN SDK
-                    // El dinero AHORA está en la cuenta MP del vendedor (Split Payment)
-                    const productRef = adminDb.collection('items').doc(productId);
-                    await productRef.update({
-                        status: 'PAID_IN_CUSTODY', 
-                        paymentId: paymentId,
-                        updatedAt: new Date()
+                
+                if (transactionId && productId) {
+                    const db = adminDb;
+                    
+                    // 1. Actualizar estado del producto
+                    try {
+                        const itemRef = db.collection('items').doc(productId);
+                        const itemSnap = await itemRef.get();
+                        if (itemSnap.exists) {
+                            const itemData = itemSnap.data();
+                            const currentQty = itemData?.quantity || 1;
+                            const newQty = Math.max(0, currentQty - 1);
+                            
+                            await itemRef.update({
+                                quantity: newQty,
+                                status: newQty > 0 ? 'AVAILABLE' : 'PAID_IN_CUSTODY',
+                                paymentId: paymentId,
+                                updatedAt: new Date()
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`Could not update item ${productId}, it might be a cart order. Continuing...`);
+                    }
+                    
+                    // 2. Traer la transaccion
+                    const txRef = db.collection('transactions').doc(transactionId);
+                    const txSnap = await txRef.get();
+                    if (!txSnap.exists) {
+                        console.error(`Tx ${transactionId} not found`);
+                        return res.status(404).send('Tx not found');
+                    }
+                    const tx = txSnap.data();
+                    
+                    if (tx?.status !== 'PENDING_PAYMENT') {
+                        console.log(`Tx ${transactionId} already processed (status: ${tx?.status}).`);
+                        return res.status(200).send('Already processed');
+                    }
+                    
+                    // 3. Actualizar transaccion
+                    await txRef.update({
+                        status: 'PAID_HELD',
+                        updatedAt: new Date(),
+                        paymentId: paymentId
                     });
-
-                    // Registrar Transacción y Escrow
-                    await adminDb.collection('transactions').add({
-                        productId,
-                        paymentId,
-                        amount: paymentData.transaction_amount,
-                        platformFee: platformFee, // Lo que ganó la plataforma
-                        status: 'IN_ESCROW', // El vendedor tiene la plata, pero debe entregar
-                        buyerId: buyerId,
-                        sellerId: sellerId,
+                    
+                    // 4. Agregar saldo 'En Custodia' al vendedor (El comprador pago por MP, no deducimos wallet)
+                    const sellerId = tx.sellerId;
+                    const amountProduct = tx.amountProduct || tx.amount;
+                    
+                    await db.collection('users').doc(sellerId).update({
+                        "wallet.inEscrow": adminDb.FieldValue ? adminDb.FieldValue.increment(amountProduct) : amountProduct
+                    });
+                    
+                    // Log del movimiento
+                    await db.collection('wallet_logs').add({
+                        uid: sellerId,
+                        type: 'ESCROW_HOLD',
+                        amount: amountProduct,
+                        referenceId: transactionId,
+                        itemTitle: tx.itemTitle || 'Producto',
+                        description: `Fondos en garantía (MercadoPago): ${tx.itemTitle}`,
                         createdAt: new Date(),
-                        paymentPlatform: 'MercadoPago_Split'
+                        status: 'COMPLETED'
                     });
 
-                    console.log(`✅ Pago Split aprobado y producto ${productId} en Escrow simulado.`);
+                    console.log(`✅ Pago MP Escrow aprobado. Transacción ${transactionId} y producto ${productId} actualizados.`);
                 }
             }
         }

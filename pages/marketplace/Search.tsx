@@ -5,6 +5,7 @@ import { CATEGORIES } from '../../lib/constants';
 import { trackUserSearch } from '../../lib/users';
 import { useAuth } from '../../lib/auth';
 import SkeletonCard from '../../components/SkeletonCard';
+import ProductCard from '../../components/ProductCard';
 import { useNotification } from '../../context/NotificationContext';
 
 const Search = () => {
@@ -18,9 +19,11 @@ const Search = () => {
   // Filter States
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000000]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+  const [activeMasterCategory, setActiveMasterCategory] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [activeSubcategory, setActiveSubcategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [banners, setBanners] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -35,6 +38,13 @@ const Search = () => {
       setLoading(false);
     };
     fetchItems();
+
+    const fetchBanners = async () => {
+      const { getCategoryBanners } = await import('../../lib/marketing');
+      const data = await getCategoryBanners();
+      setBanners(data.filter(b => b.active));
+    };
+    fetchBanners();
   }, []);
 
   const query = useMemo(() => {
@@ -49,6 +59,19 @@ const Search = () => {
     }
     return q || '';
   }, [location.search, location.hash]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const catParam = params.get('category') || params.get('cat');
+    if (catParam) {
+      const found = CATEGORIES.find(c => c.id.toLowerCase() === catParam.toLowerCase() || c.name.toLowerCase() === catParam.toLowerCase());
+      if (found) {
+        setActiveCategory(found.name);
+      } else {
+        setActiveCategory(catParam);
+      }
+    }
+  }, [location.search]);
 
   // Track search behavior
   useEffect(() => {
@@ -66,51 +89,93 @@ const Search = () => {
         p.title.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
         p.subcategory?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
+        p.description?.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q) ||
+        (Array.isArray(p.tags) ? p.tags.some((t: string) => t.toLowerCase().includes(q)) : typeof p.tags === 'string' && p.tags.toLowerCase().includes(q)) ||
+        p.seoTitle?.toLowerCase().includes(q) ||
+        p.seoDescription?.toLowerCase().includes(q)
       );
     }
 
-    if (activeCategory) {
-      filtered = filtered.filter(p => p.category === activeCategory);
+    if (priceRange[0] > 0 || priceRange[1] < 2000000) {
+      filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     }
-
-    if (activeSubcategory) {
-      filtered = filtered.filter(p => p.subcategory === activeSubcategory);
-    }
-
-    filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
     if (selectedConditions.length > 0) {
       const mappedConditions: Record<string, string> = {
         'Nuevo': 'new',
         'Como Nuevo': 'like_new',
-        'Usado': 'good', // Mapping roughly for now
+        'Usado': 'good',
         'Desgastado': 'fair'
       };
       filtered = filtered.filter(p => {
         const readableCondition = Object.keys(mappedConditions).find(key => mappedConditions[key] === p.condition);
-        return selectedConditions.includes(readableCondition || p.condition);
+        return selectedConditions.includes(readableCondition || p.condition || '');
       });
     }
 
+    if (activeCategory) {
+      const catObj = CATEGORIES.find(c => c.name === activeCategory || c.id === activeCategory);
+      filtered = filtered.filter(p => {
+        const matchExact = p.category === activeCategory || (catObj && (p.category === catObj.id || p.category === catObj.name));
+        const matchFuzzy = p.category && (
+          p.category.toLowerCase().includes(activeCategory.toLowerCase()) ||
+          (activeCategory === 'Moda' && (p.category.toLowerCase().includes('ropa') || p.category.toLowerCase().includes('moda') || p.category.toLowerCase().includes('calzado') || p.category.toLowerCase().includes('fashion'))) ||
+          (activeCategory === 'Tecnología' && (p.category.toLowerCase().includes('tecnolog') || p.category.toLowerCase().includes('comput') || p.category.toLowerCase().includes('celular') || p.category.toLowerCase().includes('laptop') || p.category.toLowerCase().includes('audio'))) ||
+          (activeCategory === 'Hogar, Muebles y Jardín' && (p.category.toLowerCase().includes('hogar') || p.category.toLowerCase().includes('mueble') || p.category.toLowerCase().includes('espacio') || p.category.toLowerCase().includes('jardin'))) ||
+          (activeCategory === 'Herramientas' && (p.category.toLowerCase().includes('herramienta') || p.category.toLowerCase().includes('taller') || p.category.toLowerCase().includes('accesorio')))
+        );
+        return matchExact || matchFuzzy;
+      });
+    }
+
+    if (activeSubcategory) {
+      filtered = filtered.filter(p => p.subcategory === activeSubcategory || p.category === activeSubcategory);
+    }
+
     return filtered;
-  }, [query, priceRange, selectedConditions, allProducts]);
+  }, [query, priceRange, selectedConditions, allProducts, activeCategory, activeSubcategory]);
+
+  const activeBanner = useMemo(() => {
+    const term = (activeCategory || query || '').toLowerCase().trim();
+    if (!term) return null;
+
+    // First try to find category match
+    const catObj = CATEGORIES.find(c => 
+      c.name.toLowerCase() === term || 
+      c.id.toLowerCase() === term ||
+      term.includes(c.name.toLowerCase()) ||
+      term.includes(c.id.toLowerCase())
+    );
+
+    if (catObj) {
+      const foundByCat = banners.find(b => b.categoryId === catObj.id || b.categoryId === catObj.name || b.categoryId.toLowerCase() === catObj.name.toLowerCase());
+      if (foundByCat) return foundByCat;
+    }
+
+    // Direct match against banner title or categoryId
+    return banners.find(b => 
+      (b.title && b.title.toLowerCase().includes(term)) ||
+      (b.categoryId && term.includes(b.categoryId.toLowerCase())) ||
+      (term === 'zapatos' || term === 'ropa' || term === 'moda' ? b.categoryId === 'fashion' : false)
+    ) || null;
+  }, [activeCategory, query, banners]);
 
   const toggleCondition = (c: string) => {
     setSelectedConditions(prev => prev.includes(c) ? prev.filter(item => item !== c) : [...prev, c]);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 min-h-screen bg-gray-50/30">
+    <div className="max-w-7xl mx-auto px-6 py-12 min-h-screen bg-background font-body">
       {/* Header & Search Bar */}
-      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white p-8 rounded-[2.5rem] border border-border-light shadow-sm">
+      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-surface p-8 rounded-3xl border border-outline-variant/30 shadow-sm">
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate(-1)} className="size-12 rounded-2xl bg-gray-50 border border-border-light flex items-center justify-center hover:bg-gray-100 transition-all">
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
+          <button onClick={() => navigate(-1)} className="size-12 rounded-2xl bg-surface-container-low border border-outline-variant/50 flex items-center justify-center hover:bg-surface-container transition-all">
+            <span className="material-symbols-outlined text-xl text-on-surface">arrow_back</span>
           </button>
           <div>
-            <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-0.5">Explorador de Activos</p>
-            <h1 className="text-xl font-black text-dark-charcoal tracking-tight">{query ? `Resultados: ${query}` : 'Catálogo Institucional'}</h1>
+            <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-widest mb-0.5">Búsqueda</p>
+            <h1 className="text-xl font-black text-primary tracking-tight font-headline">{query ? `Resultados: ${query}` : 'Todos los productos'}</h1>
           </div>
         </div>
 
@@ -120,16 +185,16 @@ const Search = () => {
               type="text"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder="Filtro rápido..."
-              className="w-full py-3 pl-6 pr-14 bg-gray-50 border border-border-light rounded-xl font-bold text-xs focus:bg-white focus:border-dark-charcoal/20 outline-none transition-all"
+              placeholder="Buscar productos..."
+              className="w-full py-3 pl-6 pr-14 bg-surface-container-low border border-outline-variant/50 rounded-xl font-bold text-xs text-on-surface focus:bg-surface focus:border-primary/50 outline-none transition-all placeholder:text-on-surface-variant/50"
             />
-            <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-dark-charcoal">
+            <button className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">
               <span className="material-symbols-outlined">search</span>
             </button>
           </form>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`lg:hidden size-14 rounded-2xl flex items-center justify-center border transition-all ${showFilters ? 'bg-dark-charcoal text-white border-dark-charcoal' : 'bg-white text-dark-charcoal border-border-light shadow-sm'}`}
+            className={`lg:hidden size-14 rounded-2xl flex items-center justify-center border transition-all ${showFilters ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-on-surface border-outline-variant/50 shadow-sm'}`}
           >
             <span className="material-symbols-outlined">tune</span>
           </button>
@@ -139,15 +204,15 @@ const Search = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Filters Sidebar */}
         <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-3 space-y-10 animate-in fade-in duration-500`}>
-          <div className="bg-white p-8 rounded-[2rem] border border-border-light shadow-sm">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-8 pb-4 border-b border-gray-50 flex items-center justify-between">
-              Configuración de Filtros
+          <div className="bg-surface p-8 rounded-3xl border border-outline-variant/30 shadow-sm">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-8 pb-4 border-b border-outline-variant/30 flex items-center justify-between">
+              Filtros
               <span className="material-symbols-outlined text-sm">filter_alt</span>
             </h3>
 
             {/* Price Filter */}
             <div className="mb-10">
-              <p className="text-xs font-black text-dark-charcoal uppercase tracking-tighter mb-6">Rango de Valor (ARS)</p>
+              <p className="text-xs font-black text-on-surface uppercase tracking-tighter mb-6">Precio (ARS)</p>
               <div className="space-y-4">
                 <input
                   type="range"
@@ -156,18 +221,18 @@ const Search = () => {
                   step="10000"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                  className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-dark-charcoal"
+                  className="w-full h-1.5 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-gray-400">Desde $0</span>
-                  <span className="text-[10px] font-black text-dark-charcoal bg-gray-50 px-2 py-1 rounded">Hasta ${priceRange[1].toLocaleString()}</span>
+                  <span className="text-[10px] font-black text-on-surface-variant">Desde $0</span>
+                  <span className="text-[10px] font-black text-on-surface bg-surface-container-low px-2 py-1 rounded">Hasta ${priceRange[1].toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
             {/* Condition Filter */}
             <div className="mb-10">
-              <p className="text-xs font-black text-dark-charcoal uppercase tracking-tighter mb-6">Estado del Producto</p>
+              <p className="text-xs font-black text-on-surface uppercase tracking-tighter mb-6">Condición</p>
               <div className="space-y-3">
                 {['Nuevo', 'Como Nuevo', 'Usado'].map(c => (
                   <label key={c} className="flex items-center gap-3 cursor-pointer group">
@@ -177,10 +242,10 @@ const Search = () => {
                       checked={selectedConditions.includes(c)}
                       onChange={() => toggleCondition(c)}
                     />
-                    <div className={`size-5 rounded-md border-2 transition-all flex items-center justify-center ${selectedConditions.includes(c) ? 'bg-dark-charcoal border-dark-charcoal' : 'border-gray-100 group-hover:border-gray-200'}`}>
-                      {selectedConditions.includes(c) && <span className="material-symbols-outlined text-white text-xs font-black">check</span>}
+                    <div className={`size-5 rounded-md border-2 transition-all flex items-center justify-center ${selectedConditions.includes(c) ? 'bg-primary border-primary' : 'border-outline-variant/50 group-hover:border-primary/50'}`}>
+                      {selectedConditions.includes(c) && <span className="material-symbols-outlined text-on-primary text-xs font-black">check</span>}
                     </div>
-                    <span className={`text-[11px] font-bold transition-colors ${selectedConditions.includes(c) ? 'text-dark-charcoal' : 'text-gray-400'}`}>{c}</span>
+                    <span className={`text-[11px] font-bold transition-colors ${selectedConditions.includes(c) ? 'text-on-surface' : 'text-on-surface-variant'}`}>{c}</span>
                   </label>
                 ))}
               </div>
@@ -188,11 +253,11 @@ const Search = () => {
 
             {/* Category Filter */}
             <div className="mb-10">
-              <p className="text-xs font-black text-dark-charcoal uppercase tracking-tighter mb-6">Categoría Principal</p>
+              <p className="text-xs font-black text-on-surface uppercase tracking-tighter mb-6">Categoría Principal</p>
               <div className="space-y-4">
                 <select
                   value={activeCategory}
-                  className="w-full p-3 bg-light-50 border border-border-light rounded-lg text-xs font-bold text-dark-charcoal outline-none focus:border-dark-charcoal/20"
+                  className="w-full p-3 bg-surface-container-low border border-outline-variant/50 rounded-xl text-xs font-bold text-on-surface outline-none focus:border-primary/50"
                   onChange={(e) => {
                     setActiveCategory(e.target.value);
                     setActiveSubcategory('');
@@ -204,17 +269,17 @@ const Search = () => {
                   ))}
                 </select>
 
-                {activeCategory && CATEGORIES.find(c => c.name === activeCategory)?.sub && (
+                {activeCategory && CATEGORIES.find(c => c.name === activeCategory)?.categories && (
                   <div className="animate-in slide-in-from-top-2 duration-300">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Específicamente en</p>
+                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2 ml-1">Específicamente en</p>
                     <select
                       value={activeSubcategory}
-                      className="w-full p-3 bg-gray-50 border border-border-light rounded-lg text-[10px] font-black uppercase text-dark-charcoal outline-none focus:border-dark-charcoal/20"
+                      className="w-full p-3 bg-surface-container border border-outline-variant/50 rounded-xl text-[10px] font-black uppercase text-on-surface outline-none focus:border-primary/50"
                       onChange={(e) => setActiveSubcategory(e.target.value)}
                     >
                       <option value="">Cualquier subcategoría</option>
-                      {CATEGORIES.find(c => c.name === activeCategory)?.sub.map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
+                      {CATEGORIES.find(c => c.name === activeCategory)?.categories.map(sub => (
+                        <option key={sub.name} value={sub.name}>{sub.name}</option>
                       ))}
                     </select>
                   </div>
@@ -223,12 +288,12 @@ const Search = () => {
             </div>
 
             {/* Institutional Meta */}
-            <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <div className="flex items-center gap-2 text-emerald-600 mb-3">
+            <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
+              <div className="flex items-center gap-2 text-primary mb-3">
                 <span className="material-symbols-outlined text-sm">verified_user</span>
-                <p className="text-[9px] font-black uppercase tracking-widest leading-none">Protección Activa</p>
+                <p className="text-[9px] font-black uppercase tracking-widest leading-none">Compra Segura</p>
               </div>
-              <p className="text-[9px] text-gray-400 font-medium leading-relaxed italic">Todos los resultados mostrados se encuentran bajo el ala de custodia Escrow de la plataforma.</p>
+              <p className="text-[9px] text-on-surface-variant font-medium leading-relaxed">Tu dinero está protegido. Solo liberamos el pago cuando recibís tu producto.</p>
             </div>
           </div>
         </aside>
@@ -236,13 +301,25 @@ const Search = () => {
         {/* Results Grid */}
         <div className="lg:col-span-9 space-y-8">
           <div className="flex items-center justify-between mb-4 px-2">
-            <p className="text-[10px] font-black uppercase text-gray-300 tracking-widest">{results.length} activos localizados</p>
-            <select className="bg-transparent text-[10px] font-black uppercase tracking-widest text-dark-charcoal outline-none cursor-pointer">
-              <option>Relevancia Institucional</option>
+            <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-widest">{results.length} resultados</p>
+            <select className="bg-transparent text-[10px] font-black uppercase tracking-widest text-on-surface outline-none cursor-pointer">
+              <option>Más Relevantes</option>
               <option>Menor Precio</option>
-              <option>Mayor Confianza</option>
+              <option>Mayor Precio</option>
             </select>
           </div>
+
+          {activeBanner && (
+            <div className="w-full h-48 md:h-64 rounded-[2.5rem] overflow-hidden relative shadow-premium animate-in zoom-in-95 duration-500 mb-8">
+              <img src={activeBanner.image} className="size-full object-cover" alt={activeBanner.title} />
+              <div className="absolute inset-0 bg-gradient-to-t from-dark-800/80 via-dark-800/20 to-transparent flex flex-col justify-end p-10">
+                <span className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white w-fit mb-4 border border-white/10">
+                  Sección Destacada
+                </span>
+                <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none">{activeBanner.title}</h2>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             // Show skeleton cards while loading
@@ -255,58 +332,18 @@ const Search = () => {
               <SkeletonCard />
             </div>
           ) : results.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {results.map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => navigate(`/product/${p.id}`)}
-                  className="group bg-white rounded-[2rem] border border-border-light overflow-hidden hover:shadow-trust-lg transition-all cursor-pointer flex flex-col animate-in fade-in duration-500"
-                >
-                  <div className="aspect-[5/4] bg-gray-100 relative overflow-hidden">
-                    <img src={p.img} alt={p.title} className="w-full h-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-105" />
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      <span className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-dark-charcoal shadow-sm border border-white/20">
-                        {p.subcategory || p.category}
-                      </span>
-                      <span className="bg-dark-charcoal/80 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
-                        {p.condition}
-                      </span>
-                    </div>
-                    {p.trust > 9.7 && (
-                      <div className="absolute top-4 right-4 size-8 bg-white/95 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg border border-white/20 animate-in zoom-in duration-1000">
-                        <span className="material-symbols-outlined text-primary-vibrant text-lg font-black">verified</span>
-                      </div>
-                    )}
-                    <div className="absolute bottom-4 right-4 bg-emerald-500 text-white size-10 rounded-xl flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                      <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                    </div>
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="font-bold text-dark-charcoal mb-1.5 leading-tight line-clamp-2 h-9 group-hover:text-emerald-500 transition-colors uppercase tracking-tight text-xs">
-                      {p.title}
-                    </h3>
-                    <div className="mt-auto pt-4 border-t border-gray-50 flex items-end justify-between">
-                      <div>
-                        <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-0.5">Valor Asegurado</p>
-                        <p className="text-xl font-black text-dark-charcoal leading-none">${p.price.toLocaleString()}</p>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md mb-0.5 uppercase">
-                          Trust {p.trust.toFixed(1)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           ) : (
-            <div className="bg-white py-32 text-center rounded-[3rem] border border-border-light shadow-sm">
-              <div className="size-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
-                <span className="material-symbols-outlined text-4xl text-gray-200">database_off</span>
+            <div className="bg-surface py-32 text-center rounded-3xl border border-outline-variant/30 shadow-sm">
+              <div className="size-20 bg-surface-container-low rounded-2xl flex items-center justify-center mx-auto mb-8">
+                <span className="material-symbols-outlined text-4xl text-on-surface-variant">search_off</span>
               </div>
-              <h2 className="text-xl font-black text-dark-charcoal mb-4 uppercase tracking-widest">Sin coincidencias</h2>
-              <p className="text-sm text-gray-400 max-w-xs mx-auto font-medium">No se han localizado activos bajo los parámetros de filtrado seleccionados.</p>
+              <h2 className="text-xl font-black text-primary mb-4 uppercase tracking-widest font-headline">No hay resultados</h2>
+              <p className="text-sm text-on-surface-variant max-w-xs mx-auto font-medium">Intentá ajustar los filtros o buscar con otras palabras.</p>
               <button
                 onClick={() => {
                   setPriceRange([0, 2000000]);
@@ -314,9 +351,9 @@ const Search = () => {
                   setActiveCategory('');
                   setActiveSubcategory('');
                 }}
-                className="mt-10 btn-secondary"
+                className="mt-10 bg-secondary text-on-secondary px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
               >
-                Resetear Filtros
+                Limpiar Filtros
               </button>
             </div>
           )}

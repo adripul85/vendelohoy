@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { subscribeToUserTransactions, TransactionData } from '../lib/transactions';
 import { subscribeToUserWalletMovements } from '../lib/users';
 
 const Wallet = () => {
   const { userProfile, user } = useAuth();
+  const navigate = useNavigate();
   const wallet = userProfile?.wallet || { available: 0, inEscrow: 0, pending: 0, currency: 'ARS' };
   const [movements, setMovements] = useState<any[]>([]);
   const [loadingMovements, setLoadingMovements] = useState(true);
@@ -185,6 +187,11 @@ const Wallet = () => {
       setShowBankModal(true);
       return;
     }
+    if (userProfile?.trustLevel === 'Bajo' || !userProfile?.trustLevel) {
+      alert('Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.');
+      navigate('/verification');
+      return;
+    }
 
     if (confirm(`¿Confirmar retiro de $${amount.toLocaleString()} a ${userProfile.bankDetails.bankName}?`)) {
       setProcessingWithdrawal(true);
@@ -196,7 +203,12 @@ const Wallet = () => {
         setWithdrawalAmount('');
         window.location.reload();
       } else {
-        alert('Error al procesar el retiro: ' + result.error);
+        if (result.error === 'REQUIRE_KYC') {
+          alert('Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.');
+          navigate('/verification');
+        } else {
+          alert('Error al procesar el retiro: ' + result.error);
+        }
       }
       setProcessingWithdrawal(false);
     }
@@ -212,7 +224,7 @@ const Wallet = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-12 xl:col-span-8 space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-dark-800 p-8 text-white rounded-[40px] shadow-2xl flex flex-col relative overflow-hidden group">
+            <div className="bg-slate-900 p-8 text-white rounded-[40px] shadow-2xl flex flex-col relative overflow-hidden group">
               <div className="absolute top-0 right-0 size-32 bg-primary-vibrant/20 blur-3xl -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
               <p className="text-[10px] font-black opacity-50 mb-6 uppercase tracking-[0.2em] relative z-10">Total Disponible</p>
               <p className="text-4xl font-black mb-10 relative z-10">${wallet.available.toLocaleString()}</p>

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.autoReleaseEscrow = exports.submitEvidence = exports.addEscrowNote = exports.refundFunds = exports.releaseFunds = exports.updateTracking = exports.updateTransactionStatus = exports.createPayment = void 0;
+exports.getShippingLabel = exports.createShippingOrder = exports.getShippingRates = exports.mercadoPagoWebhook = exports.autoReleaseEscrow = exports.submitEvidence = exports.addEscrowNote = exports.refundFunds = exports.releaseFunds = exports.updateTracking = exports.updateTransactionStatus = exports.createPayment = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const mercadopago_1 = require("mercadopago");
@@ -22,8 +22,9 @@ async function distributeEscrowFunds(transactionId, data) {
     const adminId = await getSystemAdminId();
     const sellerRef = db.collection('users').doc(data.sellerId);
     // Calculated based on new model (Step Id 5789 logic)
-    const sellerProceeds = data.amountProduct || data.amount;
-    const platformRevenue = data.amountPlatformFee || data.amountPlatformFee || 0;
+    // amountProduct is the net for the seller, amountPlatformFee is for the platform
+    const sellerProceeds = data.amountProduct || data.amount || 0;
+    const platformRevenue = data.amountPlatformFee || 0;
     const batch = db.batch();
     // A. Pay Seller
     batch.update(sellerRef, {
@@ -145,7 +146,7 @@ exports.releaseFunds = functions.https.onCall(async (request) => {
     const isBuyer = data.buyerId === request.auth.uid;
     const isAdmin = false; // TODO: Implement real admin check via custom claims
     // Validar token si es intercambio en persona
-    if (data.deliveryMethod === 'MEETING' && data.qrCode !== qrToken) {
+    if (data.deliveryMethod === 'en_mano' && data.qrCode !== qrToken) {
         throw new functions.https.HttpsError('invalid-argument', 'Token de seguridad inválido.');
     }
     if (!isBuyer && !isAdmin) {
@@ -162,6 +163,40 @@ exports.releaseFunds = functions.https.onCall(async (request) => {
     });
     // DISTRIBUTE FUNDS (New model balanced logic)
     await distributeEscrowFunds(transactionId, data);
+    // NOTIFICAR AL VENDEDOR (In-App y Email)
+    const sellerRef = db.collection('users').doc(data.sellerId);
+    const sellerDoc = await sellerRef.get();
+    if (sellerDoc.exists) {
+        const sellerData = sellerDoc.data();
+        // 1. Notificación en la plataforma
+        await db.collection('notifications').add({
+            userId: data.sellerId,
+            title: '¡Venta Completada!',
+            message: `El comprador ha liberado el pago de "${data.itemTitle}". Los fondos ya están disponibles en tu billetera.`,
+            type: 'success',
+            icon: 'payments',
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            link: '/dashboard'
+        });
+        // 2. Email preparatorio (Trigger Email Extension)
+        if (sellerData.email) {
+            await db.collection('mail').add({
+                to: sellerData.email,
+                message: {
+                    subject: `¡Pago Liberado! - ${data.itemTitle}`,
+                    html: `
+                        <h2>¡Felicidades, venta completada!</h2>
+                        <p>El comprador ha recibido el producto en condiciones y ha liberado los fondos de la transacción <strong>#${transactionId}</strong>.</p>
+                        <p>Ya puedes ver el saldo acreditado en tu Billetera dentro de De Oportunidades.</p>
+                        <br/>
+                        <p>Gracias por usar nuestra plataforma.</p>
+                    `
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
     return { success: true };
 });
 /**
@@ -254,11 +289,11 @@ exports.submitEvidence = functions.https.onCall(async (request) => {
  * Runs every hour to check for SHIPPED transactions older than 48 hours.
  */
 exports.autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRun(async (context) => {
-    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    // Query transactions that are SHIPPED and haven't been updated in 48h
+    const now = new Date();
+    // Query transactions that are DELIVERED_PENDING_REVIEW and deadline has passed
     const snapshot = await db.collection('transactions')
-        .where('status', '==', 'SHIPPED')
-        .where('updatedAt', '<=', fortyEightHoursAgo)
+        .where('status', '==', 'DELIVERED_PENDING_REVIEW')
+        .where('inspectionDeadline', '<=', now)
         .get();
     if (snapshot.empty) {
         console.log('No transactions to auto-release.');
@@ -290,4 +325,48 @@ exports.autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRun(asy
     }
     return results;
 });
+/**
+ * 10. MERCADO PAGO WEBHOOK (Payment Confirmation)
+ */
+exports.mercadoPagoWebhook = functions.https.onRequest(async (req, res) => {
+    var _a;
+    const { type, data } = req.body;
+    // We only care about payment events
+    if (type === 'payment') {
+        const paymentId = data.id;
+        try {
+            // Get payment detail from MP
+            const { Payment } = await Promise.resolve().then(() => require('mercadopago'));
+            const mpPayment = new Payment(client);
+            const paymentDetail = await mpPayment.get({ id: paymentId });
+            if (paymentDetail.status === 'approved') {
+                const txId = paymentDetail.external_reference;
+                if (txId) {
+                    const txRef = db.collection('transactions').doc(txId);
+                    const txDoc = await txRef.get();
+                    if (txDoc.exists && ((_a = txDoc.data()) === null || _a === void 0 ? void 0 : _a.status) === 'PENDING_PAYMENT') {
+                        await txRef.update({
+                            status: 'PAID_HELD',
+                            mpPaymentId: paymentId,
+                            lastSystemMessage: '✅ Pago confirmado via Mercado Pago. Fondos en garantía.',
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log(`Transaction ${txId} marked as PAID_HELD.`);
+                    }
+                }
+            }
+        }
+        catch (error) {
+            console.error('Error processing MP Webhook:', error);
+        }
+    }
+    res.status(200).send('OK');
+});
+/**
+ * 11. CORREO ARGENTINO INTEGRATION
+ */
+var correoArgentino_1 = require("./correoArgentino");
+Object.defineProperty(exports, "getShippingRates", { enumerable: true, get: function () { return correoArgentino_1.getShippingRates; } });
+Object.defineProperty(exports, "createShippingOrder", { enumerable: true, get: function () { return correoArgentino_1.createShippingOrder; } });
+Object.defineProperty(exports, "getShippingLabel", { enumerable: true, get: function () { return correoArgentino_1.getShippingLabel; } });
 //# sourceMappingURL=index.js.map

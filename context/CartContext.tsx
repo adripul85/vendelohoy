@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNotification } from './NotificationContext';
+import { trackEvent } from '../lib/analytics';
 
 export interface CartItem {
     id: string;
@@ -60,6 +61,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 icon: 'shopping_cart'
             });
         } else {
+            // Track add_to_cart event
+            trackEvent(item.sellerId, 'add_to_cart', { productId: item.id, productTitle: item.title });
+            
             notify({
                 type: 'success',
                 title: 'Agregado al Carrito',

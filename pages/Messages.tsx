@@ -34,20 +34,28 @@ export default function Messages() {
 
     // Handle chatId in URL
     useEffect(() => {
-        if (chatId && chats.length > 0) {
-            const chat = chats.find(c => c.id === chatId);
-            if (chat) setSelectedChat(chat);
+        if (!chatId) {
+            setSelectedChat(null);
+            return;
         }
-    }, [chatId, chats]);
+        const chat = chats.find(c => c.id === chatId);
+        if (chat) {
+            setSelectedChat(chat);
+        } else if (user && (!selectedChat || selectedChat.id !== chatId)) {
+            // Select stub immediately so message subscription starts while chat list is loading
+            setSelectedChat({
+                id: chatId,
+                participants: [user.uid],
+                lastMessage: '',
+                lastMessageTimestamp: null as any,
+                unreadCount: {}
+            });
+        }
+    }, [chatId, chats, user]);
 
     // Subscribe to messages when a chat is selected
     useEffect(() => {
-        if (!selectedChat || !user) return;
-
-        // Mark as read
-        if (selectedChat.unreadCount?.[user.uid] > 0) {
-            markChatAsRead(selectedChat.id, user.uid);
-        }
+        if (!selectedChat?.id || !user) return;
 
         const unsubscribe = subscribeToMessages(selectedChat.id, (data) => {
             setMessages(data);
@@ -56,7 +64,14 @@ export default function Messages() {
         });
 
         return () => unsubscribe();
-    }, [selectedChat, user]);
+    }, [selectedChat?.id, user]);
+
+    // Mark as read when viewing a chat with unread messages
+    useEffect(() => {
+        if (selectedChat?.id && user && selectedChat.unreadCount?.[user.uid] > 0) {
+            markChatAsRead(selectedChat.id, user.uid);
+        }
+    }, [selectedChat?.id, selectedChat?.unreadCount?.[user?.uid || ''], user]);
 
     const scrollToBottom = () => {
         if (messagesContainerRef.current) {

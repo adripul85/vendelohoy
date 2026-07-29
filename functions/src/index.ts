@@ -188,6 +188,44 @@ export const releaseFunds = functions.https.onCall(async (request) => {
     // DISTRIBUTE FUNDS (New model balanced logic)
     await distributeEscrowFunds(transactionId, data);
 
+    // NOTIFICAR AL VENDEDOR (In-App y Email)
+    const sellerRef = db.collection('users').doc(data.sellerId);
+    const sellerDoc = await sellerRef.get();
+    
+    if (sellerDoc.exists) {
+        const sellerData = sellerDoc.data()!;
+        
+        // 1. Notificación en la plataforma
+        await db.collection('notifications').add({
+            userId: data.sellerId,
+            title: '¡Venta Completada!',
+            message: `El comprador ha liberado el pago de "${data.itemTitle}". Los fondos ya están disponibles en tu billetera.`,
+            type: 'success',
+            icon: 'payments',
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            link: '/dashboard'
+        });
+
+        // 2. Email preparatorio (Trigger Email Extension)
+        if (sellerData.email) {
+            await db.collection('mail').add({
+                to: sellerData.email,
+                message: {
+                    subject: `¡Pago Liberado! - ${data.itemTitle}`,
+                    html: `
+                        <h2>¡Felicidades, venta completada!</h2>
+                        <p>El comprador ha recibido el producto en condiciones y ha liberado los fondos de la transacción <strong>#${transactionId}</strong>.</p>
+                        <p>Ya puedes ver el saldo acreditado en tu Billetera dentro de De Oportunidades.</p>
+                        <br/>
+                        <p>Gracias por usar nuestra plataforma.</p>
+                    `
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
+
     return { success: true };
 });
 
@@ -378,3 +416,8 @@ export const mercadoPagoWebhook = functions.https.onRequest(async (req, res) => 
 
     res.status(200).send('OK');
 });
+
+/**
+ * 11. CORREO ARGENTINO INTEGRATION
+ */
+export { getShippingRates, createShippingOrder, getShippingLabel } from './correoArgentino';

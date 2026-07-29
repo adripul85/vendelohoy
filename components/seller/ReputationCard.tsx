@@ -14,7 +14,6 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
     const status = seller.sellerStatus || 'Socio en Prueba';
     const responseTime = seller.responseTime || 'Sincronización: < 24h';
 
-    // Logic for trust colors
     const trustColors = {
         'Bajo': 'text-red-500 bg-red-50/50 border-red-100/50',
         'Medio': 'text-amber-500 bg-amber-50/50 border-amber-100/50',
@@ -22,8 +21,20 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
         'Premium': 'text-emerald-500 bg-emerald-50/50 border-emerald-100/50'
     };
 
-    const initials = seller.displayName
-        ? seller.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    let lastSaleText = 'Reciente';
+    if (seller.lastSaleDate) {
+        const date = typeof seller.lastSaleDate.toDate === 'function' 
+            ? seller.lastSaleDate.toDate() 
+            : new Date(seller.lastSaleDate);
+        const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) lastSaleText = 'Hoy';
+        else if (diffDays === 1) lastSaleText = 'Ayer';
+        else lastSaleText = `Hace ${diffDays} días`;
+    }
+
+    const displayName = seller.store?.name || seller.displayName || 'Vendedor';
+    const initials = displayName
+        ? displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
         : '??';
 
     return (
@@ -39,14 +50,14 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
             <div className="flex items-center gap-5 mb-8 relative z-10">
                 <div className="size-20 bg-dark-800 rounded-[32px] flex items-center justify-center text-white text-3xl font-black shadow-xl shrink-0">
                     {seller.avatar ? (
-                        <img src={seller.avatar} alt={seller.displayName} className="size-full object-cover rounded-[32px]" />
+                        <img src={seller.avatar} alt={displayName} className="size-full object-cover rounded-[32px]" />
                     ) : (
                         <span>{initials}</span>
                     )}
                 </div>
                 <div className="flex-1">
                     <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-3">
-                        {seller.displayName}
+                        {displayName}
                     </h3>
                     <div className="flex flex-wrap gap-4">
                         <div className="flex flex-col">
@@ -79,8 +90,13 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
                             ))}
                             <span className="ml-2 text-sm font-black text-slate-900">{rating.toFixed(1)}</span>
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            {salesCount} Protocolos Registrados
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest relative group/tooltip cursor-help w-fit">
+                            {salesCount} Ventas Realizadas
+                            {salesCount > 0 && (
+                                <span className="absolute bottom-full left-0 mb-2 w-max px-3 py-2 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50 shadow-lg pointer-events-none after:content-[''] after:absolute after:top-full after:left-4 after:border-4 after:border-transparent after:border-t-slate-800">
+                                    Última venta: {lastSaleText}
+                                </span>
+                            )}
                         </p>
                     </div>
 
@@ -95,7 +111,7 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
                 </div>
             </div>
 
-            {/* Nodo de Respuesta (UX Crucial para Vendelo Ya) */}
+            {/* Nodo de Respuesta (UX Crucial para Vendelo Hoy) */}
             <div className="bg-primary-50/30 rounded-[32px] p-5 flex items-center gap-4 border border-primary-50/50 group/nodo hover:bg-primary-50/50 transition-colors duration-500">
                 <div className="size-12 bg-white rounded-2xl shadow-premium border border-primary-100 flex items-center justify-center text-primary-vibrant group-hover/nodo:scale-110 transition-transform">
                     <span className="material-symbols-outlined font-fill text-2xl">bolt</span>

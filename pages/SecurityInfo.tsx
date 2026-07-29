@@ -6,7 +6,7 @@ export default function SecurityInfo() {
         {
             icon: 'shield_lock',
             title: 'Pago Protegido',
-            description: 'Tu dinero no va directo al vendedor. Vendelo Ya! lo retiene de forma segura hasta que confirmas que recibiste el producto tal cual lo esperabas.'
+            description: 'Tu dinero no va directo al vendedor. Vendelo Hoy! lo retiene de forma segura hasta que confirmas que recibiste el producto tal cual lo esperabas.'
         },
         {
             icon: 'verified_user',
@@ -38,7 +38,7 @@ export default function SecurityInfo() {
                         <span className="material-symbols-outlined text-4xl font-black">gpp_good</span>
                     </motion.div>
                     <h1 className="text-4xl lg:text-6xl font-black text-dark-900 uppercase tracking-tighter mb-6">Tu seguridad es <br /> nuestro compromiso</h1>
-                    <p className="text-lg text-gray-500 font-bold max-w-2xl mx-auto">En Vendelo Ya!, comprar usado es tan seguro como comprar nuevo. Así es como protegemos tu dinero y tu confianza con nuestro sistema de Pago Protegido.</p>
+                    <p className="text-lg text-gray-500 font-bold max-w-2xl mx-auto">En Vendelo Hoy!, comprar usado es tan seguro como comprar nuevo. Así es como protegemos tu dinero y tu confianza con nuestro sistema de Pago Protegido.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
@@ -68,7 +68,7 @@ export default function SecurityInfo() {
                         <div className="space-y-8">
                             <div className="flex gap-6">
                                 <span className="size-8 rounded-full bg-primary-vibrant flex-shrink-0 flex items-center justify-center font-black text-xs">1</span>
-                                <p className="font-bold text-gray-300">Pagás el producto. El dinero queda guardado en una cuenta segura de Vendelo Ya!</p>
+                                <p className="font-bold text-gray-300">Pagás el producto. El dinero queda guardado en una cuenta segura de Vendelo Hoy!</p>
                             </div>
                             <div className="flex gap-6">
                                 <span className="size-8 rounded-full bg-primary-vibrant flex-shrink-0 flex items-center justify-center font-black text-xs">2</span>

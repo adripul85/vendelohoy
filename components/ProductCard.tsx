@@ -6,7 +6,10 @@ import CountdownTimer from './product/CountdownTimer';
 import { triggerHaptic } from '../lib/haptics';
 import SellerBadge from './seller/SellerBadge';
 import { getUserProfile, UserProfile } from '../lib/users';
-
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../lib/auth';
+import { useNotification } from '../context/NotificationContext';
+import { FavoriteButton } from './FavoriteButton';
 interface ProductCardProps {
     product: ItemData & { id: string };
     location?: string;
@@ -16,6 +19,27 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified }) => {
 
     const [sellerProfile, setSellerProfile] = React.useState<UserProfile | null>(null);
+    const { addToCart } = useCart();
+    const { user } = useAuth();
+    const { notify } = useNotification();
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (user && (product.sellerId === user.uid || product.seller?.id === user.uid)) {
+            notify({ type: 'error', title: 'Operación inválida', message: 'No podés agregar tu propio producto al carrito.', icon: 'block' });
+            return;
+        }
+        triggerHaptic('medium');
+        addToCart({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            image: product.images?.[0] || '',
+            sellerId: product.seller?.id || product.sellerId || '',
+            sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
+        });
+    };
 
     React.useEffect(() => {
         if (product.sellerId) {
@@ -41,9 +65,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
 
     return (
         <motion.div
-            whileHover={isSold ? {} : { y: -5, scale: 1.01 }}
+            whileHover={isSold ? {} : { y: -10 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={`group bg-white rounded-2xl border border-light-200 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col h-full w-full ${isSold ? 'opacity-60 grayscale-[0.3]' : ''}`}
+            className={`group bg-surface-container-lowest rounded-2xl shadow-premium hover:shadow-2xl transition-all flex flex-col h-full w-full relative overflow-hidden ${isSold ? 'opacity-60 grayscale-[0.3]' : ''}`}
         >
             <Link
                 to={`/product/${product.id}`}
@@ -51,110 +75,69 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                 className={`flex flex-col h-full ${isSold ? 'cursor-default' : ''}`}
                 onPointerDown={(e) => isSold && e.preventDefault()}
             >
-                <div className="aspect-square bg-light-100 relative overflow-hidden">
+                {/* Image Container: Square aspect ratio makes product photos larger and fuller */}
+                <div className="aspect-square bg-surface-container-low relative overflow-hidden">
                     <img
                         src={product.images?.[0] || 'https://picsum.photos/400/400?tech'}
                         alt={product.title}
-                        className={`w-full h-full object-cover transition-transform duration-700 ${!isSold && 'group-hover:scale-105'}`}
+                        className={`w-full h-full object-cover transition-transform duration-1000 ease-out ${!isSold && 'group-hover:scale-110'}`}
                     />
 
-                    {/* Contenedor de Badges (Top Left) */}
-                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 items-start pointer-events-none">
-                        {/* Status Sold Badge */}
-                        {isSold && (
-                            <div className="bg-dark-900 text-white px-3 py-1.5 rounded-lg font-black text-[10px] shadow-2xl flex items-center gap-2 border border-white/20 animate-in zoom-in duration-300">
-                                <span className="material-symbols-outlined text-sm">block</span>
-                                VENDIDO
-                            </div>
-                        )}
+                    {/* Favorite Button */}
+                    <div className="absolute top-4 right-4 z-20">
+                        <FavoriteButton product={{
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            image: product.images?.[0] || '',
+                            sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
+                        }} />
+                    </div>
 
-                        {/* Globitos de Notificación (Bounce Effect) */}
-                        {!isSold && product.views && product.views >= 5 && (
-                            <motion.div
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{
-                                    scale: [1, 1.05, 1],
-                                    opacity: 1
-                                }}
-                                transition={{
-                                    duration: 0.5,
-                                    repeat: Infinity,
-                                    repeatDelay: 3
-                                }}
-                            >
-                                <div className="bg-[#FF7043] text-white px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg border border-white/30 backdrop-blur-sm">
-                                    <span className="material-symbols-outlined text-[12px] font-black">visibility</span>
-                                    <span className="text-[9px] font-black tracking-tight whitespace-nowrap">
-                                        ¡{product.views} visitas!
-                                    </span>
-                                </div>
-                                <div className="w-1.5 h-1.5 bg-[#FF7043] rotate-45 ml-3 -mt-1 shadow-md"></div>
-                            </motion.div>
+                    {/* High-End Badges */}
+                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 items-start pointer-events-none">
+                        {product.condition === 'new' && (
+                            <span className="bg-secondary-container text-on-surface px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-xl">
+                                Nuevo
+                            </span>
                         )}
-
-                        {/* Badge de Descuento (Universal) */}
                         {!isSold && product.oldPrice && product.oldPrice > product.price && (
-                            <div className="bg-red-600 text-white px-2.5 py-1 rounded-lg font-black text-[9px] shadow-lg shadow-red-600/10 flex items-center gap-1 animate-in zoom-in duration-500">
-                                <span className="material-symbols-outlined text-[12px]">trending_down</span>
+                            <div className="bg-tertiary-container text-white px-3 py-1 rounded-md font-black text-[9px] shadow-xl flex items-center gap-1">
                                 -{Math.round((1 - product.price / product.oldPrice) * 100)}%
                             </div>
                         )}
-
-                        {isVerified && (
-                            <div className="size-7 bg-white/95 backdrop-blur-md rounded-lg flex items-center justify-center shadow-md border border-white/20 animate-in zoom-in duration-700">
-                                <span className="material-symbols-outlined text-primary-vibrant text-base font-black">verified</span>
-                            </div>
-                        )}
-
-                        {/* Seller Trust Badge */}
-                        {!isSold && sellerProfile && (
-                            <div className="absolute top-3 right-3 z-10 animate-in fade-in slide-in-from-right-2 duration-500 delay-300">
-                                <SellerBadge
-                                    seller={sellerProfile}
-                                    compact
-                                />
-                            </div>
-                        )}
                     </div>
+
+                    {/* Quick Add To Cart (High Energy CTA) */}
+                    {!isSold && (
+                        <button 
+                            onClick={handleAddToCart}
+                            className="absolute bottom-4 right-4 size-12 bg-secondary-container text-on-surface rounded-xl shadow-2xl flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-20 hover:scale-110"
+                        >
+                            <span className="material-symbols-outlined text-2xl font-black">add_shopping_cart</span>
+                        </button>
+                    )}
                 </div>
 
-                <div className="p-3 flex flex-col flex-1">
-                    {/* Precio - Tipografía INTER */}
-                    <div className="flex items-baseline gap-1 mb-1">
-                        <span className={`text-lg font-extrabold font-sans tracking-tight ${isSold ? 'text-slate-400' : 'text-slate-900'}`}>
+                <div className="p-4 sm:p-5 flex flex-col flex-1 space-y-3">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-1">
+                            {product.category || 'Selección'}
+                        </span>
+                        <h3 className={`text-sm font-black font-display line-clamp-1 transition-colors leading-tight ${isSold ? 'text-primary/20' : 'text-primary'}`}>
+                            {product.title}
+                        </h3>
+                    </div>
+
+                    <div className="flex items-baseline gap-2 mt-auto">
+                        <span className={`text-lg font-black font-display tracking-tighter ${isSold ? 'text-primary/20' : 'text-primary'}`}>
                             ${product.price.toLocaleString('es-AR')}
                         </span>
                         {product.oldPrice && product.oldPrice > product.price && !isSold && (
-                            <span className="text-[10px] font-bold text-slate-400 line-through opacity-60">
+                            <span className="text-[11px] font-bold text-primary/20 line-through">
                                 ${product.oldPrice.toLocaleString('es-AR')}
                             </span>
                         )}
-                    </div>
-
-                    {/* Título - Tipografía JAKARTA */}
-                    <h3 className={`text-[11px] font-medium font-display line-clamp-2 mb-2 transition-colors h-8 leading-snug ${isSold ? 'text-slate-400' : 'text-slate-600 group-hover:text-primary-vibrant'}`}>
-                        {product.title}
-                    </h3>
-
-                    <div className="mt-auto pt-2 border-t border-slate-50 flex items-center justify-between text-[9px] text-slate-400 font-sans">
-                        <div className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">location_on</span>
-                            <span className="truncate max-w-[80px] font-medium">
-                                {product.location || location || 'Ubicación'}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            {isSold ? (
-                                <span className="font-bold text-slate-300 uppercase tracking-widest text-[8px]">Agotado</span>
-                            ) : (
-                                <>
-                                    <span className="material-symbols-outlined text-[10px] text-amber-400">star</span>
-                                    <span className="font-bold">
-                                        {product.sellerRating || 'Nuevo'}
-                                    </span>
-                                </>
-                            )}
-                        </div>
                     </div>
                 </div>
             </Link>

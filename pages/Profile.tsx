@@ -9,6 +9,7 @@ import { toggleFollow, checkIsFollowing } from '../lib/interactions';
 import ReviewsList from '../components/ReviewsList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ProductCard from '../components/ProductCard';
+import { UserIcon, StoreIcon, CheckIcon, HeartIcon } from '../components/animate-ui/icons';
 
 const Profile = () => {
   const { uid } = useParams();
@@ -49,12 +50,27 @@ const Profile = () => {
 
       if (profile) {
         setTargetProfile(profile);
-        const { compras, ventas } = await getUserTransactions(targetUid);
-        const userProducts = await getItemsBySeller(targetUid);
-        setProducts(userProducts);
+        
+        let totalOps = 0;
+        let disputes = 0;
 
-        const totalOps = compras.length + ventas.length;
-        const disputes = [...compras, ...ventas].filter(t => t.status === 'DISPUTED').length;
+        if (isOwnProfile) {
+          const { compras, ventas } = await getUserTransactions(targetUid);
+          totalOps = compras.length + ventas.length;
+          disputes = [...compras, ...ventas].filter(t => t.status === 'DISPUTED').length;
+        } else {
+          totalOps = profile.salesCount || profile.reputation?.totalOps || 0;
+        }
+
+        const userProducts = await getItemsBySeller(targetUid);
+        const activeProducts = userProducts.filter(p => {
+          if (isOwnProfile) return true; // owner sees all their products
+          if (!p.status) return true;
+          const s = String(p.status).toUpperCase();
+          return ['AVAILABLE', 'ACTIVE', 'PUBLISHED', 'EN_VENTA', 'PUBLICADO', 'NEW', 'GOOD', 'USED', 'LIKE_NEW'].includes(s) || (p.quantity !== undefined && p.quantity > 0);
+        });
+        setProducts(activeProducts);
+
         const avgRating = profile.reputation?.averageRating || 0;
         const totalReviews = profile.reputation?.totalReviews || 0;
         const trustScore = totalReviews > 0 ? Math.round((avgRating / 5) * 100) : 0;
@@ -81,7 +97,13 @@ const Profile = () => {
       const { isFollowing: newStatus } = await toggleFollow(
         user.uid,
         targetProfile?.uid || '',
-        user.displayName || user.email || 'Un usuario'
+        user.displayName || user.email || 'Un usuario',
+        {
+          name: targetProfile?.displayName || targetProfile?.store?.name || 'Vendedor',
+          avatar: targetProfile?.photoURL || targetProfile?.avatar || targetProfile?.store?.logo || '',
+          slug: targetProfile?.store?.slug || targetProfile?.uid,
+          reputation: targetProfile?.reputation?.averageRating || 5.0
+        }
       );
       setIsFollowing(newStatus);
       notify({ type: 'success', title: newStatus ? 'Siguiendo' : 'Dejaste de seguir', message: newStatus ? `Ahora sigues a este usuario.` : 'Has dejado de seguir a este usuario.', icon: newStatus ? 'person_add' : 'person_remove' });
@@ -113,16 +135,16 @@ const Profile = () => {
   return (
     <div className="bg-light-50 min-h-screen pb-32">
       {/* --- TOP BANNER --- */}
-      <div className="h-32 md:h-48 w-full relative overflow-hidden">
+      <div className="h-48 md:h-64 w-full relative overflow-hidden bg-dark-900">
         <img
           src={targetProfile.coverImage || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=2670"}
           className="w-full h-full object-cover"
           alt="Network Banner"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-dark-900/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 via-dark-900/20 to-transparent" />
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-6 relative z-10 -mt-24 md:-mt-32">
+      <div className="max-w-[1280px] mx-auto px-6 relative z-10 -mt-12 md:-mt-16">
         {/* --- HEADER PROFILE CARD --- */}
         <div className="flex flex-col md:flex-row items-end gap-8 mb-16">
           <div className="relative group">
@@ -158,7 +180,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 pb-4">
+          <div className="flex flex-wrap items-center gap-3 pb-4">
             {!isOwnProfile && (
               <>
                 <button
@@ -168,32 +190,39 @@ const Profile = () => {
                     : 'bg-white text-dark-800 border-light-200 hover:bg-light-100'
                     }`}
                 >
-                  <span className={`material-symbols-outlined text-lg transition-transform ${isFollowing ? '' : 'group-hover:scale-110'}`}>
-                    {isFollowing ? 'check' : 'person_add'}
-                  </span>
-                  {isFollowing ? 'Siguiendo' : 'Seguir'}
+                  {isFollowing ? <CheckIcon size={18} className="text-emerald-600" /> : <UserIcon add size={18} />}
+                  {isFollowing ? 'Siguiendo' : 'Seguir Vendedor'}
                 </button>
                 <button className="h-11 px-6 rounded-xl bg-primary-vibrant text-white font-black text-[9px] uppercase tracking-widest hover:shadow-lg shadow-primary-vibrant/20 transition-all flex items-center gap-2 active:scale-95">
                   <span className="material-symbols-outlined text-lg">chat_bubble</span>
                   Mensaje
                 </button>
                 <button
-                  onClick={() => navigate(`/shop/${targetProfile.uid}`)}
+                  onClick={() => navigate(`/shop/${targetProfile.store?.slug || targetProfile.uid}`)}
                   className="h-11 px-6 rounded-xl bg-white text-dark-800 border font-black text-[9px] uppercase tracking-widest hover:bg-light-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
                 >
-                  <span className="material-symbols-outlined text-lg text-primary-vibrant">store</span>
+                  <StoreIcon size={18} className="text-primary-vibrant" />
                   Tienda
                 </button>
               </>
             )}
             {isOwnProfile && (
-              <button
-                onClick={() => navigate(`/shop/${targetProfile.uid}`)}
-                className="h-11 px-6 rounded-xl bg-white text-dark-800 border border-primary-100 font-black text-[9px] uppercase tracking-widest hover:bg-primary-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
-              >
-                <span className="material-symbols-outlined text-lg text-primary-vibrant">storefront</span>
-                Mi Tienda Pública
-              </button>
+              <>
+                <button
+                  onClick={() => navigate(`/shop/${targetProfile.store?.slug || targetProfile.uid}`)}
+                  className="h-11 px-6 rounded-xl bg-white text-dark-800 border border-primary-100 font-black text-[9px] uppercase tracking-widest hover:bg-primary-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+                >
+                  <StoreIcon size={18} className="text-primary-vibrant" />
+                  Mi Tienda Pública
+                </button>
+                <button
+                  onClick={() => navigate('/favorites')}
+                  className="h-11 px-6 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-black text-[9px] uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+                >
+                  <HeartIcon size={18} className="text-rose-600" />
+                  Vendedores Guardados
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -252,7 +281,7 @@ const Profile = () => {
                   </div>
                 )}
                 {metrics.totalOps > 10 && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl border font-black text-[9px] uppercase tracking-tight bg-indigo-50 text-indigo-600 border-indigo-100">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl border font-black text-[9px] uppercase tracking-tight bg-sky-50 text-sky-700 border-sky-100">
                     <span className="material-symbols-outlined text-base font-black">lock</span>
                     Comerciante Experto
                   </div>

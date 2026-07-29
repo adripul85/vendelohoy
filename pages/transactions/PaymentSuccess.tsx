@@ -30,7 +30,7 @@ export default function PaymentSuccess() {
                             title: '🎉 ¡Nueva Venta!',
                             message: `Tu producto "${txData.itemTitle || 'Producto'}" se vendió por $${txData.amount?.toLocaleString() || '0'}. Los fondos están en garantía hasta que confirmes la entrega.`,
                             type: 'success',
-                            link: `/escrow/${externalReference}`
+                            link: `/dashboard`
                         });
                     }
                 } catch (e) { console.error('Error notifying seller:', e); }
@@ -67,21 +67,21 @@ export default function PaymentSuccess() {
 
                 {/* Title */}
                 <h1 className="text-3xl font-black text-dark-800 mb-4 uppercase tracking-tight">
-                    {status === 'approved' ? 'Adquisición Exitosa' : 'Pago Pendiente'}
+                    {status === 'approved' ? '¡Pago Exitoso!' : 'Pago Pendiente'}
                 </h1>
 
                 {/* Message */}
                 <p className="text-[11px] font-bold text-gray-400 leading-relaxed uppercase tracking-wider mb-10 px-4">
                     {status === 'approved'
-                        ? 'Tu capital ha sido transferido exitosamente a garantía (escrow). La protección está activa hasta la entrega.'
-                        : 'Tu pago se está sincronizando con nuestro libro contable. Se enviará una notificación pronto.'}
+                        ? 'Tu dinero ya está seguro. Lo mantendremos protegido hasta que confirmes que recibiste el producto.'
+                        : 'Tu pago se está procesando. Te avisaremos apenas se confirme.'}
                 </p>
 
                 {/* Payment Details */}
                 {paymentId && (
                     <div className="bg-light-50 p-6 rounded-3xl mb-10 border border-light-200 group">
                         <p className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-300 mb-3 block">
-                            ID de Referencia del Proveedor
+                            Código de Referencia (Mercado Pago)
                         </p>
                         <p className="text-xs font-black font-mono text-dark-800 group-hover:text-primary-vibrant transition-colors">
                             {paymentId}
@@ -92,7 +92,7 @@ export default function PaymentSuccess() {
                 {/* Trust Badge */}
                 <div className="bg-primary-50 p-5 rounded-2xl border border-primary-100 mb-10 flex items-center justify-center gap-3">
                     <span className="material-symbols-outlined text-xl text-primary-vibrant font-black">verified_user</span>
-                    <span className="text-[9px] font-black text-primary-900 uppercase tracking-widest">Protección de Escrow Activada</span>
+                    <span className="text-[9px] font-black text-primary-900 uppercase tracking-widest">Compra 100% Protegida</span>
                 </div>
 
                 {/* Actions */}
@@ -101,17 +101,17 @@ export default function PaymentSuccess() {
                         onClick={() => navigate('/dashboard')}
                         className="w-full bg-dark-800 text-white py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-dark-800/10 active:scale-95"
                     >
-                        Acceder a mis Tratos
+                        Ir a Mis Compras
                     </button>
                     <button
                         onClick={() => navigate('/')}
                         className="w-full border-2 border-light-200 text-dark-800 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-light-50 transition-all active:scale-95"
                     >
-                        Volver al Mercado
+                        Volver al Inicio
                     </button>
                 </div>
 
-                <p className="mt-12 text-[8px] font-black text-gray-300 uppercase tracking-[0.5em]">Vendelo Ya! 🎯 SecLayer V4.5</p>
+                <p className="mt-12 text-[8px] font-black text-gray-300 uppercase tracking-[0.5em]">Vendelo Hoy! 🎯</p>
             </div>
         </div>
     );

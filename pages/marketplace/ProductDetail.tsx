@@ -12,11 +12,13 @@ initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY || 'TEST-c13f9948-4cb2-4753-9
 // Hooks
 import { useProduct } from '../../hooks/useProduct';
 import { useNotification } from '../../context/NotificationContext';
+import { trackEvent } from '../../lib/analytics';
 
 // Components
 import ShareModal from '../../components/product/ShareModal';
 import SellerSection from '../../components/product/SellerSection';
 import ProductMedia from '../../components/product/ProductMedia';
+import FavoriteButton from '../../components/FavoriteButton';
 import QuestionsSection from '../../components/product/QuestionsSection';
 import ProductActions from '../../components/product/ProductActions';
 import SellerStoreBanner from '../../components/product/SellerStoreBanner';
@@ -25,6 +27,164 @@ import { toggleFavorite, checkIsFavorite, toggleProductAlert, checkHasAlert, rep
 import { trackProductView } from '../../lib/users';
 import ReportModal from '../../components/product/ReportModal';
 import { useCart } from '../../context/CartContext';
+
+const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  const [guideTab, setGuideTab] = useState<'ropa' | 'calzado' | 'bebe' | 'pantalones'>('ropa');
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl p-6 lg:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-6 right-6 text-on-surface-variant hover:text-primary transition-colors">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+        <h3 className="text-2xl font-black text-primary mb-2 font-headline">Guía Oficial de Talles y Medidas</h3>
+        <p className="text-xs text-on-surface-variant mb-6">Encontrá tu medida ideal en centímetros para cada categoría.</p>
+        
+        {/* Tabs */}
+        <div className="flex border-b border-outline-variant/30 mb-6 shrink-0 overflow-x-auto">
+          <button 
+            onClick={() => setGuideTab('ropa')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors shrink-0 ${guideTab === 'ropa' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-primary'}`}
+          >
+            Indumentaria
+          </button>
+          <button 
+            onClick={() => setGuideTab('calzado')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors shrink-0 ${guideTab === 'calzado' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-primary'}`}
+          >
+            Calzado
+          </button>
+          <button 
+            onClick={() => setGuideTab('pantalones')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors shrink-0 ${guideTab === 'pantalones' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-primary'}`}
+          >
+            Pantalones
+          </button>
+          <button 
+            onClick={() => setGuideTab('bebe')}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors shrink-0 ${guideTab === 'bebe' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-primary'}`}
+          >
+            Bebés y Niños
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="overflow-y-auto pr-1 flex-1">
+          {guideTab === 'ropa' && (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-primary sticky top-0">
+                <tr>
+                  <th className="p-3 rounded-tl-xl font-black">Talle</th>
+                  <th className="p-3 font-black">Equivalencia</th>
+                  <th className="p-3 font-black">Pecho (cm)</th>
+                  <th className="p-3 font-black">Cintura (cm)</th>
+                  <th className="p-3 rounded-tr-xl font-black">Cadera (cm)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20 text-on-surface-variant">
+                <tr><td className="p-3 font-bold text-primary">Único / U</td><td className="p-3">Talle Universal</td><td className="p-3">88-102</td><td className="p-3">70-88</td><td className="p-3">90-106</td></tr>
+                <tr><td className="p-3 font-bold text-primary">2XS / XXS</td><td className="p-3">34 / 36</td><td className="p-3">78-82</td><td className="p-3">58-62</td><td className="p-3">82-86</td></tr>
+                <tr><td className="p-3 font-bold text-primary">XS</td><td className="p-3">36 / 38</td><td className="p-3">82-86</td><td className="p-3">62-66</td><td className="p-3">86-90</td></tr>
+                <tr><td className="p-3 font-bold text-primary">S</td><td className="p-3">38 / 40</td><td className="p-3">86-91</td><td className="p-3">68-74</td><td className="p-3">90-96</td></tr>
+                <tr><td className="p-3 font-bold text-primary">M</td><td className="p-3">40 / 42</td><td className="p-3">96-101</td><td className="p-3">78-84</td><td className="p-3">98-104</td></tr>
+                <tr><td className="p-3 font-bold text-primary">L</td><td className="p-3">42 / 44</td><td className="p-3">106-111</td><td className="p-3">88-94</td><td className="p-3">106-112</td></tr>
+                <tr><td className="p-3 font-bold text-primary">XL</td><td className="p-3">44 / 46</td><td className="p-3">116-121</td><td className="p-3">98-104</td><td className="p-3">114-120</td></tr>
+                <tr><td className="p-3 font-bold text-primary">2XL / XXL</td><td className="p-3">46 / 48</td><td className="p-3">126-131</td><td className="p-3">108-114</td><td className="p-3">122-128</td></tr>
+                <tr><td className="p-3 font-bold text-primary">3XL / XXXL</td><td className="p-3">48 / 50</td><td className="p-3">136-141</td><td className="p-3">118-124</td><td className="p-3">130-136</td></tr>
+                <tr><td className="p-3 font-bold text-primary">4XL / XXXXL</td><td className="p-3">50 / 52</td><td className="p-3">146-151</td><td className="p-3">128-134</td><td className="p-3">138-144</td></tr>
+              </tbody>
+            </table>
+          )}
+
+          {guideTab === 'calzado' && (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-primary sticky top-0">
+                <tr>
+                  <th className="p-3 rounded-tl-xl font-black">Número / Talle</th>
+                  <th className="p-3 font-black">Largo del pie (cm)</th>
+                  <th className="p-3 rounded-tr-xl font-black">Equivalencia US (Promedio)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20 text-on-surface-variant">
+                <tr><td className="p-3 font-bold text-primary">Nº 34</td><td className="p-3">22.0 cm</td><td className="p-3">US 4.5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 35</td><td className="p-3">22.5 cm</td><td className="p-3">US 5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 36</td><td className="p-3">23.0 cm</td><td className="p-3">US 5.5 / 6</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 37</td><td className="p-3">24.0 cm</td><td className="p-3">US 6.5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 38</td><td className="p-3">24.5 cm</td><td className="p-3">US 7</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 39</td><td className="p-3">25.0 cm</td><td className="p-3">US 7.5 / 8</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 40</td><td className="p-3">26.0 cm</td><td className="p-3">US 8.5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 41</td><td className="p-3">26.5 cm</td><td className="p-3">US 9</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 42</td><td className="p-3">27.0 cm</td><td className="p-3">US 9.5 / 10</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 43</td><td className="p-3">28.0 cm</td><td className="p-3">US 10.5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 44</td><td className="p-3">28.5 cm</td><td className="p-3">US 11 / 11.5</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 45</td><td className="p-3">29.0 cm</td><td className="p-3">US 12</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 46</td><td className="p-3">30.0 cm</td><td className="p-3">US 12.5 / 13</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Nº 47</td><td className="p-3">30.5 cm</td><td className="p-3">US 13.5</td></tr>
+              </tbody>
+            </table>
+          )}
+
+          {guideTab === 'pantalones' && (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-primary sticky top-0">
+                <tr>
+                  <th className="p-3 rounded-tl-xl font-black">Talle Numérico</th>
+                  <th className="p-3 font-black">Cintura (cm)</th>
+                  <th className="p-3 rounded-tr-xl font-black">Cadera (cm)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20 text-on-surface-variant">
+                <tr><td className="p-3 font-bold text-primary">Talle 28</td><td className="p-3">70 - 73 cm</td><td className="p-3">88 - 91 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 30</td><td className="p-3">74 - 77 cm</td><td className="p-3">92 - 95 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 32</td><td className="p-3">78 - 81 cm</td><td className="p-3">96 - 99 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 34</td><td className="p-3">82 - 85 cm</td><td className="p-3">100 - 103 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 36</td><td className="p-3">86 - 89 cm</td><td className="p-3">104 - 107 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 38</td><td className="p-3">90 - 93 cm</td><td className="p-3">108 - 111 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 40</td><td className="p-3">94 - 97 cm</td><td className="p-3">112 - 115 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 42</td><td className="p-3">98 - 102 cm</td><td className="p-3">116 - 119 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 44</td><td className="p-3">103 - 107 cm</td><td className="p-3">120 - 123 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 46</td><td className="p-3">108 - 112 cm</td><td className="p-3">124 - 127 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 48</td><td className="p-3">113 - 117 cm</td><td className="p-3">128 - 131 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 50</td><td className="p-3">118 - 122 cm</td><td className="p-3">132 - 135 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 52</td><td className="p-3">123 - 127 cm</td><td className="p-3">136 - 139 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">Talle 54</td><td className="p-3">128 - 132 cm</td><td className="p-3">140 - 143 cm</td></tr>
+              </tbody>
+            </table>
+          )}
+
+          {guideTab === 'bebe' && (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-container-low text-primary sticky top-0">
+                <tr>
+                  <th className="p-3 rounded-tl-xl font-black">Talle</th>
+                  <th className="p-3 font-black">Edad / Etapa</th>
+                  <th className="p-3 rounded-tr-xl font-black">Estatura del niño (cm)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20 text-on-surface-variant">
+                <tr><td className="p-3 font-bold text-primary">0-3m</td><td className="p-3">Recién nacido a 3 meses</td><td className="p-3">Hasta 60 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">3-6m</td><td className="p-3">3 a 6 meses</td><td className="p-3">60 - 67 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">6-9m</td><td className="p-3">6 a 9 meses</td><td className="p-3">67 - 72 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">9-12m</td><td className="p-3">9 a 12 meses</td><td className="p-3">72 - 78 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">12-18m</td><td className="p-3">12 a 18 meses</td><td className="p-3">78 - 83 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">18-24m</td><td className="p-3">18 a 24 meses</td><td className="p-3">83 - 88 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T2</td><td className="p-3">2 años</td><td className="p-3">88 - 93 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T4</td><td className="p-3">4 años</td><td className="p-3">98 - 105 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T6</td><td className="p-3">6 años</td><td className="p-3">110 - 116 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T8</td><td className="p-3">8 años</td><td className="p-3">122 - 128 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T10</td><td className="p-3">10 años</td><td className="p-3">134 - 140 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T12</td><td className="p-3">12 años</td><td className="p-3">146 - 152 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T14</td><td className="p-3">14 años</td><td className="p-3">158 - 164 cm</td></tr>
+                <tr><td className="p-3 font-bold text-primary">T16</td><td className="p-3">16 años</td><td className="p-3">168 - 172 cm</td></tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+        <p className="text-[10px] text-on-surface-variant mt-4 shrink-0">Las medidas en centímetros pueden variar ligeramente según el corte o la marca. Usar como guía de referencia.</p>
+      </div>
+    </div>
+  );
+};
 
 const ProductDetail = () => {
   const {
@@ -56,6 +216,13 @@ const ProductDetail = () => {
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const [isMatingPayment, setIsMatingPayment] = useState(false);
 
+  // New UI states
+  const [selectedColor, setSelectedColor] = useState<number>(0);
+  const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [quantity, setQuantity] = useState<number>(1);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'specs' | 'shipping'>('specs');
+
   // Check initial state & Track View
   useEffect(() => {
     if (user && product.id) {
@@ -66,7 +233,11 @@ const ProductDetail = () => {
       trackProductView(user.uid, product.id, product.category);
       incrementProductViews(product.id);
     }
-  }, [user, product.id, product.category]);
+    
+    if (product.id && product.sellerId) {
+      trackEvent(product.sellerId, 'page_view', { productId: product.id, productTitle: product.title });
+    }
+  }, [user, product.id, product.category, product.sellerId, product.title]);
 
   const handleAction = async (action: string) => {
     if (!user) {
@@ -131,20 +302,27 @@ const ProductDetail = () => {
       navigate('/register');
       return;
     }
-    if (user.uid === product.seller.id) {
+    const targetSellerId = product.seller?.id || product.seller?.uid || product.sellerId;
+    if (!targetSellerId) {
+      notify({ type: 'error', title: 'Error', message: 'No se identificó al vendedor del producto.', icon: 'error' });
+      return;
+    }
+    if (user.uid === targetSellerId) {
       notify({ type: 'warning', title: 'Es tu producto', message: 'No puedes enviarte mensajes a ti mismo.', icon: 'person' });
       return;
     }
 
     try {
-      const chatId = await startChat(user.uid, product.seller.id, {
-        displayName: product.seller.name || 'Vendedor',
-        photoURL: product.seller.image || `https://ui-avatars.com/api/?name=${product.seller.name || 'V'}&background=random`
+      const sellerName = product.seller?.displayName || product.seller?.name || product.sellerName || 'Vendedor';
+      const sellerImg = product.seller?.avatar || product.seller?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=random`;
+      const chatId = await startChat(user.uid, targetSellerId, {
+        displayName: sellerName,
+        photoURL: sellerImg
       });
       navigate(`/messages/${chatId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error contact seller:", error);
-      notify({ type: 'error', title: 'Error', message: 'No se pudo iniciar el chat.', icon: 'error' });
+      notify({ type: 'error', title: 'Error', message: error.message || 'No se pudo iniciar el chat.', icon: 'error' });
     }
   };
 
@@ -160,6 +338,11 @@ const ProductDetail = () => {
       return;
     }
 
+    if (user && product.seller?.id === user.uid) {
+      notify({ type: 'error', title: 'Operación inválida', message: 'No podés comprar tu propio producto. Iniciá sesión con otra cuenta.', icon: 'block' });
+      return;
+    }
+
     // Redirigir al Checkout con la información del producto
     navigate('/checkout', {
       state: {
@@ -170,17 +353,23 @@ const ProductDetail = () => {
         sellerId: product.seller.id,
         sellerName: product.seller.displayName || product.seller.name,
         deliveryMethods: product.deliveryMethods,
-        condition: product.condition
+        condition: product.condition,
+        productQuantity: quantity
       }
     });
   };
 
   const handleAddToCart = () => {
+    if (user && product.seller?.id === user.uid) {
+      notify({ type: 'error', title: 'Operación inválida', message: 'No podés agregar tu propio producto al carrito.', icon: 'block' });
+      return;
+    }
     addToCart({
       id: product.id,
       title: product.title,
       price: product.price,
-      image: product.images[0],
+      image: product.images?.[0],
+      quantity: quantity,
       sellerId: product.seller.id,
       sellerName: product.seller.displayName || product.seller.name
     });
@@ -191,9 +380,9 @@ const ProductDetail = () => {
     return {
       "@context": "https://schema.org/",
       "@type": "Product",
-      "name": product.title,
+      "name": product.seoTitle || product.title,
       "image": product.images || [],
-      "description": product.description,
+      "description": product.seoDescription || product.description,
       "brand": {
         "@type": "Brand",
         "name": product.brand || "Unspecified"
@@ -207,25 +396,27 @@ const ProductDetail = () => {
         "availability": "https://schema.org/InStock",
         "seller": {
           "@type": "Organization",
-          "name": product.seller.displayName || product.seller.name || "Vendelo Ya User"
+          "name": product.seller.displayName || product.seller.name || "Vendelo Hoy User"
         }
       }
     };
   };
 
   return (
-    <main className="max-w-[1280px] mx-auto px-3 py-3 lg:px-6 lg:py-6 bg-light-50 min-h-screen">
+    <main className="max-w-[1280px] mx-auto px-3 py-3 lg:px-6 lg:py-6 bg-background min-h-screen font-body">
       <Helmet>
-        <title>{`${product.title} | Vendelo Ya!`}</title>
-        <meta name="description" content={product.description.substring(0, 150) + '...'} />
-        <meta property="og:title" content={`${product.title} - $${product.price.toLocaleString()}`} />
-        <meta property="og:description" content={product.description.substring(0, 100) + '...'} />
+        <title>{`${product.seoTitle || product.title} | Vendelo Hoy!`}</title>
+        <meta name="description" content={product.seoDescription || product.description.substring(0, 150) + '...'} />
+        <meta property="og:title" content={`${product.seoTitle || product.title} - $${product.price.toLocaleString()}`} />
+        <meta property="og:description" content={product.seoDescription || product.description.substring(0, 100) + '...'} />
         {product.images?.[0] && <meta property="og:image" content={product.images[0]} />}
         <meta name="twitter:card" content="summary_large_image" />
         <script type="application/ld+json">
           {JSON.stringify(getJsonLd())}
         </script>
       </Helmet>
+
+      <SizeGuideModal isOpen={isSizeGuideOpen} onClose={() => setIsSizeGuideOpen(false)} />
 
       <ShareModal
         isOpen={isShareModalOpen}
@@ -239,18 +430,9 @@ const ProductDetail = () => {
         targetName={product.title}
       />
 
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 lg:mb-6">
-        <Link to="/" className="hover:text-primary-vibrant transition-colors">Inicio</Link>
-        <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <Link to="/search" className="hover:text-primary-vibrant transition-colors">{product.category}</Link>
-        <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-dark-800">{product.title}</span>
-      </nav>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8">
         {/* IMAGE GALLERY - order-1: always first */}
-        <div className="lg:col-span-8 order-1">
+        <div className="lg:col-span-9 xl:col-span-9 order-1">
           <ProductMedia
             images={product.images}
             activeImg={activeImg}
@@ -265,139 +447,292 @@ const ProductDetail = () => {
           />
         </div>
 
-        {/* PURCHASING HUB - order-2 on mobile (right below image), stays in right column on desktop */}
-        <div className="lg:col-span-4 lg:row-span-2 order-2 h-full">
-          <div className="lg:sticky lg:top-24 space-y-3 lg:space-y-6">
-            <ProductActions
-              onSave={() => handleAction('save')}
-              onAlert={() => handleAction('alert')}
-              onReport={() => handleAction('report')}
-              onShare={() => setIsShareModalOpen(true)}
-              isSaved={isSaved}
-              hasAlert={hasAlert}
-            />
+        {/* RIGHT COLUMN - PURCHASING HUB */}
+        <div className="lg:col-span-3 xl:col-span-3 lg:row-span-2 order-2 h-full">
+          <div className="lg:sticky lg:top-24 flex flex-col h-full">
+            
+            {/* Breadcrumbs */}
+            <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-4">
+              <Link to="/" className="hover:text-primary transition-colors">Shop</Link>
+              <span className="material-symbols-outlined text-[10px]">chevron_right</span>
+              <Link to="/search" className="hover:text-primary transition-colors">{product.category}</Link>
+            </nav>
 
-            <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl border border-light-200 shadow-premium">
-              <div className="mb-3 lg:mb-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h1 className="text-lg lg:text-2xl font-black text-dark-800 leading-tight bg-gradient-to-br from-dark-800 to-dark-600 bg-clip-text text-transparent">{product.title}</h1>
-                  <button className="text-gray-400 hover:text-red-500 transition-colors">
-                    <span className="material-symbols-outlined" onClick={() => handleAction('save')}>{isSaved ? 'favorite' : 'favorite_border'}</span>
-                  </button>
+            {/* Title & Reviews */}
+            <div className="flex justify-between items-start mb-2">
+              <h1 className="text-3xl lg:text-4xl font-black text-primary leading-[1.1] font-headline tracking-tighter">{product.title}</h1>
+              {product.views !== undefined && (
+                <div className="flex items-center gap-1 text-on-surface-variant whitespace-nowrap mt-2">
+                  <span className="material-symbols-outlined text-sm">visibility</span>
+                  <span className="text-[10px] font-bold">{product.views} Visitas</span>
                 </div>
-                <div className="flex items-center justify-between mb-3 lg:mb-6">
-                  <div className="flex items-baseline gap-3">
-                    <p className="text-2xl lg:text-4xl font-black text-dark-800 tracking-tight">${product.price.toLocaleString()}</p>
-                    {product.oldPrice && product.oldPrice > product.price && (
-                      <p className="text-sm lg:text-xl font-bold text-gray-400 line-through opacity-60">
-                        ${product.oldPrice.toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                  {product.views && product.views > 10 && (
-                    <div className="flex items-center gap-1.5 bg-light-100/50 px-2.5 py-1.5 lg:px-4 lg:py-2 rounded-full border border-light-200 shadow-sm animate-in fade-in slide-in-from-right-2">
-                      <span className="material-symbols-outlined text-sm text-gray-400">visibility</span>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        {product.views} visitas
-                      </span>
+              )}
+            </div>
+
+            {/* Price */}
+            <div className="flex items-baseline gap-3 mb-6">
+              <p className="text-2xl font-light text-on-surface tracking-tight">${product.price.toLocaleString()}</p>
+              {product.oldPrice && product.oldPrice > product.price && (
+                <p className="text-sm text-on-surface-variant line-through opacity-60">
+                  ${product.oldPrice.toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            {/* Short Description */}
+            <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
+              {product.description.substring(0, 150)}{product.description.length > 150 ? '...' : ''}
+            </p>
+
+            {/* Conditional Variants (Only if size or color exist) */}
+            {(product.color || product.size) && (
+              <div className="space-y-6 mb-8">
+                {/* Color */}
+                {product.color && (Array.isArray(product.color) ? product.color.length > 0 : true) && (
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Color</p>
+                    <div className="flex flex-wrap gap-3">
+                      {(Array.isArray(product.color) ? product.color : [product.color]).map((c: string) => {
+                          const colorMap: Record<string, string> = {
+                              'Negro': '#000000', 'Blanco': '#FFFFFF', 'Gris': '#808080', 
+                              'Azul': '#0000FF', 'Rojo': '#FF0000', 'Verde': '#008000', 
+                              'Amarillo': '#FFFF00', 'Rosa': '#FFC0CB', 'Marrón': '#A52A2A', 'Beige': '#F5F5DC',
+                              'Multicolor': 'conic-gradient(red, yellow, green, blue, magenta, red)'
+                          };
+                          const bg = colorMap[c];
+                          const style = c === 'Multicolor' ? { background: bg } : { backgroundColor: bg || '#e5e7eb' };
+                          const isActive = selectedColor === (Array.isArray(product.color) ? product.color : [product.color]).indexOf(c);
+                          return (
+                            <button
+                              key={c}
+                              onClick={() => setSelectedColor((Array.isArray(product.color) ? product.color : [product.color]).indexOf(c))}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-outline-variant/30 hover:border-outline-variant'}`}
+                            >
+                              <div 
+                                className={`size-6 rounded-full border border-outline-variant/30 ${isActive ? 'ring-2 ring-offset-1 ring-primary' : ''}`}
+                                style={style}
+                              />
+                              <span className={`font-bold text-xs ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>{c}</span>
+                            </button>
+                          );
+                      })}
                     </div>
-                  )}
+                  </div>
+                )}
+                
+                {/* Size */}
+                {product.size && (Array.isArray(product.size) ? product.size.length > 0 : true) && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary">Talle</p>
+                      {['ropa', 'calzado', 'indumentaria', 'moda', 'camisetas', 'interior'].some(k => product.category.toLowerCase().includes(k)) && (
+                          <span onClick={() => setIsSizeGuideOpen(true)} className="text-[10px] font-bold text-secondary cursor-pointer hover:underline">Guía de Talles</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(Array.isArray(product.size) ? product.size : [product.size]).map((sz: string) => (
+                        <button 
+                          key={sz}
+                          onClick={() => setSelectedSize(sz)}
+                          className={`px-4 py-2 font-black text-xs rounded-xl border-2 transition-all ${selectedSize === sz ? 'border-primary text-primary bg-primary/5 shadow-sm' : 'border-outline-variant/30 text-on-surface-variant hover:border-primary/50'}`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quantity Selector */}
+            {(product.quantity || 1) > 1 && product.status === 'AVAILABLE' && (
+              <div className="mb-6">
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Cantidad</p>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
+                    <button 
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      className="px-4 py-2 text-on-surface hover:bg-surface-container-low transition-colors font-bold"
+                    >-</button>
+                    <div className="px-4 font-bold text-sm min-w-[3rem] text-center">{quantity}</div>
+                    <button 
+                      onClick={() => setQuantity(q => Math.min(product.quantity || 1, q + 1))}
+                      className="px-4 py-2 text-on-surface hover:bg-surface-container-low transition-colors font-bold"
+                    >+</button>
+                  </div>
+                  <span className="text-xs text-on-surface-variant font-medium">
+                    {product.quantity} disponibles
+                  </span>
                 </div>
               </div>
+            )}
 
-              <div className="flex flex-col gap-2 lg:gap-3 mb-3 lg:mb-6">
+            {/* Purchase Actions */}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex gap-3">
                 {preferenceId ? (
-                  <div className="animate-in zoom-in-95 duration-300">
-                    <Wallet
-                      initialization={{ preferenceId }}
-                    />
+                  <div className="flex-1 animate-in zoom-in-95 duration-300">
+                    <Wallet initialization={{ preferenceId }} />
                   </div>
                 ) : (
                   <button
                     onClick={handleBuyNow}
                     disabled={isMatingPayment || product.status !== 'AVAILABLE'}
-                    className="bg-primary-vibrant text-white py-3 lg:py-5 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-[10px] uppercase tracking-[0.15em] lg:tracking-[0.2em] hover:bg-primary-600 transition-all flex items-center justify-center gap-1.5 lg:gap-2 shadow-lg shadow-primary-500/30 active:scale-95 group disabled:opacity-50"
+                    className="flex-1 bg-primary text-white py-4 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <span className="material-symbols-outlined text-base lg:text-lg group-hover:scale-110 transition-transform">
-                      {isMatingPayment ? 'sync' : 'bolt'}
-                    </span>
+                    <span className="material-symbols-outlined text-lg">{isMatingPayment ? 'sync' : 'bolt'}</span>
                     {isMatingPayment ? 'Procesando...' : product.status !== 'AVAILABLE' ? 'No disponible' : 'Comprar Ya'}
                   </button>
                 )}
-                <div className="grid grid-cols-2 gap-2 lg:gap-3">
-                  <button
-                    onClick={handleContactSeller}
-                    className="bg-white text-dark-800 border-2 border-light-200 py-3 lg:py-5 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-[10px] uppercase tracking-[0.15em] lg:tracking-[0.2em] hover:bg-light-50 transition-all flex items-center justify-center gap-1.5 lg:gap-2 active:scale-95 group"
-                  >
-                    <span className="material-symbols-outlined text-gray-400 group-hover:text-primary-vibrant transition-colors text-base lg:text-lg">chat</span>
-                    Mensaje
-                  </button>
-                </div>
+                <FavoriteButton
+                  product={{
+                    id: product.id,
+                    title: product.title,
+                    price: product.price,
+                    image: product.images?.[0] || '',
+                    sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
+                  }}
+                  className="size-[56px] shrink-0 bg-secondary flex items-center justify-center rounded-xl text-white hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20"
+                />
+              </div>
+              <button
+                onClick={handleAddToCart}
+                disabled={product.status !== 'AVAILABLE'}
+                className="w-full bg-surface-container-low border border-outline-variant/30 text-on-surface py-4 rounded-xl font-bold text-sm hover:bg-surface-container transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-lg">shopping_bag</span>
+                Agregar al Carrito
+              </button>
+              <button
+                onClick={handleContactSeller}
+                className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-95 mt-1"
+              >
+                <span className="material-symbols-outlined text-lg">chat</span>
+                Preguntar / Hablar con el Vendedor
+              </button>
+            </div>
+            
+            {product.status === 'AVAILABLE' && (
+              <p className="text-[10px] text-center text-on-surface-variant mb-8">Envío express gratuito disponible en esta zona.</p>
+            )}
+
+            {/* Minimalist Tabs for Specs & Shipping */}
+            <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl overflow-hidden mb-6">
+              <div className="flex border-b border-outline-variant/20">
                 <button
-                  onClick={handleAddToCart}
-                  className="w-full bg-light-100/50 hover:bg-light-100 text-dark-800 py-3 lg:py-5 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-[10px] uppercase tracking-[0.15em] lg:tracking-[0.2em] transition-all flex items-center justify-center gap-1.5 lg:gap-2 active:scale-95 group"
+                  onClick={() => setActiveTab('specs')}
+                  className={`flex-1 py-3.5 text-center text-xs font-bold border-b-2 transition-colors ${activeTab === 'specs' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
                 >
-                  <span className="material-symbols-outlined text-base lg:text-lg group-hover:rotate-12 transition-transform">add_shopping_cart</span>
-                  Agregar al Carrito
+                  Especificaciones
+                </button>
+                <button
+                  onClick={() => setActiveTab('shipping')}
+                  className={`flex-1 py-3.5 text-center text-xs font-bold border-b-2 transition-colors ${activeTab === 'shipping' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
+                >
+                  Envíos y Retiros
                 </button>
               </div>
 
-              <div className="border-t border-light-100 pt-4 lg:pt-8 mb-4 lg:mb-8">
-                <h4 className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 lg:mb-6">Detalles</h4>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-3 lg:gap-x-4 lg:gap-y-6">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Condición</p>
-                    <p className="text-sm font-bold text-dark-800 capitalize">
-                      {product.condition === 'new' ? 'Nuevo' :
-                        product.condition === 'like_new' ? 'Como Nuevo' :
-                          product.condition === 'good' ? 'Bueno' : 'Regular'}
-                    </p>
+              <div className="p-5">
+                {activeTab === 'specs' ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-on-surface-variant font-bold">Estado</span>
+                      <span className="text-primary font-medium">{product.condition === 'new' ? 'Nuevo' : product.condition === 'like-new' ? 'Como Nuevo' : product.condition === 'good' ? 'Buen Estado' : 'Usado'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-on-surface-variant font-bold">Categoría</span>
+                      <span className="text-primary font-medium">{product.category}</span>
+                    </div>
+                    {product.brand && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant font-bold">Marca</span>
+                        <span className="text-primary font-medium">{product.brand}</span>
+                      </div>
+                    )}
+                    {product.productDimensions && (product.productDimensions.length || product.productDimensions.width || product.productDimensions.height) && (
+                      <>
+                        {product.productDimensions.length && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant font-bold">Largo</span>
+                            <span className="text-primary font-medium">{product.productDimensions.length} cm</span>
+                          </div>
+                        )}
+                        {product.productDimensions.width && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant font-bold">Ancho</span>
+                            <span className="text-primary font-medium">{product.productDimensions.width} cm</span>
+                          </div>
+                        )}
+                        {product.productDimensions.height && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant font-bold">Alto</span>
+                            <span className="text-primary font-medium">{product.productDimensions.height} cm</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {product.tags && (
+                      <div className="border-t border-outline-variant/20 pt-3 mt-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Etiquetas / SEO Tags</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(Array.isArray(product.tags) ? product.tags : typeof product.tags === 'string' ? product.tags.split(',') : []).map((t: string, idx: number) => {
+                            const cleanTag = t.trim();
+                            if (!cleanTag) return null;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => navigate(`/search?q=${encodeURIComponent(cleanTag)}`)}
+                                className="bg-surface-container-low hover:bg-primary/10 text-on-surface-variant hover:text-primary px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">tag</span>
+                                {cleanTag}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marca</p>
-                    <p className="text-sm font-bold text-dark-800">{product.brand || 'No especificada'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Color</p>
-                    <p className="text-sm font-bold text-dark-800">{product.color || 'No especificado'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Categoría</p>
-                    <p className="text-sm font-bold text-dark-800">{product.category}</p>
-                  </div>
-                </div>
-
-                {product.deliveryMethods && product.deliveryMethods.length > 0 && (
-                  <div className="mt-4 pt-4 lg:mt-8 lg:pt-8 border-t border-light-100">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Opciones de Entrega</p>
-                    <div className="space-y-2 lg:space-y-3">
-                      {product.deliveryMethods.map((m: string) => {
+                ) : (
+                  <div className="space-y-3">
+                    {product.deliveryMethods && product.deliveryMethods.length > 0 ? (
+                      product.deliveryMethods.map((m: string) => {
                         const methodMap: Record<string, { label: string, icon: string }> = {
-                          'correo_argentino': { label: 'Correo Argentino', icon: 'local_shipping' },
-                          'en_mano': { label: 'En mano (Persona a persona)', icon: 'handshake' },
+                          'correo_argentino': { label: 'Correo Argentino (A todo el país)', icon: 'local_shipping' },
+                          'en_mano': { label: 'Retiro en persona', icon: 'handshake' },
                           'acordar': { label: 'Acordar con vendedor', icon: 'chat' },
-                          'domicilio': { label: 'Envío a domicilio', icon: 'home' }
+                          'domicilio': { label: 'Envío a domicilio (Local)', icon: 'home' }
                         };
                         const method = methodMap[m] || { label: m, icon: 'package' };
                         return (
-                          <div key={m} className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 bg-light-50 rounded-lg lg:rounded-xl border border-light-200/50">
-                            <span className="material-symbols-outlined text-primary-vibrant text-lg">{method.icon}</span>
-                            <span className="text-[11px] font-black text-dark-800 uppercase tracking-tight">{method.label}</span>
+                          <div key={m} className="flex items-center gap-3 text-xs">
+                            <span className="material-symbols-outlined text-secondary text-base">{method.icon}</span>
+                            <span className="text-primary font-medium">{method.label}</span>
                           </div>
                         );
-                      })}
-                    </div>
+                      })
+                    ) : (
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="material-symbols-outlined text-secondary text-base">chat</span>
+                        <span className="text-primary font-medium">Acordar envío con el vendedor</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+            </div>
 
-              <SellerSection seller={product.seller} />
-
-              <div className="mt-4 lg:mt-6 bg-primary-50 rounded-xl lg:rounded-2xl p-3 lg:p-5 border border-primary-100 flex gap-3 lg:gap-4">
-                <span className="material-symbols-outlined text-primary-vibrant">verified_user</span>
+            {/* Seller Info & Security */}
+            <div className="mt-auto">
+              <SellerSection seller={product.seller} onContactSeller={handleContactSeller} />
+              
+              <div className="mt-4 bg-primary/5 rounded-xl p-4 border border-primary/10 flex gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">shield</span>
                 <div>
-                  <h5 className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-1">Consejos de Seguridad</h5>
-                  <ul className="text-[10px] font-bold text-primary-800/70 space-y-1 list-disc pl-3">
+                  <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1.5">Consejos de Seguridad</h5>
+                  <ul className="text-[10px] font-medium text-on-surface-variant space-y-1 list-disc pl-3">
                     <li>Encuéntrese en un lugar público y bien iluminado</li>
                     <li>Inspeccione el artículo antes de pagar</li>
                     <li>Nunca envíe dinero por transferencia bancaria directa</li>
@@ -405,52 +740,37 @@ const ProductDetail = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
+      </div>
 
-        {/* DESCRIPTION & MORE - order-3 on mobile (below purchase card), part of left column on desktop */}
-        <div className="lg:col-span-8 space-y-6 lg:space-y-10 order-3">
-          <div className="p-4 lg:p-8 bg-white border border-light-200 rounded-2xl lg:rounded-3xl shadow-premium">
-            <h3 className="text-xs lg:text-sm font-black uppercase tracking-widest text-dark-800 mb-4 lg:mb-8 flex items-center gap-2 lg:gap-3">
-              <span className="material-symbols-outlined text-primary-vibrant">subject</span>
-              Descripción
-            </h3>
-            <div className="prose prose-slate max-w-none">
-              <p className="text-sm lg:text-lg font-bold text-dark-700 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-
-            <div className="mt-6 lg:mt-12 grid grid-cols-2 gap-4 lg:gap-8 border-t border-light-100 pt-6 lg:pt-10">
-              <div className="flex items-center gap-3 lg:gap-4">
-                <div className="size-9 lg:size-12 rounded-xl lg:rounded-2xl bg-light-100 flex items-center justify-center text-dark-800">
-                  <span className="material-symbols-outlined text-lg lg:text-2xl">stars</span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-0.5">Condición</p>
-                  <p className="text-xs lg:text-base font-black text-dark-800 capitalize">{product.condition === 'like_new' ? 'Usado - Excelente' : 'Usado - Bueno'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 lg:gap-4">
-                <div className="size-9 lg:size-12 rounded-xl lg:rounded-2xl bg-light-100 flex items-center justify-center text-dark-800">
-                  <span className="material-symbols-outlined text-lg lg:text-2xl">location_on</span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-0.5">Ubicación</p>
-                  <p className="text-xs lg:text-base font-black text-dark-800">{product.location || 'Buenos Aires, AR'}</p>
-                </div>
-              </div>
-            </div>
+      {/* FEATURE SECTION (Editorial Layout) */}
+      <div className="mt-16 lg:mt-24 bg-surface-container-lowest rounded-3xl overflow-hidden border border-outline-variant/20 shadow-sm flex flex-col md:flex-row">
+        <div className="p-8 lg:p-16 flex-1 flex flex-col justify-center">
+          <h2 className="text-2xl lg:text-4xl font-black text-primary leading-tight font-headline tracking-tighter mb-4">
+            Diseñado para <br/><span className="text-secondary italic">destacar.</span>
+          </h2>
+          <div className="prose prose-slate max-w-none text-on-surface-variant text-sm lg:text-base leading-relaxed">
+            <p>{product.description}</p>
           </div>
-
-          <SellerStoreBanner
-            sellerId={product.seller.id}
-            sellerName={product.seller.displayName || product.seller.name}
-            sellerAvatar={product.seller.avatar || product.seller.image}
+        </div>
+        <div className="flex-1 relative min-h-[300px]">
+          <img 
+            src={product.images?.[1] || product.images?.[0] || 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=1000'} 
+            alt="Detalle" 
+            className="absolute inset-0 w-full h-full object-cover" 
           />
-
-          <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
         </div>
+      </div>
+
+      {/* YOU MAY ALSO LIKE */}
+      <div className="mt-16 lg:mt-24 border-t border-outline-variant/30 pt-12">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2">Curated for you</h4>
+        <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter mb-8">Te podría interesar</h2>
+        
+        {/* We use QuestionsSection here temporarily or replace it entirely. Let's keep it clean */}
+        <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
       </div>
 
     </main>

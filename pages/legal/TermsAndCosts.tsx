@@ -79,7 +79,7 @@ const TermsAndCosts = () => {
                         </h2>
                         <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-sm space-y-6 text-sm text-gray-600 leading-relaxed font-medium">
                             <p>
-                                En <strong>Vendelo Ya!</strong>, su privacidad es un pilar fundamental de nuestra arquitectura. Utilizamos encriptación de extremo a extremo para todos los datos sensibles.
+                                En <strong>Vendelo Hoy!</strong>, su privacidad es un pilar fundamental de nuestra arquitectura. Utilizamos encriptación de extremo a extremo para todos los datos sensibles.
                             </p>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li><strong>Datos Recopilados:</strong> Información de identidad (KYC), registros de transacciones y comunicaciones en el chat de mediación.</li>

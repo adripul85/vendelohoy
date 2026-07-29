@@ -44,6 +44,11 @@ export default function ReviewModal({
             return;
         }
 
+        if (!transactionId || !sellerId) {
+            notify({ type: 'error', title: 'Datos Faltantes', message: 'No se pudo identificar la transacción para calificar.', icon: 'error' });
+            return;
+        }
+
         setSubmitting(true);
 
         const result = await createReview({
@@ -57,17 +62,21 @@ export default function ReviewModal({
             comment: comment.trim() || undefined
         });
 
-        setSubmitting(true); // Keep it busy for a sec for effect
+        setSubmitting(false);
 
         if (result.success) {
-            notify({ type: 'success', title: 'Protocolo Grabado', message: 'Tu feedback ayuda a asegurar el mercado.', icon: 'star' });
+            import('../lib/users').then(({ addReputationPoints }) => {
+                addReputationPoints(user.uid, 20, 'Recompensa por dejar una reseña (Feedback Comprador)');
+            });
+            notify({ type: 'success', title: 'Protocolo Grabado', message: 'Tu feedback ayuda a asegurar el mercado. ¡Has ganado +20 XP!', icon: 'star' });
             onReviewSubmitted?.();
             onClose();
             // Reset form
             setRating(0);
             setComment('');
         } else {
-            notify({ type: 'error', title: 'Error de Sincronización', message: result.error as string || 'Fallo al transmitir reseña.', icon: 'error' });
+            const errorMsg = typeof result.error === 'string' ? result.error : (result.error?.message || 'Fallo al transmitir reseña.');
+            notify({ type: 'error', title: 'Error de Sincronización', message: errorMsg, icon: 'error' });
         }
     };
 
@@ -86,8 +95,8 @@ export default function ReviewModal({
                 {/* Header */}
                 <div className="flex items-start justify-between mb-10">
                     <div>
-                        <h2 className="text-2xl font-black text-dark-800 uppercase tracking-tight">Evaluar Comerciante</h2>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Protocolo: {itemTitle}</p>
+                        <h2 className="text-2xl font-black text-dark-800 tracking-tight">Calificar Vendedor</h2>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Producto: {itemTitle}</p>
                     </div>
                     <button
                         onClick={handleClose}
@@ -103,7 +112,7 @@ export default function ReviewModal({
                     {/* Rating */}
                     <div className="bg-light-50/50 rounded-3xl p-8 border border-light-100/50">
                         <label className="block text-[9px] font-black uppercase tracking-[0.4em] text-gray-400 mb-6 text-center">
-                            Calificación de Estética y Rendimiento
+                            ¿Cómo fue tu experiencia de compra?
                         </label>
                         <div className="flex justify-center flex-col items-center gap-4">
                             <RatingStars
@@ -115,11 +124,11 @@ export default function ReviewModal({
                             <div className="h-6">
                                 {rating > 0 && (
                                     <p className="text-[10px] font-black text-primary-vibrant uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom-1">
-                                        {rating === 1 && 'Fallo Crítico'}
-                                        {rating === 2 && 'Sub-óptimo'}
-                                        {rating === 3 && 'Rendimiento Estándar'}
-                                        {rating === 4 && 'Experiencia Premium'}
-                                        {rating === 5 && 'Excelencia Sobresaliente'}
+                                        {rating === 1 && 'Mala experiencia'}
+                                        {rating === 2 && 'Podría mejorar'}
+                                        {rating === 3 && 'Todo bien, normal'}
+                                        {rating === 4 && 'Muy buena atención'}
+                                        {rating === 5 && '¡Excelente, súper recomendado!'}
                                     </p>
                                 )}
                             </div>
@@ -129,27 +138,27 @@ export default function ReviewModal({
                     {/* Comment */}
                     <div>
                         <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 mb-4 ml-2">
-                            Feedback Detallado (Opcional)
+                            Contanos más detalles (Opcional)
                         </label>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder="Provee insights del protocolo o detalles del rendimiento del comerciante..."
+                            placeholder="¿Qué tal te pareció el producto y el vendedor? ¡Tu opinión es de gran ayuda!..."
                             className="w-full p-6 rounded-2xl border border-light-200 bg-light-50 focus:bg-white focus:border-primary-vibrant focus:ring-4 focus:ring-primary-vibrant/5 outline-none transition-all font-bold text-sm text-dark-800 resize-none h-32"
                             maxLength={500}
                         />
                         <div className="flex items-center justify-end mt-3 px-2">
                             <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">
-                                {comment.length} / 500 Meta-unidades
+                                {comment.length} / 500 caracteres
                             </span>
                         </div>
                     </div>
 
                     {/* Trust Badge */}
                     <div className="bg-primary-50 border border-primary-100/50 p-6 rounded-3xl flex gap-4">
-                        <span className="material-symbols-outlined text-primary-vibrant font-black">verified_user</span>
+                        <span className="material-symbols-outlined text-primary-vibrant font-black">favorite</span>
                         <p className="text-[10px] font-bold text-primary-900 leading-relaxed uppercase tracking-tight opacity-70">
-                            Tu feedback será hasheado y publicado en el perfil de confianza del comerciante, asistiendo a futuros participantes del Protocolo.
+                            Tu reseña aparecerá en el perfil del vendedor y ayudará a toda nuestra comunidad a comprar de forma más segura y confiable. ¡Gracias por participar!
                         </p>
                     </div>
 
@@ -159,14 +168,14 @@ export default function ReviewModal({
                             type="button"
                             onClick={handleClose}
                             disabled={submitting}
-                            className="flex-1 px-8 py-5 rounded-3xl border-2 border-light-200 text-gray-400 font-black hover:bg-light-50 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                            className="flex-1 px-8 py-5 rounded-3xl border-2 border-slate-200 text-slate-500 font-black hover:bg-slate-50 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={submitting || rating === 0}
-                            className="flex-1 bg-dark-800 text-white px-8 py-5 rounded-3xl font-black hover:bg-dark-900 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-dark-800/10 active:scale-95"
+                            className="flex-1 bg-indigo-600 text-white px-8 py-5 rounded-3xl font-black hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-slate-500 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95"
                         >
                             {submitting ? (
                                 <>
@@ -175,8 +184,8 @@ export default function ReviewModal({
                                 </>
                             ) : (
                                 <>
-                                    <span className="material-symbols-outlined text-xl font-black">publish</span>
-                                    Transmitir Reseña
+                                    <span className="material-symbols-outlined text-xl font-black">send</span>
+                                    Enviar Reseña
                                 </>
                             )}
                         </button>

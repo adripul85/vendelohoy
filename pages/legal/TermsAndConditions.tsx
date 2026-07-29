@@ -12,7 +12,7 @@ const TermsAndConditions = () => {
 
             <div className="prose prose-slate max-w-none space-y-8">
                 <p className="text-lg text-gray-600 font-medium">
-                    Bienvenido a Vendelo Ya!. Al acceder y utilizar este sitio web, el usuario acepta los presentes Términos y Condiciones. Si no está de acuerdo con alguno de ellos, deberá abstenerse de utilizar la plataforma.
+                    Bienvenido a Vendelo Hoy!. Al acceder y utilizar este sitio web, el usuario acepta los presentes Términos y Condiciones. Si no está de acuerdo con alguno de ellos, deberá abstenerse de utilizar la plataforma.
                 </p>
 
                 <section>
@@ -21,7 +21,7 @@ const TermsAndConditions = () => {
                         Descripción del servicio
                     </h2>
                     <div className="bg-light-50 p-6 rounded-2xl border border-light-200 space-y-4">
-                        <p>Vendelo Ya! es una plataforma digital que permite a los usuarios publicar anuncios para comprar, vender o intercambiar productos entre particulares.</p>
+                        <p>Vendelo Hoy! es una plataforma digital que permite a los usuarios publicar anuncios para comprar, vender o intercambiar productos entre particulares.</p>
                         <p>La plataforma actúa únicamente como intermediario tecnológico para facilitar el contacto entre usuarios y no participa en las transacciones realizadas entre ellos.</p>
                     </div>
                 </section>
@@ -51,7 +51,7 @@ const TermsAndConditions = () => {
                     </h2>
                     <div className="bg-light-50 p-6 rounded-2xl border border-light-200 border-l-4 border-l-red-500 space-y-4">
                         <p className="font-bold text-dark-800">Las operaciones de compra y venta se realizan exclusivamente entre los usuarios.</p>
-                        <p>Vendelo Ya! no interviene en:</p>
+                        <p>Vendelo Hoy! no interviene en:</p>
                         <ul className="list-disc pl-6 space-y-2 text-gray-600">
                             <li>la negociación entre comprador y vendedor</li>
                             <li>el pago de los productos</li>
@@ -93,7 +93,7 @@ const TermsAndConditions = () => {
                         Modificaciones del servicio
                     </h2>
                     <div className="bg-light-50 p-6 rounded-2xl border border-light-200 space-y-4">
-                        <p>Vendelo Ya! se reserva el derecho de modificar, suspender o actualizar el servicio en cualquier momento sin previo aviso.</p>
+                        <p>Vendelo Hoy! se reserva el derecho de modificar, suspender o actualizar el servicio en cualquier momento sin previo aviso.</p>
                     </div>
                 </section>
 

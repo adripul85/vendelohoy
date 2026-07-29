@@ -190,7 +190,7 @@ const ProhibitedItems = () => {
                         <div>
                             <h2 className="text-xl font-black mb-2 tracking-tight">Compromiso con la Seguridad</h2>
                             <p className="text-sm font-medium text-red-100 leading-relaxed max-w-3xl">
-                                En <strong>Vendelo Ya!</strong>, priorizamos la seguridad de nuestra comunidad.
+                                En <strong>Vendelo Hoy!</strong>, priorizamos la seguridad de nuestra comunidad.
                                 Los artículos listados a continuación están <strong>estrictamente prohibidos</strong> en nuestra plataforma.
                                 Las publicaciones que infrinjan estas políticas serán eliminadas de forma inmediata y la cuenta del
                                 vendedor podrá ser suspendida temporal o permanentemente.

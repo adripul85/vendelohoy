@@ -560,7 +560,7 @@ export const generateAuditReport = async () => {
 
         const report = {
             generatedAt: new Date().toISOString(),
-            platform: 'Vendelo Ya!',
+            platform: 'Vendelo Hoy!',
             summary: {
                 totalUsers: users.length,
                 activeUsers: users.filter((u: any) => !u.deleted).length,
@@ -753,5 +753,89 @@ export const fetchMonthlySales = async (month: string) => {
     } catch (error) {
         console.error("Error fetching monthly sales:", error);
         return [];
+    }
+};
+/**
+ * DEV TOOL: Hard Reset - Delete EVERYTHING except Admin accounts
+ */
+export const hardResetDatabase = async () => {
+    try {
+        const { writeBatch, collection, getDocs, deleteDoc } = await import("firebase/firestore");
+        const { db } = await import("./firebase");
+        let totalDeleted = 0;
+
+        // 1. Delete all non-admin users and their subcollections
+        const usersSnap = await getDocs(collection(db, "users"));
+        for (const userDoc of usersSnap.docs) {
+            const userData = userDoc.data();
+            if (userData.role !== "admin") {
+                // Delete user subcollections first
+                const subCollections = ["reviews", "notifications", "following", "followers"];
+                for (const sub of subCollections) {
+                    const subSnap = await getDocs(collection(db, "users", userDoc.id, sub));
+                    for (const subDoc of subSnap.docs) {
+                        await deleteDoc(subDoc.ref);
+                        totalDeleted++;
+                    }
+                }
+                // Delete user doc
+                await deleteDoc(userDoc.ref);
+                totalDeleted++;
+            }
+        }
+
+        // 2. Delete main collections
+        const collectionsToClear = [
+            "items", 
+            "transactions", 
+            "wallet_movements", 
+            "withdrawals", 
+            "financial_logs", 
+            "reports", 
+            "questions", 
+            "reviews"
+        ];
+
+        for (const colName of collectionsToClear) {
+            const colRef = collection(db, colName);
+            const snapshot = await getDocs(colRef);
+            
+            // Delete in batches if there are many
+            const batchSize = 450;
+            let batch = writeBatch(db);
+            let count = 0;
+
+            for (const doc of snapshot.docs) {
+                batch.delete(doc.ref);
+                count++;
+                totalDeleted++;
+
+                if (count % batchSize === 0) {
+                    await batch.commit();
+                    batch = writeBatch(db);
+                }
+            }
+            if (count % batchSize !== 0) {
+                await batch.commit();
+            }
+        }
+
+        // 3. Delete Chats and their messages
+        const chatsSnap = await getDocs(collection(db, "chats"));
+        for (const chatDoc of chatsSnap.docs) {
+            const msgsSnap = await getDocs(collection(db, "chats", chatDoc.id, "messages"));
+            for (const m of msgsSnap.docs) {
+                await deleteDoc(m.ref);
+                totalDeleted++;
+            }
+            await deleteDoc(chatDoc.ref);
+            totalDeleted++;
+        }
+
+        console.log(`[HARD RESET] Successfully deleted ${totalDeleted} documents.`);
+        return { success: true, count: totalDeleted };
+    } catch (error: any) {
+        console.error("Error during hard reset:", error);
+        return { success: false, error: error.message };
     }
 };

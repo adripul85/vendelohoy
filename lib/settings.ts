@@ -8,6 +8,7 @@ export interface PlatformSettings {
     featuredDurationHours: number;
     escrowFixedFee?: number;
     useFixedEscrowFee?: boolean;
+    showHero: boolean;
     updatedAt?: any;
 }
 
@@ -17,7 +18,8 @@ const DEFAULT_SETTINGS: PlatformSettings = {
     featuredExtraPercentage: 0.05, // 5% Extra for Featured
     featuredDurationHours: 48,
     escrowFixedFee: 2500,
-    useFixedEscrowFee: false
+    useFixedEscrowFee: false,
+    showHero: true
 };
 
 /**

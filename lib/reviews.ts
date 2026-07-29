@@ -17,6 +17,10 @@ export interface ReviewData {
 // Create a new review
 export const createReview = async (data: Omit<ReviewData, 'createdAt'>) => {
     try {
+        if (!data.transactionId || !data.sellerId) {
+            return { success: false, error: 'Datos de transacción inválidos.' };
+        }
+
         // Check if review already exists for this transaction
         const existing = await getReviewForTransaction(data.transactionId);
         if (existing) {
@@ -28,25 +32,43 @@ export const createReview = async (data: Omit<ReviewData, 'createdAt'>) => {
             return { success: false, error: 'La calificación debe ser entre 1 y 5 estrellas' };
         }
 
-        // Create review
-        const docRef = await addDoc(collection(db, "reviews"), {
-            ...data,
+        const cleanData: any = {
+            transactionId: data.transactionId || "",
+            itemId: data.itemId || "",
+            sellerId: data.sellerId || "",
+            buyerId: data.buyerId || "",
+            buyerName: data.buyerName || "Usuario",
+            buyerAvatar: data.buyerAvatar || "",
+            rating: data.rating || 5,
             createdAt: serverTimestamp(),
-        });
+        };
+        if (data.comment && typeof data.comment === 'string' && data.comment.trim() !== '') {
+            cleanData.comment = data.comment.trim();
+        }
+
+        // Create review
+        const docRef = await addDoc(collection(db, "reviews"), cleanData);
 
         // Update seller's reputation
         await updateSellerReputation(data.sellerId);
 
+        // Gamification: Reward seller for good service
+        if (data.rating >= 4) {
+            const { addReputationPoints } = await import('./users');
+            await addReputationPoints(data.sellerId, 50, `Recibiste una calificación de ${data.rating} estrellas por una venta.`);
+        }
+
         return { success: true, id: docRef.id };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating review:", error);
-        return { success: false, error };
+        return { success: false, error: error.message || error };
     }
 };
 
 // Get all reviews for a seller
 export const getReviewsForSeller = async (sellerId: string): Promise<(ReviewData & { id: string })[]> => {
     try {
+        if (!sellerId) return [];
         const q = query(
             collection(db, "reviews"),
             where("sellerId", "==", sellerId),
@@ -67,6 +89,7 @@ export const getReviewsForSeller = async (sellerId: string): Promise<(ReviewData
 // Check if transaction has been reviewed
 export const getReviewForTransaction = async (transactionId: string): Promise<(ReviewData & { id: string }) | null> => {
     try {
+        if (!transactionId) return null;
         const q = query(
             collection(db, "reviews"),
             where("transactionId", "==", transactionId)

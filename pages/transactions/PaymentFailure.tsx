@@ -95,7 +95,7 @@ export default function PaymentFailure() {
                     </button>
                 </div>
 
-                <p className="mt-12 text-[8px] font-black text-gray-300 uppercase tracking-[0.5em]">Vendelo Ya! 🎯 SecLayer V4.5</p>
+                <p className="mt-12 text-[8px] font-black text-gray-300 uppercase tracking-[0.5em]">Vendelo Hoy! 🎯 SecLayer V4.5</p>
             </div>
         </div>
     );

@@ -4,7 +4,8 @@ service cloud.firestore {
     
     // Función auxiliar para verificar si el usuario es Admin (usando campo en el documento)
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.isAdmin == true || userData.role == 'admin';
     }
 
     // REGLAS PARA TRANSACCIONES
@@ -23,32 +24,94 @@ service cloud.firestore {
       allow update: if request.auth != null && (
         isAdmin() || (
           // El usuario solo puede cambiar el estado bajo reglas estrictas (FSM limitado)
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'trackingId', 'courier', 'deliveredAt', 'inspectionDeadline', 'disputeReason', 'disputeStartedAt', 'lastSystemMessage', 'isAmicableReturnAccepted']) && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'trackingId', 'courier', 'deliveredAt', 'inspectionDeadline', 'disputeReason', 'disputeStartedAt', 'lastSystemMessage', 'isAmicableReturnAccepted', 'paidAt', 'paymentId', 'paymentStatus']) && (
             // Regla: Pasar a DISPUTED es permitido para Comprador/Vendedor
             (request.resource.data.status == 'DISPUTED' && resource.data.status != 'COMPLETED' && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)) ||
             // Regla: El COMPRADOR libera fondos (Completa el trato)
             (request.resource.data.status == 'COMPLETED' && resource.data.status != 'DISPUTED' && resource.data.buyerId == request.auth.uid) ||
             // Regla: EL VENDEDOR registra envío
             (request.resource.data.status == 'SHIPPED' && resource.data.status == 'PAID_HELD' && resource.data.sellerId == request.auth.uid) ||
-            // Regla: Pasar a PAID_HELD (Devolución amigable o pago) suele ser via Admin/CF, pero permitimos retorno amigable
-            (request.resource.data.status == 'PAID_HELD' && resource.data.status == 'DISPUTED' && resource.data.sellerId == request.auth.uid && request.resource.data.isAmicableReturnAccepted == true)
+            // Regla: Pasar a PAID_HELD después del pago exitoso (Comprador que pagó o Vendedor en trato directo)
+            (request.resource.data.status == 'PAID_HELD' && (resource.data.status == 'PENDING_PAYMENT' || resource.data.status == 'PAID_HELD') && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)) ||
+            // Regla: Devolución amigable (vendedor acepta devolver desde disputa)
+            (request.resource.data.status == 'PAID_HELD' && resource.data.status == 'DISPUTED' && resource.data.sellerId == request.auth.uid && request.resource.data.isAmicableReturnAccepted == true) ||
+            // Regla: Comprador o Vendedor pueden cancelar si está PENDING_PAYMENT
+            (request.resource.data.status == 'CANCELLED' && resource.data.status == 'PENDING_PAYMENT' && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid))
           )
         )
       );
       
       allow delete: if isAdmin();
+
+      // Reglas para subcolecciones de mensajes (Disputas/Garantía)
+      match /messages/{messageId} {
+        allow read, create: if request.auth != null && (
+          get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid ||
+          get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid ||
+          isAdmin()
+        );
+      }
+      
+      // Reglas para subcolecciones de evidencia
+      match /evidence/{evidenceId} {
+        allow read, create: if request.auth != null && (
+          get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid ||
+          get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid ||
+          isAdmin()
+        );
+      }
+    }
+
+    // REGLAS PARA REVIEWS
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+    }
+    
+    // REGLAS PARA LOGS DE REPUTACION
+    match /reputationLogs/{logId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null;
+    }
+
+    // REGLAS PARA MOVIMIENTOS DE BILLETERA
+    match /walletMovements/{movementId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+    match /wallet_movements/{movementId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+
+    // REGLAS PARA NOTIFICACIONES (subcolección en users)
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // REGLAS PARA RETIROS (WITHDRAWALS)
+    match /withdrawals/{withdrawalId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
     }
     
     // REGLAS PARA USUARIOS
     match /users/{userId} {
-      allow read: if request.auth != null;
+      allow read: if true; // Permitir que visitantes y compradores vean el perfil y nombre del vendedor
       allow create: if request.auth != null && request.auth.uid == userId;
       
-      // Bloquear edición manual de balance y reputación
-      allow update: if request.auth != null && request.auth.uid == userId && (
-        !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['balance', 'reputation', 'isAdmin', 'points'])
-      ) || isAdmin();
+      // Actualización del propio usuario: bloquear campos sensibles
+      allow update: if request.auth != null && (
+        // El propio usuario puede editarse, excepto campos protegidos
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['balance', 'isAdmin'])) ||
+        // Otro usuario autenticado puede actualizar SOLO campos de wallet y reputación
+        (request.auth.uid != userId && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['wallet.inEscrow', 'wallet.available', 'wallet.pending', 'wallet.lastUpdated', 'wallet', 'updatedAt', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'salesCount', 'rating', 'lastDailyXpDate'])) ||
+        // Admin puede todo
+        isAdmin()
+      );
     }
 
     // REGLAS PARA PRODUCTOS (ITEMS)
@@ -58,6 +121,81 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && (
         resource.data.sellerId == request.auth.uid || isAdmin()
       );
+    }
+    
+    // REGLAS PARA CHATS
+    match /chats/{chatId} {
+      allow read: if request.auth != null && (
+        request.auth.uid in resource.data.participants || 
+        isAdmin()
+      );
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        request.auth.uid in resource.data.participants ||
+        isAdmin()
+      );
+      
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // REGLAS PARA PREGUNTAS
+    match /questions/{questionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // REGLAS GLOBALES (MARKETING Y PLATAFORMA)
+    match /platform/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /marketing_hero/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /marketing_broadcasts/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /category_banners/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /marketing_collections/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /marketing_notifications/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /coupons/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /reports/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /disputes/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /verifications/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /store_registry/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /financial_logs/{document=**} {
+      allow read: if isAdmin();
+      allow write: if request.auth != null;
+    }
+    
+    // PERMITIR SUBCONJUNTOS EN USERS (COMO FAVORITOS)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

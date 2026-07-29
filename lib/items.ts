@@ -1,11 +1,12 @@
 import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 
 // Definimos qué forma tiene un Producto
 export interface ItemData {
     title: string;
     price: number;
     description: string;
+    masterCategory?: string;
     category: string;
     subcategory?: string;
     condition: 'new' | 'like_new' | 'good' | 'used' | 'repair' | 'digital' | 'service';
@@ -16,14 +17,32 @@ export interface ItemData {
     sellerId: string; // ID del usuario que vende
     sellerName?: string; // Nombre para mostrar del vendedor
     brand?: string;
-    color?: string;
+    color?: string | string[];
+    size?: string | string[];
+    productDimensions?: { length?: number; width?: number; height?: number; weight?: number }; // medidas del producto en sí
     status?: 'AVAILABLE' | 'PENDING_PAYMENT' | 'PAID_IN_CUSTODY' | 'SHIPPED' | 'DELIVERED' | 'SOLD' | 'CANCELLED';
     location?: string; // Ubicación del vendedor (ej: "Mendoza, AR")
     isFeatured?: boolean;
+    isFlashSale?: boolean;
     quantity?: number; // 1 for unique, >1 for stock
     oldPrice?: number;
+    weight?: number; // kg - peso del paquete para envío
+    dimensions?: { length: number; width: number; height: number }; // cm - dimensiones del paquete para envío
     featuredUntil?: any;
     featuredFeeApplied?: number;
+    cost?: number;
+    showPriceInStore?: boolean;
+    videoUrl?: string;
+    hasInfiniteStock?: boolean;
+    sku?: string;
+    barcode?: string;
+    mpn?: string;
+    ageRange?: string;
+    gender?: string;
+    tags?: string[];
+    seoTitle?: string;
+    seoDescription?: string;
+    productUrlSlug?: string;
     createdAt?: any;
     updatedAt?: any;
 }
@@ -32,20 +51,34 @@ export type ItemCondition = 'new' | 'like_new' | 'good' | 'used' | 'repair' | 'd
 
 import { CATEGORIES as CONST_CATEGORIES } from "./constants";
 
-// Maintaining compatibility: map names from objects if needed
-export const CATEGORIES = CONST_CATEGORIES.map(c => c.name);
+const cleanUndefined = (obj: Record<string, any>): Record<string, any> => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {} as Record<string, any>);
+};
 
 export const publishItem = async (data: ItemData) => {
     try {
+        if (!auth.currentUser) {
+            throw new Error("UNAUTHORIZED: Debes iniciar sesión para publicar.");
+        }
+        if (data.price <= 0) {
+            throw new Error("INVALID_PRICE: El precio debe ser mayor a cero.");
+        }
         // Referencia a la colección "items" en la base de datos
-        const docRef = await addDoc(collection(db, "items"), {
+        const cleanPayload = cleanUndefined({
             ...data,
+            sellerId: auth.currentUser.uid, // Override with secure token id
             status: data.status || 'AVAILABLE',
             quantity: data.quantity ?? 1,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             searchKeywords: generateKeywords(data.title)
         });
+        const docRef = await addDoc(collection(db, "items"), cleanPayload);
 
         return { success: true, id: docRef.id };
     } catch (error) {
@@ -71,26 +104,31 @@ export const getItems = async () => {
         return querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        })) as (ItemData & { id: string })[];
+        })).filter((item: any) => item.quantity === undefined || item.quantity > 0) as (ItemData & { id: string })[];
     } catch (error) {
         console.error("Error al obtener items:", error);
         return [];
     }
 };
 
-// Fetch items by seller ID
+// Fetch items by seller ID (sorted in memory to avoid Firestore composite index requirements)
 export const getItemsBySeller = async (sellerId: string) => {
     try {
         const q = query(
             collection(db, "items"),
-            where("sellerId", "==", sellerId),
-            orderBy("createdAt", "desc")
+            where("sellerId", "==", sellerId)
         );
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
+        const docs = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         })) as (ItemData & { id: string })[];
+        
+        return docs.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
+            const timeB = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+            return timeB - timeA;
+        });
     } catch (error) {
         console.error("Error fetching items by seller:", error);
         return [];
@@ -113,7 +151,9 @@ export const getFeaturedItems = async (userLocation?: string) => {
             // Filtrar expirados
             .filter(item => !item.featuredUntil || item.featuredUntil.toDate() > now)
             // Filtro de Calidad: al menos 1 imagen
-            .filter(item => item.images && item.images.length >= 1);
+            .filter(item => item.images && item.images.length >= 1)
+            // Filtro de Stock
+            .filter(item => item.quantity === undefined || item.quantity > 0);
 
         // Scoring: combinar urgencia + engagement
         const scored = allFeatured.map(item => {
@@ -145,6 +185,43 @@ export const getFeaturedItems = async (userLocation?: string) => {
     }
 };
 
+export const getFlashSaleItems = async (userLocation?: string) => {
+    try {
+        const now = new Date();
+        const q = query(
+            collection(db, "items"),
+            where("isFlashSale", "==", true),
+            where("status", "==", "AVAILABLE")
+        );
+        const querySnapshot = await getDocs(q);
+        const allFlash = querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as (ItemData & { id: string })))
+            .filter(item => !item.featuredUntil || item.featuredUntil.toDate() > now)
+            .filter(item => item.images && item.images.length >= 1)
+            .filter(item => item.quantity === undefined || item.quantity > 0);
+
+        const scored = allFlash.map(item => {
+            const expiresAt = item.featuredUntil?.toDate?.() || new Date(Date.now() + 86400000);
+            const msLeft = expiresAt.getTime() - now.getTime();
+            const urgencyScore = Math.max(0, 1 - (msLeft / (48 * 3600 * 1000)));
+            const engagementScore = Math.min(1, (item.views || 0) / 100);
+            const totalScore = (urgencyScore * 0.2) + (engagementScore * 0.8);
+            const isLocal = userLocation && item.location
+                ? item.location.toLowerCase().includes(userLocation.toLowerCase())
+                : false;
+            return { ...item, _score: totalScore, _isLocal: isLocal };
+        });
+
+        const localItems = scored.filter(i => i._isLocal).sort((a, b) => b._score - a._score);
+        const nationalItems = scored.filter(i => !i._isLocal).sort((a, b) => b._score - a._score);
+
+        return [...localItems, ...nationalItems];
+    } catch (error) {
+        console.error("Error fetching flash sale items:", error);
+        return [];
+    }
+};
+
 
 // Fetch single item by ID
 export const getProduct = async (id: string) => {
@@ -161,26 +238,155 @@ export const getProduct = async (id: string) => {
     }
 };
 
-// Update an existing item
 export const updateItem = async (id: string, data: Partial<ItemData>) => {
     try {
-        const docRef = doc(db, "items", id);
+        if (!auth.currentUser) {
+            throw new Error("UNAUTHORIZED: Debes iniciar sesión para editar.");
+        }
+        if (data.price !== undefined && data.price <= 0) {
+            throw new Error("INVALID_PRICE: El precio debe ser mayor a cero.");
+        }
 
-        // Record old price if it changes
-        if (data.price !== undefined) {
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-                const currentData = snap.data() as ItemData;
-                if (currentData.price !== data.price) {
-                    data.oldPrice = currentData.price;
-                }
+        const docRef = doc(db, "items", id);
+        const snap = await getDoc(docRef);
+
+        if (!snap.exists()) {
+            throw new Error("Item not found");
+        }
+
+        const currentData = snap.data() as ItemData;
+
+        // Security check: Only the owner can edit, unless it's an automated status update
+        const isOnlyStatusUpdate = Object.keys(data).length === 1 && data.status !== undefined;
+        if (currentData.sellerId !== auth.currentUser.uid && !isOnlyStatusUpdate) {
+            throw new Error("UNAUTHORIZED: No puedes editar un producto que no es tuyo.");
+        }
+
+        // Regla automática: si el precio cambia y el frontend no envió explícitamente un oldPrice, guardamos el anterior.
+        // Si el frontend envió un oldPrice (incluso null para borrarlo), respetamos la decisión del usuario.
+        if (data.price !== undefined && currentData.price !== data.price) {
+            if (data.oldPrice === undefined) {
+                data.oldPrice = currentData.price;
             }
         }
 
-        await import("firebase/firestore").then(({ updateDoc }) => updateDoc(docRef, { ...data }));
+        const cleanPayload = cleanUndefined({ ...data });
+        await import("firebase/firestore").then(({ updateDoc }) => updateDoc(docRef, cleanPayload));
         return { success: true };
     } catch (error) {
-        console.error("Error updating item:", error);
+        console.error("Error al actualizar ítem:", error);
+        return { success: false, error };
+    }
+};
+
+export const seedMockData = async (sellerId: string) => {
+    const MOCK_ITEMS = [
+        {
+            title: "MacBook Pro M2 14'",
+            price: 1850000,
+            description: "Impecable, uso de oficina. Batería al 98%. Incluye cargador original y funda.",
+            category: "Tecnología y Accesorios",
+            subcategory: "Laptops",
+            condition: "like_new",
+            images: ["https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Silla de Oficina Ergonómica",
+            price: 85000,
+            description: "Silla mesh respirable, apoyo lumbar ajustable. Súper cómoda para trabajo remoto.",
+            category: "Espacios Habitables",
+            subcategory: "Muebles de Oficina",
+            condition: "used",
+            images: ["https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=800&q=80"],
+            shippingAvailable: false,
+            status: "AVAILABLE"
+        },
+        {
+            title: "iPhone 13 Pro Max 256GB",
+            price: 950000,
+            description: "Color grafito. Libre de fábrica. Pantalla impecable con templado.",
+            category: "Tecnología y Accesorios",
+            subcategory: "Celulares",
+            condition: "used",
+            images: ["https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Set de Herramientas Bosch",
+            price: 125000,
+            description: "Taladro percutor + 40 accesorios. Ideal para emprendedores o taller en casa.",
+            category: "Accesorios Artesanales",
+            subcategory: "Herramientas",
+            condition: "new",
+            images: ["https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Zapatillas Nike Air Max",
+            price: 110000,
+            description: "Talle 42. Casi nuevas, las usé 2 veces pero me van chicas.",
+            category: "Ropa y Moda",
+            subcategory: "Calzado",
+            condition: "like_new",
+            images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Auriculares Sony WH-1000XM4",
+            price: 280000,
+            description: "Cancelación de ruido líder en el mercado. En caja original.",
+            category: "Tecnología y Accesorios",
+            subcategory: "Audio",
+            condition: "used",
+            images: ["https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Campera de Cuero Vintage",
+            price: 75000,
+            description: "Auténtico cuero vacuno. Estilo motero. Talle L.",
+            category: "Ropa y Moda",
+            subcategory: "Abrigos",
+            condition: "good",
+            images: ["https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80"],
+            shippingAvailable: true,
+            status: "AVAILABLE"
+        },
+        {
+            title: "Mesa Ratona de Roble",
+            price: 65000,
+            description: "Madera maciza, diseño nórdico. Medidas 100x50x45cm.",
+            category: "Espacios Habitables",
+            subcategory: "Muebles",
+            condition: "new",
+            images: ["https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=800&q=80"],
+            shippingAvailable: false,
+            status: "AVAILABLE"
+        }
+    ];
+
+    try {
+        const itemsCol = collection(db, "items");
+        for (const item of MOCK_ITEMS) {
+            await addDoc(itemsCol, {
+                ...item,
+                sellerId,
+                sellerName: "Usuario de Prueba",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                views: Math.floor(Math.random() * 500),
+                isFeatured: Math.random() > 0.5
+            });
+        }
+        return { success: true };
+    } catch (error) {
+        console.error("Error seeding mock data:", error);
         return { success: false, error };
     }
 };
@@ -216,10 +422,12 @@ export const toggleFeaturedItem = async (id: string, currentlyFeatured: boolean)
     try {
         const docRef = doc(db, "items", id);
         const featuredUntil = !currentlyFeatured ? new Date(Date.now() + 12 * 60 * 60 * 1000) : null;
+        const featuredFeeApplied = !currentlyFeatured ? 0.10 : null; // 10% fee
 
         await import("firebase/firestore").then(({ updateDoc }) => updateDoc(docRef, {
             isFeatured: !currentlyFeatured,
-            featuredUntil: featuredUntil
+            featuredUntil: featuredUntil,
+            featuredFeeApplied: featuredFeeApplied
         }));
 
         return { success: true, isFeatured: !currentlyFeatured };

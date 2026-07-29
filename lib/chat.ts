@@ -1,4 +1,4 @@
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { getUserProfile } from "./users";
 import {
     collection,
@@ -41,6 +41,9 @@ export interface Chat {
 // Start a chat or return existing one
 export const startChat = async (currentUserId: string, otherUserId: string, otherUserData?: { displayName: string, photoURL: string }) => {
     try {
+        if (!auth.currentUser || auth.currentUser.uid !== currentUserId) {
+            throw new Error("UNAUTHORIZED: Invalid session");
+        }
         // Check if chat already exists
         const chatsRef = collection(db, "chats");
         const q = query(chatsRef, where("participants", "array-contains", currentUserId));
@@ -81,10 +84,14 @@ export const startChat = async (currentUserId: string, otherUserId: string, othe
 // Send a message
 export const sendMessage = async (chatId: string, senderId: string, text: string, image?: string) => {
     try {
+        if (!auth.currentUser || auth.currentUser.uid !== senderId) {
+            throw new Error("UNAUTHORIZED: You can only send messages as yourself.");
+        }
+
         const messagesRef = collection(db, "chats", chatId, "messages");
         const messageData: any = {
             text: text || '',
-            senderId,
+            senderId: auth.currentUser.uid, // Override with secure token id
             createdAt: serverTimestamp(),
             read: false,
             type: image ? 'image' : 'text'
@@ -208,8 +215,7 @@ const generateAIResponse = (message: string): string => {
 export const subscribeToChats = (userId: string, callback: (chats: Chat[]) => void) => {
     const q = query(
         collection(db, "chats"),
-        where("participants", "array-contains", userId),
-        orderBy("lastMessageTimestamp", "desc")
+        where("participants", "array-contains", userId)
     );
 
     return onSnapshot(q, async (snapshot) => {
@@ -262,17 +268,25 @@ export const subscribeToChats = (userId: string, callback: (chats: Chat[]) => vo
             };
         }));
 
+        // Sort in-memory to avoid needing a Composite Index in Firestore
+        chats.sort((a, b) => {
+            const timeA = a.lastMessageTimestamp?.toMillis ? a.lastMessageTimestamp.toMillis() : 0;
+            const timeB = b.lastMessageTimestamp?.toMillis ? b.lastMessageTimestamp.toMillis() : 0;
+            return timeB - timeA; // Descending
+        });
+
         // Filter out archived chats locally
         const activeChats = chats.filter(chat => !chat.archivedBy?.includes(userId));
         callback(activeChats);
+    }, (error) => {
+        console.error("Error subscribing to chats:", error);
     });
 };
 
 // Subscribe to messages in a specific chat
 export const subscribeToMessages = (chatId: string, callback: (messages: Message[]) => void) => {
     const q = query(
-        collection(db, "chats", chatId, "messages"),
-        orderBy("createdAt", "asc")
+        collection(db, "chats", chatId, "messages")
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -280,7 +294,17 @@ export const subscribeToMessages = (chatId: string, callback: (messages: Message
             id: doc.id,
             ...doc.data()
         })) as Message[];
+        
+        // Sort in memory to handle serverTimestamp() nulls gracefully
+        messages.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
+            return timeA - timeB; // Ascending (oldest first)
+        });
+
         callback(messages);
+    }, (error) => {
+        console.error("Error subscribing to messages:", error);
     });
 };
 

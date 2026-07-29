@@ -41,15 +41,15 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, className =
     return (
         <div className={`flex items-center gap-2 font-black text-xs tabular-nums ${className}`}>
             <div className="flex flex-col items-center">
-                <span className="bg-dark-800 text-white px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-dark-800/10">{timeLeft.hours}</span>
+                <span className="bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-inverse-surface/10">{timeLeft.hours}</span>
             </div>
-            <span className="text-dark-800 animate-pulse">:</span>
+            <span className="text-on-surface animate-pulse">:</span>
             <div className="flex flex-col items-center">
-                <span className="bg-dark-800 text-white px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-dark-800/10">{timeLeft.minutes}</span>
+                <span className="bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-inverse-surface/10">{timeLeft.minutes}</span>
             </div>
-            <span className="text-dark-800 animate-pulse">:</span>
+            <span className="text-on-surface animate-pulse">:</span>
             <div className="flex flex-col items-center">
-                <span className="bg-dark-800 text-white px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-dark-800/10">{timeLeft.seconds}</span>
+                <span className="bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded-lg min-w-[30px] text-center shadow-lg shadow-inverse-surface/10">{timeLeft.seconds}</span>
             </div>
         </div>
     );

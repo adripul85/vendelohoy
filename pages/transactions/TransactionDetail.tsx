@@ -15,6 +15,7 @@ const TransactionDetail = () => {
     const [loading, setLoading] = useState(true);
     const [scanMode, setScanMode] = useState(false);
     const [manualCode, setManualCode] = useState('');
+    const [isGeneratingLabel, setIsGeneratingLabel] = useState(false);
 
     useEffect(() => {
         if (id) fetchTransaction();
@@ -38,6 +39,31 @@ const TransactionDetail = () => {
         } else {
             notify({ type: 'error', title: 'Código Inválido', message: result.error as string || 'La clave de seguridad proporcionada es incorrecta.', icon: 'error' });
         }
+    };
+
+    const handleGenerateLabel = async () => {
+        if (!id || !transaction) return;
+        setIsGeneratingLabel(true);
+        try {
+            const { generateShippingLabel } = await import('../../lib/shipping');
+            const { trackingNumber, labelUrl } = await generateShippingLabel(id, transaction.sellerId, transaction.buyerId);
+            
+            // Update Firestore Document directly for mock API simplicity
+            const { doc, updateDoc } = await import('firebase/firestore');
+            const { db } = await import('../../lib/firebase');
+            await updateDoc(doc(db, 'transactions', id), {
+                trackingNumber,
+                labelUrl,
+                status: 'SHIPPED',
+                updatedAt: new Date()
+            });
+
+            notify({ type: 'success', title: 'Etiqueta Generada', message: 'La etiqueta está lista para imprimir.', icon: 'local_shipping' });
+            fetchTransaction();
+        } catch (error) {
+            notify({ type: 'error', title: 'Error', message: 'No se pudo generar la etiqueta de envío.', icon: 'error' });
+        }
+        setIsGeneratingLabel(false);
     };
 
     if (loading) return <div className="p-20 text-center"><div className="size-12 border-4 border-primary-vibrant border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Sincronizando Libro Contable...</p></div>;
@@ -133,6 +159,34 @@ const TransactionDetail = () => {
                             <p className="text-center text-[10px] font-bold text-gray-300 uppercase leading-relaxed tracking-widest px-4">
                                 Validar la clave del comprador confirma la entrega del activo y activa la acreditación inmediata de los fondos.
                             </p>
+                        </div>
+                    )}
+
+                    {/* VENDEDOR - ENVIO POR CORREO */}
+                    {isSeller && !isCompleted && transaction?.deliveryMethod === 'correo_argentino' && transaction?.status === 'PAID_HELD' && (
+                        <div className="w-full max-w-sm space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                             <div className="bg-primary/5 p-8 rounded-[32px] border border-primary/20 text-center">
+                                 <span className="material-symbols-outlined text-4xl text-primary mb-4 font-black">local_shipping</span>
+                                 <h3 className="text-sm font-black uppercase text-primary tracking-widest mb-2">Envío Nacional</h3>
+                                 <p className="text-[10px] font-bold text-on-surface-variant mb-6">Debes imprimir la etiqueta y despachar el paquete en una sucursal de Correo Argentino.</p>
+                                 <button
+                                     onClick={handleGenerateLabel}
+                                     disabled={isGeneratingLabel}
+                                     className="w-full bg-primary text-on-primary py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                 >
+                                     {isGeneratingLabel ? 'Generando...' : 'Generar Etiqueta'}
+                                 </button>
+                             </div>
+                        </div>
+                    )}
+
+                    {isSeller && transaction?.trackingNumber && (
+                        <div className="w-full max-w-sm bg-surface-container-low p-6 rounded-[24px] border border-outline-variant/50 text-center">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant block mb-1">Tracking Number</span>
+                            <span className="text-lg font-mono font-black text-on-surface">{transaction.trackingNumber}</span>
+                            {transaction.status === 'SHIPPED' && (
+                                <p className="text-[10px] font-bold text-primary mt-3 uppercase tracking-widest">El paquete está en camino.</p>
+                            )}
                         </div>
                     )}
 

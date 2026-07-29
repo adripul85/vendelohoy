@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, limit, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { useState, useEffect, useRef } from 'react';
+import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
+import { useNotification } from '../context/NotificationContext';
 
 export interface AppNotification {
     id: string;
@@ -15,9 +16,11 @@ export interface AppNotification {
 
 export const useFirestoreNotifications = () => {
     const { user } = useAuth();
+    const { notify } = useNotification();
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const initialLoadRef = useRef(true);
 
     useEffect(() => {
         if (!user) {
@@ -34,6 +37,24 @@ export const useFirestoreNotifications = () => {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!initialLoadRef.current) {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const notif = change.doc.data() as AppNotification;
+                        if (!notif.read) {
+                            notify({
+                                title: notif.title,
+                                message: notif.message,
+                                type: notif.type === 'alert' ? 'error' : notif.type as any,
+                                icon: notif.type === 'success' ? 'check_circle' : 'notifications_active'
+                            });
+                        }
+                    }
+                });
+            } else {
+                initialLoadRef.current = false;
+            }
+
             const newNotifications = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -73,5 +94,19 @@ export const useFirestoreNotifications = () => {
         }
     };
 
-    return { notifications, unreadCount, loading, markAsRead, markAllAsRead };
+    const clearAllNotifications = async () => {
+        if (!user || notifications.length === 0) return;
+        try {
+            const batch = writeBatch(db);
+            notifications.forEach(n => {
+                const ref = doc(db, `users/${user.uid}/notifications`, n.id);
+                batch.delete(ref);
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Error clearing notifications:", error);
+        }
+    };
+
+    return { notifications, unreadCount, loading, markAsRead, markAllAsRead, clearAllNotifications };
 };

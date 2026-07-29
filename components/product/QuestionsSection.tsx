@@ -141,12 +141,12 @@ export default function QuestionsSection({ itemId, sellerId, itemTitle }: Questi
 
             {/* Header */}
             <div className="flex items-center gap-5 mb-12 relative z-10">
-                <div className="size-16 bg-dark-800 rounded-2xl flex items-center justify-center shadow-lg shadow-dark-800/20">
+                <div className="size-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
                     <span className="material-symbols-outlined text-3xl text-white">chat_bubble_outline</span>
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-dark-800 uppercase tracking-tight">Preguntas y Respuestas</h2>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-2 pl-1">Despeja todas tus dudas con el vendedor</p>
+                    <h2 className="text-2xl font-black text-on-surface uppercase tracking-tight">Preguntas y Respuestas</h2>
+                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.3em] mt-2 pl-1">Despeja todas tus dudas con el vendedor</p>
                 </div>
             </div>
 
@@ -171,7 +171,7 @@ export default function QuestionsSection({ itemId, sellerId, itemTitle }: Questi
                             <button
                                 type="submit"
                                 disabled={submitting || !questionText.trim()}
-                                className="bg-dark-800 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-dark-900 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-3 shadow-xl shadow-dark-800/10 active:scale-95"
+                                className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-3 shadow-xl shadow-primary/20 active:scale-95"
                             >
                                 {submitting ? (
                                     <>
@@ -207,14 +207,14 @@ export default function QuestionsSection({ itemId, sellerId, itemTitle }: Questi
                                     <img
                                         src={q.askedByAvatar}
                                         alt={q.askedByName}
-                                        className="size-14 rounded-2xl object-cover ring-4 ring-light-50 group-hover:ring-primary-vibrant/10 transition-all shadow-sm"
+                                        className="size-14 rounded-2xl object-cover ring-4 ring-light-50 group-hover:ring-primary/10 transition-all shadow-sm"
                                     />
                                 </Link>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-3">
-                                        <span className="font-black text-dark-800 text-[11px] uppercase tracking-tight">{q.askedByName}</span>
+                                        <span className="font-black text-on-surface text-[11px] uppercase tracking-tight">{q.askedByName}</span>
                                         <div className="size-1 bg-gray-200 rounded-full" />
-                                        <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{getRelativeTime(q.createdAt)}</span>
+                                        <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">{getRelativeTime(q.createdAt)}</span>
                                     </div>
                                     <p className="text-dark-800 leading-relaxed font-bold text-sm bg-light-50/30 p-5 rounded-2xl border border-light-100/50">
                                         {q.questionText}
@@ -254,7 +254,7 @@ export default function QuestionsSection({ itemId, sellerId, itemTitle }: Questi
                                         <div className="flex items-center gap-4 mt-5">
                                             <button
                                                 onClick={() => handleAnswerQuestion(q.id, q.askedBy)}
-                                                className="bg-dark-800 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-dark-900 transition-all flex items-center gap-3 shadow-xl shadow-dark-800/10"
+                                                className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary-600 transition-all flex items-center gap-3 shadow-xl shadow-primary/20"
                                             >
                                                 <span className="material-symbols-outlined text-lg">publish</span>
                                                 Enviar Respuesta

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../lib/auth';
 import { mapAuthError } from '../lib/error-map';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -92,14 +93,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-dark-950 selection:bg-primary-500/30 selection:text-white">
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-surface selection:bg-primary/30 selection:text-primary">
 
       {/* --- PREMIUM AMBIENT BACKGROUND --- */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-primary-900/20 rounded-full blur-[120px] animate-mesh-1"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-indigo-900/10 rounded-full blur-[120px] animate-mesh-2"></div>
-        <div className="absolute top-[30%] left-[50%] w-[40vw] h-[40vw] bg-red-900/10 rounded-full blur-[100px] animate-mesh-3"></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-50 mix-blend-overlay"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-primary/10 rounded-full blur-[120px] animate-mesh-1"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-secondary/10 rounded-full blur-[120px] animate-mesh-2"></div>
+        <div className="absolute top-[30%] left-[50%] w-[40vw] h-[40vw] bg-primary/5 rounded-full blur-[100px] animate-mesh-3"></div>
       </div>
 
       <motion.div
@@ -110,7 +110,7 @@ const Login = () => {
       >
 
         {/* --- GLASS CARD --- */}
-        <div className={`bg-dark-900/40 backdrop-blur-3xl rounded-[60px] p-8 md:p-10 border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] relative transition-all duration-300 ${isShaking ? 'animate-shake ring-4 ring-red-500/30' : 'hover:border-white/20'}`}>
+        <div className={`bg-surface/80 backdrop-blur-3xl rounded-[40px] p-8 md:p-10 border border-outline-variant/30 shadow-2xl relative transition-all duration-300 ${isShaking ? 'animate-shake ring-4 ring-error/30' : 'hover:border-primary/20 hover:shadow-primary/10'}`}>
 
           <AnimatePresence mode="wait">
             {showVerificationSent ? (
@@ -121,29 +121,29 @@ const Login = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="text-center"
               >
-                <div className="size-24 bg-emerald-500/10 rounded-[40px] flex items-center justify-center mx-auto mb-12 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.15)] animate-float">
-                  <span className="material-symbols-outlined text-5xl text-emerald-400">mark_as_unread</span>
+                <div className="size-24 bg-green-500/10 rounded-[40px] flex items-center justify-center mx-auto mb-12 border border-green-500/20 shadow-sm animate-float">
+                  <span className="material-symbols-outlined text-5xl text-green-600">mark_as_unread</span>
                 </div>
-                <h1 className="text-4xl font-black text-white mb-6 tracking-tighter uppercase">Verificar Identidad</h1>
-                <p className="text-xs font-bold text-gray-400 mb-14 leading-relaxed uppercase tracking-widest px-4">
-                  Hemos enviado un protocolo de activación a tu dirección de correo electrónico:<br />
-                  <span className="text-white font-black border-b-2 border-primary-500 pb-0.5 mt-4 block">{email}</span>
+                <h1 className="text-3xl font-black text-primary mb-6 tracking-tight font-headline">Verifica tu correo</h1>
+                <p className="text-sm font-medium text-on-surface-variant mb-10 leading-relaxed px-4">
+                  Te enviamos un enlace de confirmación a:<br />
+                  <span className="text-primary font-bold border-b-2 border-primary/30 pb-0.5 mt-4 block">{email}</span>
                 </p>
 
                 <div className="space-y-6">
                   <button
                     onClick={() => navigate('/dashboard')}
-                    className="w-full py-6 bg-white text-dark-950 text-[10px] font-black uppercase tracking-[0.3em] rounded-[32px] shadow-2xl hover:bg-primary-50 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+                    className="w-full py-5 bg-primary text-on-primary text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-lg hover:opacity-90 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
                   >
-                    <span className="material-symbols-outlined text-xl text-primary-vibrant">verified</span>
-                    <span>Acceder al Nodo Principal</span>
+                    <span className="material-symbols-outlined text-xl">verified</span>
+                    <span>Ir al panel principal</span>
                   </button>
-                  <div className="pt-12 border-t border-white/5">
+                  <div className="pt-8 border-t border-outline-variant/30">
                     <button
                       onClick={() => { setShowVerificationSent(false); setIsLogin(true); }}
-                      className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] hover:text-primary-400 transition-all"
+                      className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.3em] hover:text-primary transition-all"
                     >
-                      Volver al Identificador
+                      Volver al inicio de sesión
                     </button>
                   </div>
                 </div>
@@ -155,43 +155,40 @@ const Login = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <div className="text-center mb-14">
-                  <motion.div
-                    whileHover={{ rotate: 15 }}
-                    className="size-16 bg-gradient-to-br from-primary-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-primary-900/60 ring-4 ring-white/5"
-                  >
-                    <span className="material-symbols-outlined text-white text-3xl font-black">lock</span>
-                  </motion.div>
-                  <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-500">
-                    {isLogin ? 'Bienvenido' : 'Registrar'}
+                <div className="text-center mb-10">
+                  <div className="flex justify-center mb-6">
+                    <Logo size="lg" />
+                  </div>
+                  <h1 className="text-3xl font-black text-primary mb-2 tracking-tight font-headline">
+                    {isLogin ? 'Bienvenido' : 'Crear Cuenta'}
                   </h1>
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="size-1.5 bg-primary-vibrant rounded-full animate-pulse"></div>
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">
-                      {isLogin ? 'Ingresa tus datos' : 'Crea Tu Identidad'}
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="size-1.5 bg-secondary rounded-full animate-pulse"></div>
+                    <p className="text-sm font-medium text-on-surface-variant">
+                      {isLogin ? 'Ingresa tus credenciales' : 'Únete al mercado'}
                     </p>
                   </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="group">
-                    <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-gray-500 mb-4 ml-2 group-focus-within:text-primary-400 transition-colors">Correo Electrónico</label>
+                    <label className="block text-sm font-semibold text-on-surface-variant mb-2 ml-1 group-focus-within:text-primary transition-colors">Correo Electrónico</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="MAIL@SISTEMA.COM"
-                      className="w-full px-8 py-4 rounded-[28px] border-2 border-white/5 bg-dark-800/30 font-black text-[11px] text-white tracking-widest focus:bg-dark-800 focus:border-primary-500/50 outline-none transition-all placeholder:text-gray-700 uppercase"
+                      placeholder="tu@correo.com"
+                      className="w-full px-5 py-4 rounded-xl border-2 border-outline-variant/50 bg-surface text-base text-on-surface focus:bg-surface focus:border-primary outline-none transition-all placeholder:text-outline shadow-sm"
                     />
                   </div>
                   <div className="group">
-                    <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-gray-500 mb-4 ml-2 group-focus-within:text-primary-400 transition-colors">Contraseña</label>
+                    <label className="block text-sm font-semibold text-on-surface-variant mb-2 ml-1 group-focus-within:text-primary transition-colors">Contraseña</label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-8 py-4 rounded-[28px] border-2 border-white/5 bg-dark-800/30 font-bold text-[11px] text-white tracking-widest focus:bg-dark-800 focus:border-primary-500/50 outline-none transition-all placeholder:text-gray-700"
+                      className="w-full px-5 py-4 rounded-xl border-2 border-outline-variant/50 bg-surface text-base text-on-surface focus:bg-surface focus:border-primary outline-none transition-all placeholder:text-outline shadow-sm"
                     />
                   </div>
 
@@ -201,9 +198,9 @@ const Login = () => {
                         type="button"
                         onClick={handleForgotPassword}
                         disabled={isLoadingAuth}
-                        className="text-[10px] font-black text-gray-600 hover:text-primary-400 uppercase tracking-[0.2em] transition-colors disabled:opacity-50"
+                        className="text-sm font-medium text-secondary hover:underline transition-colors disabled:opacity-50"
                       >
-                        ¿Olvidaste el acceso?
+                        ¿Olvidaste tu contraseña?
                       </button>
                     </div>
                   )}
@@ -212,29 +209,29 @@ const Login = () => {
                     type="submit"
                     whileTap={{ scale: 0.98 }}
                     disabled={isLoadingAuth}
-                    className={`w-full py-5 text-[10px] font-black uppercase tracking-[0.3em] rounded-[32px] transition-all flex items-center justify-center gap-4 shadow-2xl ${isLoadingAuth
-                      ? 'bg-dark-800 text-gray-600 cursor-not-allowed border border-white/5'
-                      : 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white hover:shadow-primary-900/40 hover:scale-[1.02]'
+                    className={`w-full py-4 mt-2 text-sm font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-4 shadow-lg ${isLoadingAuth
+                      ? 'bg-surface-container-high text-on-surface-variant cursor-not-allowed border border-outline-variant/50'
+                      : 'bg-primary text-on-primary hover:shadow-primary/40 hover:opacity-95 hover:-translate-y-0.5'
                       }`}
                   >
-                    <span>{isLoadingAuth ? 'INGRESANDO...' : isLogin ? 'ENTRAR' : 'CREAR CUENTA'}</span>
+                    <span>{isLoadingAuth ? 'Procesando...' : isLogin ? 'Entrar' : 'Crear Cuenta'}</span>
                     {!isLoadingAuth && <span className="material-symbols-outlined text-lg">arrow_forward</span>}
                   </motion.button>
                 </form>
 
-                <div className="mt-10">
-                  <div className="relative flex items-center justify-center mb-8">
+                <div className="mt-8">
+                  <div className="relative flex items-center justify-center mb-6">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/5"></div>
+                      <div className="w-full border-t border-outline-variant/50"></div>
                     </div>
-                    <span className="relative px-6 bg-transparent text-[9px] font-black uppercase text-gray-600 tracking-[0.3em] backdrop-blur-xl">Autenticación Externa</span>
+                    <span className="relative px-4 bg-surface/80 text-[9px] font-black uppercase text-on-surface-variant tracking-[0.3em]">O ingresa con</span>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleGoogleLogin}
                     disabled={isLoadingAuth}
-                    className="w-full flex items-center justify-center gap-4 py-5 px-6 bg-white rounded-[28px] transition-all font-black text-[10px] uppercase tracking-[0.3em] text-dark-800 shadow-xl group"
+                    className="w-full flex items-center justify-center gap-4 py-4 px-6 bg-surface border-2 border-outline-variant/30 rounded-xl transition-all font-black text-[10px] uppercase tracking-[0.3em] text-on-surface shadow-sm hover:bg-surface-container-low group"
                   >
                     <svg className="size-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -242,11 +239,11 @@ const Login = () => {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    Sincronizar Google
+                    Google
                   </motion.button>
                 </div>
 
-                <div className="mt-12 text-center">
+                <div className="mt-8 text-center">
                   <button
                     onClick={() => {
                       if (isLogin) {
@@ -255,9 +252,9 @@ const Login = () => {
                         setIsLogin(true);
                       }
                     }}
-                    className="text-gray-500 font-black text-[9px] uppercase tracking-[0.3em] hover:text-white transition-all border-b-2 border-transparent hover:border-primary-500 pb-2"
+                    className="text-on-surface-variant font-black text-[9px] uppercase tracking-[0.3em] hover:text-primary transition-all border-b-2 border-transparent hover:border-primary pb-1"
                   >
-                    {isLogin ? "¿NO TIENES CUENTA? REGISTRO" : "¿YA ESTÁS REGISTRADO? ACCESO"}
+                    {isLogin ? "¿No tienes cuenta? Regístrate" : "¿Ya estás registrado? Inicia sesión"}
                   </button>
                 </div>
               </motion.div>
@@ -265,8 +262,8 @@ const Login = () => {
           </AnimatePresence>
         </div>
 
-        <p className="text-center mt-12 text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] px-12 leading-relaxed opacity-40">
-          Infraestructura de red sujeta a <span className="text-gray-500 underline decoration-primary-500/40 hover:text-gray-400 cursor-pointer">Seguridad de Nodo</span> y Resguardo de Activos.
+        <p className="text-center mt-10 text-[9px] font-black text-on-surface-variant uppercase tracking-[0.4em] px-8 leading-relaxed opacity-60">
+          Tus datos están protegidos por <span className="text-primary underline decoration-primary/40 hover:text-secondary cursor-pointer">Seguridad Avanzada</span>
         </p>
       </motion.div>
     </div>
