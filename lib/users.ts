@@ -57,6 +57,10 @@ export interface UserProfile {
         accountType: string;
         dni?: string;
     };
+    taxDetails?: {
+        cuit: string;
+        taxCondition: 'Monotributo' | 'Responsable Inscripto' | 'Consumidor Final' | 'Exento';
+    };
     reputationPoints?: number;
     reputation?: {
         averageRating: number;

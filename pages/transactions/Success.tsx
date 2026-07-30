@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-
+import { useAuth } from '../../lib/auth';
 
 
 const Success = () => {
@@ -10,7 +10,7 @@ const Success = () => {
   const [queryParams] = React.useState(new URLSearchParams(location.search));
 
   const status = queryParams.get('collection_status') || 'approved';
-  const paymentMethod = queryParams.get('payment_method') || 'MERCADO_PAGO';
+  const paymentMethod = queryParams.get('payment_method') || queryParams.get('payment_type') || 'MERCADO_PAGO';
   const transactionId = queryParams.get('external_reference') || 'N/A';
   const [transactionData, setTransactionData] = React.useState<any>(null);
   const { user, loading } = useAuth(); // Esperar a Firebase Auth
@@ -26,23 +26,36 @@ const Success = () => {
               setTransactionData(data);
               // AUTO-FIX: Ensure status moves to PAID_HELD if payment approved
               if (status === 'approved' && data.status === 'PENDING_PAYMENT') {
-                Promise.all([
-                  updateTransactionStatus(transactionId, 'PAID_HELD'),
-                  data.itemId ? updateItem(data.itemId, { status: 'SOLD' }).catch(() => {}) : Promise.resolve() // Fallback: webhook usually does this
-                ]).then(() => {
-                  setTransactionData((prev: any) => ({ ...prev, status: 'PAID_HELD' }));
-                  // Notify seller about the sale
-                  if (data.sellerId) {
-                    import('../../lib/interactions').then(({ sendNotification }) => {
-                      sendNotification(data.sellerId, {
-                        title: '🎉 ¡Nueva Venta!',
-                        message: `Tu producto "${data.itemTitle || 'Producto'}" se vendió por $${(data.amountTotal || data.amount || 0).toLocaleString()}. Los fondos están en garantía hasta que confirmes la entrega.`,
-                        type: 'success',
-                        link: `/dashboard`
-                      });
-                    });
-                  }
-                }).catch(console.error);
+                user.getIdToken().then(token => {
+                  fetch('/api/confirm-payment', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ transactionId })
+                  })
+                  .then(res => res.json())
+                  .then(apiRes => {
+                    if (apiRes.success) {
+                      setTransactionData((prev: any) => ({ ...prev, status: 'PAID_HELD' }));
+                      // Notify seller about the sale
+                      if (data.sellerId) {
+                        import('../../lib/interactions').then(({ sendNotification }) => {
+                          sendNotification(data.sellerId, {
+                            title: '🎉 ¡Nueva Venta!',
+                            message: `Tu producto "${data.itemTitle || 'Producto'}" se vendió por $${(data.amountTotal || data.amount || 0).toLocaleString()}. Los fondos están en garantía hasta que confirmes la entrega.`,
+                            type: 'success',
+                            link: `/dashboard`
+                          });
+                        });
+                      }
+                    } else {
+                      console.error("Backend error confirming payment:", apiRes.error);
+                    }
+                  })
+                  .catch(console.error);
+                });
               } else if ((status === 'pending' || status === 'in_process') && data.status === 'PENDING_PAYMENT') {
                 // Si el pago está pendiente (Transferencia/Efectivo/MercadoPago en revisión)
                 // Ocultamos el producto pasándolo a PENDING_PAYMENT

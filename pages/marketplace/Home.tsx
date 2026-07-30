@@ -584,6 +584,14 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [dynamicTrendingCategories]);
 
+  useEffect(() => {
+    const handleReset = () => {
+      handleClearFilters();
+    };
+    window.addEventListener('reset-home-filters', handleReset);
+    return () => window.removeEventListener('reset-home-filters', handleReset);
+  }, []);
+
   const handleClearFilters = () => {
     setActiveCategory(null);
     setActiveSubcategory('');
@@ -794,9 +802,17 @@ const Home = () => {
           </div>
         )}
 
-        {hasActiveFilters ? (
-          /* RESULTADOS DE BÚSQUEDA (MOSTRAR AL FILTRAR) */
-          <div className="max-w-screen-2xl mx-auto animate-in fade-in zoom-in duration-500">
+        <AnimatePresence mode="wait">
+          {hasActiveFilters ? (
+            /* RESULTADOS DE BÚSQUEDA (MOSTRAR AL FILTRAR) */
+            <motion.div 
+              key="filtered"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-screen-2xl mx-auto"
+            >
              {activeBanner && (
               <div className="w-full h-48 md:h-64 rounded-3xl overflow-hidden relative mb-8 shadow-xl shadow-primary/10">
                 <img src={activeBanner.image} className="size-full object-cover" alt={activeBanner.title} />
@@ -838,10 +854,17 @@ const Home = () => {
                   </div>
                 )}
              </div>
-          </div>
-        ) : (
-          /* EDITORIAL LANDING PAGE (MOSTRAR SIN FILTROS) */
-          <div className="max-w-screen-2xl mx-auto animate-in fade-in duration-500 space-y-14">
+            </motion.div>
+          ) : (
+            /* EDITORIAL LANDING PAGE (MOSTRAR SIN FILTROS) */
+            <motion.div 
+              key="unfiltered"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-screen-2xl mx-auto space-y-14"
+            >
             
             {/* --- DYNAMIC HERO SECTION --- */}
             <HomeHero featuredItems={recentProducts.slice(0, 5)} />
@@ -973,8 +996,9 @@ const Home = () => {
             {/* === NEWSLETTER === */}
             <NewsletterSection />
 
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

@@ -172,6 +172,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 description: `Comisión Pago Protegido: ${data.itemTitle || 'Producto'}`,
                 timestamp: FieldValue.serverTimestamp()
             });
+
+            // ==========================================
+            // SIMULATED AFIP ELECTRONIC INVOICING (FACTURACIÓN)
+            // ==========================================
+            // In a real scenario, here we call AFIP WSFEv1 to emit a Factura B/C for the platformRevenue
+            const simulatedInvoiceNumber = `0001-${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`;
+            const simulatedInvoiceUrl = `https://afip.gov.ar/fe/comprobantes?cae=${Math.random().toString().substring(2)}`;
+            
+            batch.update(docRef, {
+                'invoice.number': simulatedInvoiceNumber,
+                'invoice.url': simulatedInvoiceUrl,
+                'invoice.amount': platformRevenue,
+                'invoice.issuedAt': FieldValue.serverTimestamp()
+            });
         }
 
         // Seller Wallet logs

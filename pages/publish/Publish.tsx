@@ -330,13 +330,36 @@ export default function Publish() {
 
     const hasMercadoPago = !!userProfile?.mercadoPagoOAuth;
 
+    if (user && !user.emailVerified) {
+        return (
+            <div className="bg-background min-h-screen flex items-center justify-center p-6 animate-in fade-in duration-500 font-body">
+                <div className="bg-surface rounded-3xl shadow-sm border border-outline-variant/30 p-8 lg:p-12 max-w-lg text-center overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[60px] pointer-events-none -mt-20 -mr-20"></div>
+                    <div className="size-24 bg-amber-100 text-amber-500 rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-amber-500/10 relative z-10 p-4">
+                        <span className="material-symbols-outlined text-4xl">mark_email_unread</span>
+                    </div>
+                    <h2 className="text-3xl font-black text-primary tracking-tighter mb-4 uppercase relative z-10 font-headline">Verificá tu Mail</h2>
+                    <p className="text-sm font-bold text-on-surface-variant mb-8 leading-relaxed relative z-10">
+                        Para empezar a publicar productos, primero debes verificar tu cuenta de correo electrónico.
+                    </p>
+                    <button onClick={() => navigate('/')} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-black transition-all flex items-center justify-center gap-3 relative z-10">
+                        <span className="material-symbols-outlined text-sm">home</span> Volver al Inicio
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (userProfile && !hasMercadoPago) {
         return (
             <div className="bg-background min-h-screen flex items-center justify-center p-6 animate-in fade-in duration-500 font-body">
                 <div className="bg-surface rounded-3xl shadow-sm border border-outline-variant/30 p-8 lg:p-12 max-w-lg text-center overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#009ee3]/5 rounded-full blur-[60px] pointer-events-none -mt-20 -mr-20"></div>
-                    <div className="size-24 bg-[#009ee3] text-white rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-[#009ee3]/20 relative z-10 p-4">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Mercado_Libre_logo.svg/1200px-Mercado_Libre_logo.svg.png" className="w-full h-full object-contain brightness-0 invert" alt="Mercado Pago" />
+                    <div className="h-14 px-8 w-fit shrink-0 bg-[#009ee3] rounded-[20px] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-[#009ee3]/20 relative z-10">
+                        <div className="flex items-center gap-1.5 text-white font-black tracking-tighter text-xl">
+                            <span className="material-symbols-outlined text-3xl">handshake</span>
+                            <span>mercado<span className="text-sky-200">pago</span></span>
+                        </div>
                     </div>
                     <h2 className="text-3xl font-black text-primary tracking-tighter mb-4 uppercase relative z-10 font-headline">Vinculá tu Cuenta</h2>
                     <p className="text-sm font-bold text-on-surface-variant mb-8 leading-relaxed relative z-10">
@@ -559,7 +582,7 @@ export default function Publish() {
                                             <div>
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Calzado (Zapatillas / Zapatos / Botas)</span>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['Nº 34', 'Nº 35', 'Nº 36', 'Nº 37', 'Nº 38', 'Nº 39', 'Nº 40', 'Nº 41', 'Nº 42', 'Nº 43', 'Nº 44', 'Nº 45', 'Nº 46', 'Nº 47'].map(sz => {
+                                                    {['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47'].map(sz => {
                                                         const isSelected = form.size.includes(sz);
                                                         return (
                                                             <button
@@ -611,7 +634,7 @@ export default function Publish() {
                                             <div>
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Numérico / Pantalones</span>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['Talle 28', 'Talle 30', 'Talle 32', 'Talle 34', 'Talle 36', 'Talle 38', 'Talle 40', 'Talle 42', 'Talle 44', 'Talle 46', 'Talle 48', 'Talle 50', 'Talle 52', 'Talle 54'].map(sz => {
+                                                    {['28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52', '54'].map(sz => {
                                                         const isSelected = form.size.includes(sz);
                                                         return (
                                                             <button

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useNotification } from '../context/NotificationContext';
+import { useDialog } from '../context/DialogContext';
 import { getAllUsers, updateUserVerification, updateUserRole, deleteUserByAdmin, getPlatformStats, suspendUser, getRecentTransactions, reviewUserEvidence } from '../lib/admin';
 import { getReports, resolveReport, ReportData } from '../lib/interactions';
 import { getPlatformSettings, PlatformSettings, updatePlatformSettings } from '../lib/settings';
@@ -37,6 +38,7 @@ import { MarketingCollectionManager } from '../components/admin/MarketingCollect
 export default function AdminDashboard() {
     const { user, userProfile } = useAuth();
     const { notify } = useNotification();
+    const { showConfirm, showAlert } = useDialog();
     const navigate = useNavigate();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
@@ -249,7 +251,14 @@ export default function AdminDashboard() {
         }
 
         const targetUser = users.find(u => u.uid === uid);
-        if (!window.confirm(`ADVERTENCIA: ¿Eliminar permanentemente a "${targetUser?.displayName || uid}"?\n\nSe borrará:\n• Items publicados\n• Chats y mensajes\n• Reseñas y preguntas\n• Movimientos de billetera\n• Retiros y reportes\n\nSolo se conservará el EMAIL.`)) return;
+        const confirm1 = await showConfirm(
+            "Eliminar Usuario",
+            `ADVERTENCIA: ¿Eliminar permanentemente a "${targetUser?.displayName || uid}"?\n\nSe borrará:\n• Items publicados\n• Chats y mensajes\n• Reseñas y preguntas\n• Movimientos de billetera\n• Retiros y reportes\n\nSolo se conservará el EMAIL.`,
+            "Eliminar Permanentemente",
+            "Cancelar",
+            "delete_forever"
+        );
+        if (!confirm1) return;
 
         const confirmKey = prompt('Escribe "ELIMINAR" para confirmar la eliminación total:');
         if (confirmKey !== 'ELIMINAR') return;
@@ -279,7 +288,14 @@ export default function AdminDashboard() {
         }
         setIsUpdating(uid);
         const actionMsg = isSuspended ? 'Suspender' : 'Reactivar';
-        if (!window.confirm(`¿${actionMsg} esta cuenta?`)) {
+        const confirmResult = await showConfirm(
+            `${actionMsg} Usuario`,
+            `¿${actionMsg} esta cuenta?`,
+            actionMsg,
+            "Cancelar",
+            isSuspended ? "block" : "check_circle"
+        );
+        if (!confirmResult) {
             setIsUpdating(null);
             return;
         }
@@ -308,8 +324,10 @@ export default function AdminDashboard() {
     };
 
     const handleClearWalletMovements = async () => {
-        if (!window.confirm('¿ELIMINAR TODOS LOS MOVIMIENTOS? Esta acción no se puede deshacer.')) return;
-        if (!window.confirm('CONFIRMACIÓN FINAL: Se borrarán todos los registros de activos en la red.')) return;
+        const confirm1 = await showConfirm('Eliminar Movimientos', '¿ELIMINAR TODOS LOS MOVIMIENTOS? Esta acción no se puede deshacer.', 'Continuar', 'Cancelar', 'warning');
+        if (!confirm1) return;
+        const confirm2 = await showConfirm('Confirmación Final', 'Se borrarán todos los registros de activos en la red.', 'Eliminar', 'Cancelar', 'delete_forever');
+        if (!confirm2) return;
 
         setIsUpdating('dev-tools');
         const { clearAllWalletMovements } = await import('../lib/admin');
@@ -324,8 +342,10 @@ export default function AdminDashboard() {
     };
 
     const handleResetReputations = async () => {
-        if (!window.confirm('¿RESETEAR TODAS LAS REPUTACIONES? Todos los vendedores volverán a 0 estrellas.')) return;
-        if (!window.confirm('CONFIRMACIÓN FINAL: Se borrarán todas las reseñas y promedios de la plataforma.')) return;
+        const confirm1 = await showConfirm('Resetear Reputaciones', '¿RESETEAR TODAS LAS REPUTACIONES? Todos los vendedores volverán a 0 estrellas.', 'Continuar', 'Cancelar', 'warning');
+        if (!confirm1) return;
+        const confirm2 = await showConfirm('Confirmación Final', 'Se borrarán todas las reseñas y promedios de la plataforma.', 'Resetear', 'Cancelar', 'star_outline');
+        if (!confirm2) return;
 
         setIsUpdating('dev-tools');
         const { resetAllUserReputations } = await import('../lib/admin');
@@ -340,7 +360,8 @@ export default function AdminDashboard() {
     };
 
     const handleHardReset = async () => {
-        if (!window.confirm('¡PELIGRO EXTREMO! ¿BORRAR TODA LA BASE DE DATOS EXCEPTO ADMINS? Esta acción destruirá toda la plataforma.')) return;
+        const confirm1 = await showConfirm('Reset de Fábrica', '¡PELIGRO EXTREMO! ¿BORRAR TODA LA BASE DE DATOS EXCEPTO ADMINS? Esta acción destruirá toda la plataforma.', 'Peligro - Continuar', 'Cancelar', 'warning');
+        if (!confirm1) return;
         
         const confirmKey = prompt('Escribe "DESTRUIR TODO" para confirmar la eliminación de la base de datos:');
         if (confirmKey !== 'DESTRUIR TODO') return;
@@ -1259,10 +1280,26 @@ export default function AdminDashboard() {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={async () => {
-                                                                if (confirm('¿Confirmar que la transferencia fue realizada?')) {
-                                                                    const { updateWithdrawalStatus } = await import('../lib/admin');
-                                                                    const res = await updateWithdrawalStatus(req.id, 'completed');
-                                                                    if (res.success) loadData();
+                                                                const confirm1 = await showConfirm('Aprobar Transferencia', '¿Confirmar que la transferencia fue realizada?', 'Confirmar', 'Cancelar', 'account_balance');
+                                                                if (confirm1) {
+                                                                    try {
+                                                                        const { auth } = await import('../lib/firebase');
+                                                                        const token = await auth.currentUser?.getIdToken();
+                                                                        const response = await fetch('/api/process-payout', {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                                                            body: JSON.stringify({ withdrawalId: req.id })
+                                                                        });
+                                                                        const data = await response.json();
+                                                                        if (data.success) {
+                                                                            await showAlert('Pago Procesado', data.message + ' (Ref: ' + data.bankTransactionId + ')', 'check_circle');
+                                                                            loadData();
+                                                                        } else {
+                                                                            await showAlert('Error', 'Error: ' + data.error, 'error');
+                                                                        }
+                                                                    } catch (e: any) {
+                                                                        await showAlert('Error', 'Error conectando con la API de pagos.', 'error');
+                                                                    }
                                                                 }
                                                             }}
                                                             className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-sm"
@@ -1271,7 +1308,8 @@ export default function AdminDashboard() {
                                                         </button>
                                                         <button
                                                             onClick={async () => {
-                                                                if (confirm('¿Rechazar solicitud de retiro?')) {
+                                                                const confirm1 = await showConfirm('Rechazar Retiro', '¿Rechazar solicitud de retiro?', 'Rechazar', 'Cancelar', 'cancel');
+                                                                if (confirm1) {
                                                                     const { updateWithdrawalStatus } = await import('../lib/admin');
                                                                     const res = await updateWithdrawalStatus(req.id, 'rejected');
                                                                     if (res.success) loadData();
@@ -1323,10 +1361,10 @@ export default function AdminDashboard() {
                                             const { clearAllItems } = await import('../lib/admin');
                                             const res = await clearAllItems();
                                             if (res.success) {
-                                                alert(`Éxito: Se eliminaron ${res.count} productos.`);
+                                                await showAlert('Éxito', `Se eliminaron ${res.count} productos.`, 'check_circle');
                                                 loadData();
                                             } else {
-                                                alert('Error: ' + res.error);
+                                                await showAlert('Error', 'Error: ' + res.error, 'error');
                                             }
                                         }
                                     }}
@@ -1348,10 +1386,10 @@ export default function AdminDashboard() {
                                             const { clearAllTransactionsHistory } = await import('../lib/admin');
                                             const res = await clearAllTransactionsHistory();
                                             if (res.success) {
-                                                alert(`Éxito: Se eliminaron ${res.count} registros.`);
+                                                await showAlert('Éxito', `Se eliminaron ${res.count} registros.`, 'check_circle');
                                                 loadData();
                                             } else {
-                                                alert('Error: ' + res.error);
+                                                await showAlert('Error', 'Error: ' + res.error, 'error');
                                             }
                                         }
                                     }}

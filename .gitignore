@@ -31,3 +31,4 @@ serviceAccountKey.json
 .env
 
 .vercel
+.env*

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../lib/cropImage';
 
@@ -33,7 +34,7 @@ export default function ImageCropper({ imageSrc, aspectRatio = 16 / 9, onCropCom
         setIsProcessing(false);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] bg-black/90 flex flex-col items-center justify-center p-4">
             <div className="relative w-full max-w-4xl h-[60vh] bg-black rounded-2xl overflow-hidden shadow-2xl">
                 <Cropper
@@ -92,6 +93,7 @@ export default function ImageCropper({ imageSrc, aspectRatio = 16 / 9, onCropCom
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

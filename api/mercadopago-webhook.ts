@@ -50,27 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (transactionId && productId) {
                     const db = adminDb;
                     
-                    // 1. Actualizar estado del producto
-                    try {
-                        const itemRef = db.collection('items').doc(productId);
-                        const itemSnap = await itemRef.get();
-                        if (itemSnap.exists) {
-                            const itemData = itemSnap.data();
-                            const currentQty = itemData?.quantity || 1;
-                            const newQty = Math.max(0, currentQty - 1);
-                            
-                            await itemRef.update({
-                                quantity: newQty,
-                                status: newQty > 0 ? 'AVAILABLE' : 'PAID_IN_CUSTODY',
-                                paymentId: paymentId,
-                                updatedAt: new Date()
-                            });
-                        }
-                    } catch (e) {
-                        console.warn(`Could not update item ${productId}, it might be a cart order. Continuing...`);
-                    }
-                    
-                    // 2. Traer la transaccion
+                    // 1. Traer la transaccion
                     const txRef = db.collection('transactions').doc(transactionId);
                     const txSnap = await txRef.get();
                     if (!txSnap.exists) {
@@ -84,6 +64,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         return res.status(200).send('Already processed');
                     }
                     
+                    // 2. Actualizar estado del producto
+                    try {
+                        const itemRef = db.collection('items').doc(productId);
+                        const itemSnap = await itemRef.get();
+                        if (itemSnap.exists) {
+                            const itemData = itemSnap.data();
+                            const currentQty = itemData?.quantity || 1;
+                            const txQuantity = tx?.quantity || 1;
+                            const newQty = Math.max(0, currentQty - txQuantity);
+                            
+                            await itemRef.update({
+                                quantity: newQty,
+                                status: newQty > 0 ? 'AVAILABLE' : 'SOLD', // Change from PAID_IN_CUSTODY to SOLD when out of stock
+                                paymentId: paymentId,
+                                updatedAt: new Date()
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`Could not update item ${productId}, it might be a cart order. Continuing...`);
+                    }
+
                     // 3. Actualizar transaccion
                     await txRef.update({
                         status: 'PAID_HELD',

@@ -7,6 +7,7 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { autoVerifyIdentity, VerificationStep } from '../lib/verification';
 import { uploadFile } from '../lib/storage';
 import { useNotification } from '../context/NotificationContext';
+import { useDialog } from '../context/DialogContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import imageCompression from 'browser-image-compression';
@@ -63,6 +64,7 @@ export default function Settings() {
     const navigate = useNavigate();
     const { user, userProfile, profileLoading, refreshProfile, logout } = useAuth();
     const { notify } = useNotification();
+    const { showConfirm } = useDialog();
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
     const [isSaving, setIsSaving] = useState(false);
@@ -116,6 +118,10 @@ export default function Settings() {
             holderName: '',
             accountType: 'Caja de Ahorro',
             dni: '',
+        },
+        taxDetails: {
+            cuit: '',
+            taxCondition: 'Monotributo' as 'Monotributo' | 'Responsable Inscripto' | 'Consumidor Final' | 'Exento',
         },
         shopTheme: {
             backgroundType: 'gradient' as 'color' | 'image' | 'gradient',
@@ -215,6 +221,10 @@ export default function Settings() {
                     holderName: userProfile.bankDetails?.holderName || '',
                     accountType: userProfile.bankDetails?.accountType || 'Caja de Ahorro',
                     dni: userProfile.bankDetails?.dni || '',
+                },
+                taxDetails: {
+                    cuit: userProfile.taxDetails?.cuit || '',
+                    taxCondition: userProfile.taxDetails?.taxCondition || 'Monotributo',
                 },
                 shopTheme: {
                     backgroundType: userProfile.shopTheme?.backgroundType || 'gradient',
@@ -559,7 +569,7 @@ export default function Settings() {
         if (formData.storeInfo.name || formData.storeInfo.slug) {
             const availability = await checkStoreIdentifierAvailability(user.uid, formData.storeInfo.name, formData.storeInfo.slug);
             if (!availability.available) {
-                notify(availability.reason || "El nombre comercial o enlace no está disponible o está protegido contra suplantación.", "error");
+                notify({ type: 'error', title: 'Error', message: availability.reason || "El nombre comercial o enlace no está disponible o está protegido contra suplantación." });
                 setIsSaving(false);
                 return;
             }
@@ -581,6 +591,7 @@ export default function Settings() {
             identity: formData.identity,
             logistics: formData.logistics,
             bankDetails: formData.bankDetails,
+            taxDetails: formData.taxDetails,
             dni: formData.dni,
             shopTheme: formData.shopTheme,
             store: {
@@ -625,7 +636,14 @@ export default function Settings() {
     };
 
     const handlePurgeData = async () => {
-        if (window.confirm("¿ESTÁS SEGURO? Esta acción eliminará permanentemente tu cuenta y todos tus datos. No se puede deshacer.")) {
+        const isConfirmed = await showConfirm(
+            "Eliminar Cuenta",
+            "¿ESTÁS SEGURO? Esta acción eliminará permanentemente tu cuenta y todos tus datos. No se puede deshacer.",
+            "Sí, Eliminar",
+            "Cancelar",
+            "delete_forever"
+        );
+        if (isConfirmed) {
             setLoading(true);
             const res = await deleteUserAccount(user.uid);
             if (res.success) {
@@ -1610,9 +1628,11 @@ export default function Settings() {
                                 <div className="pt-8 border-t border-slate-100 flex justify-end">
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (window.confirm('¿Seguro que deseas desactivar tu tienda? Tus productos volverán a ser publicaciones regulares.')) {
+                                        onClick={async () => {
+                                            const confirm = await showConfirm('Desactivar Tienda', '¿Seguro que deseas desactivar tu tienda? Tus productos volverán a ser publicaciones regulares.', 'Desactivar', 'Cancelar', 'store_off');
+                                            if (confirm) {
                                                 setFormData({ ...formData, storeInfo: { ...formData.storeInfo, isActive: false } });
+                                                notify({ type: 'info', title: 'Tienda desactivada', message: 'Los cambios se aplicarán al guardar.', icon: 'store_off' });
                                             }
                                         }}
                                         className="text-red-500 text-sm font-bold flex items-center gap-2 hover:bg-red-50 px-4 py-2 rounded-xl transition-all"
@@ -2233,8 +2253,11 @@ export default function Settings() {
 
                                     <div className="flex items-start md:items-center justify-between flex-col md:flex-row gap-6 relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <div className="size-16 rounded-[20px] bg-[#009ee3] flex items-center justify-center p-3 shadow-lg shadow-[#009ee3]/20">
-                                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Mercado_Libre_logo.svg/1200px-Mercado_Libre_logo.svg.png" className="w-full h-full object-contain brightness-0 invert" alt="Mercado Pago" />
+                                            <div className="h-12 px-5 shrink-0 rounded-[18px] bg-[#009ee3] flex items-center justify-center shadow-lg shadow-[#009ee3]/20 w-fit">
+                                                <div className="flex items-center gap-1.5 text-white font-black tracking-tighter text-lg">
+                                                    <span className="material-symbols-outlined text-2xl">handshake</span>
+                                                    <span>mercado<span className="text-sky-200">pago</span></span>
+                                                </div>
                                             </div>
                                             <div>
                                                 <h4 className="text-xl font-black text-slate-900 tracking-tight">Cobros Automáticos</h4>
@@ -2271,7 +2294,8 @@ export default function Settings() {
                                                 <button
                                                     type="button"
                                                     onClick={async () => {
-                                                        if (window.confirm("¿Vincular usando el Access Token de Prueba proporcionado?")) {
+                                                        const confirm = await showConfirm("Vincular MercadoPago", "¿Vincular usando el Access Token de Prueba proporcionado?", "Vincular", "Cancelar", "link");
+                                                        if (confirm) {
                                                             setIsSaving(true);
                                                             const testToken = "APP_USR-4773832435343676-031310-0064546a2496fc97279e7909f582cab5-3117965906";
                                                             try {
@@ -2395,6 +2419,47 @@ export default function Settings() {
                                             <option>Cuenta Corriente</option>
                                             <option>Cuenta Digital (Fintech)</option>
                                         </select>
+                                    </div>
+                                </div>
+
+                                {/* DATOS FISCALES (AFIP) */}
+                                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 space-y-8">
+                                    <div className="flex items-center justify-between pb-4 border-b border-light-100">
+                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Datos Fiscales (AFIP)</h4>
+                                    </div>
+                                    <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
+                                        <span className="material-symbols-outlined text-amber-500">receipt_long</span>
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-800">Facturación de Comisiones</p>
+                                            <p className="text-xs font-medium text-amber-700/80 mt-1">Obligatorio para operar y retirar fondos. Estos datos se usarán para emitir las facturas por los cargos de la plataforma.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">CUIT / CUIL</label>
+                                            <input
+                                                type="text"
+                                                value={formData.taxDetails.cuit}
+                                                onChange={(e) => setFormData({ ...formData, taxDetails: { ...formData.taxDetails, cuit: e.target.value } })}
+                                                className="w-full bg-slate-50 border-2 border-transparent focus:border-slate-200 focus:bg-white rounded-2xl py-4 px-6 outline-none font-bold text-slate-700 transition-all font-mono text-sm"
+                                                placeholder="Sin guiones (Ej: 20123456789)"
+                                                maxLength={11}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Condición frente al IVA</label>
+                                            <select
+                                                value={formData.taxDetails.taxCondition}
+                                                onChange={(e) => setFormData({ ...formData, taxDetails: { ...formData.taxDetails, taxCondition: e.target.value as any } })}
+                                                className="w-full bg-slate-50 border-2 border-transparent focus:border-slate-200 focus:bg-white rounded-2xl py-4 px-6 outline-none font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="Monotributo">Monotributo</option>
+                                                <option value="Responsable Inscripto">Responsable Inscripto</option>
+                                                <option value="Consumidor Final">Consumidor Final</option>
+                                                <option value="Exento">Sujeto Exento</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

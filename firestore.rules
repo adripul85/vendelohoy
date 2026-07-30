@@ -31,8 +31,8 @@ service cloud.firestore {
             (request.resource.data.status == 'COMPLETED' && resource.data.status != 'DISPUTED' && resource.data.buyerId == request.auth.uid) ||
             // Regla: EL VENDEDOR registra envío
             (request.resource.data.status == 'SHIPPED' && resource.data.status == 'PAID_HELD' && resource.data.sellerId == request.auth.uid) ||
-            // Regla: Pasar a PAID_HELD después del pago exitoso (Comprador que pagó o Vendedor en trato directo)
-            (request.resource.data.status == 'PAID_HELD' && (resource.data.status == 'PENDING_PAYMENT' || resource.data.status == 'PAID_HELD') && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)) ||
+            // PAID_HELD: SOLO se puede establecer desde el backend (webhook MP / Admin SDK)
+            // La única excepción client-side es la devolución amigable (DISPUTED -> PAID_HELD por vendedor)
             // Regla: Devolución amigable (vendedor acepta devolver desde disputa)
             (request.resource.data.status == 'PAID_HELD' && resource.data.status == 'DISPUTED' && resource.data.sellerId == request.auth.uid && request.resource.data.isAmicableReturnAccepted == true) ||
             // Regla: Comprador o Vendedor pueden cancelar si está PENDING_PAYMENT
@@ -103,12 +103,12 @@ service cloud.firestore {
       
       // Actualización del propio usuario: bloquear campos sensibles
       allow update: if request.auth != null && (
-        // El propio usuario puede editarse, excepto campos protegidos
+        // El propio usuario puede editarse, excepto campos protegidos financieros y de rol
         (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['balance', 'isAdmin'])) ||
-        // Otro usuario autenticado puede actualizar SOLO campos de wallet y reputación
+          .hasAny(['balance', 'isAdmin', 'wallet', 'wallet.available', 'wallet.inEscrow', 'wallet.pending', 'wallet.lastUpdated', 'salesCount', 'successfulSales'])) ||
+        // Otro usuario autenticado puede actualizar SOLO campos de reputación/gamificación (NO wallet)
         (request.auth.uid != userId && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['wallet.inEscrow', 'wallet.available', 'wallet.pending', 'wallet.lastUpdated', 'wallet', 'updatedAt', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'salesCount', 'rating', 'lastDailyXpDate'])) ||
+          .hasOnly(['updatedAt', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'rating', 'lastDailyXpDate'])) ||
         // Admin puede todo
         isAdmin()
       );
@@ -118,9 +118,8 @@ service cloud.firestore {
     match /items/{itemId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && (
-        resource.data.sellerId == request.auth.uid || isAdmin()
-      );
+      allow update: if (request.auth != null && (resource.data.sellerId == request.auth.uid || isAdmin())) || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']));
+      allow delete: if request.auth != null && (resource.data.sellerId == request.auth.uid || isAdmin());
     }
     
     // REGLAS PARA CHATS
@@ -146,34 +145,34 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
-    // REGLAS GLOBALES (MARKETING Y PLATAFORMA)
+    // REGLAS GLOBALES (MARKETING Y PLATAFORMA) — Solo Admin puede escribir
     match /platform/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /marketing_hero/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /marketing_broadcasts/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /category_banners/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /marketing_collections/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /marketing_notifications/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /coupons/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
     }
     match /reports/{document=**} {
       allow read, write: if request.auth != null;
@@ -190,7 +189,11 @@ service cloud.firestore {
     }
     match /financial_logs/{document=**} {
       allow read: if isAdmin();
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    match /store_events/{document=**} {
+      allow create: if true;
+      allow read: if request.auth != null && isAdmin();
     }
     
     // PERMITIR SUBCONJUNTOS EN USERS (COMO FAVORITOS)

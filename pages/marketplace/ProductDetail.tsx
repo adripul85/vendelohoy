@@ -15,6 +15,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { trackEvent } from '../../lib/analytics';
 
 // Components
+import FloatingChat from '../../components/chat/FloatingChat';
 import ShareModal from '../../components/product/ShareModal';
 import SellerSection from '../../components/product/SellerSection';
 import ProductMedia from '../../components/product/ProductMedia';
@@ -208,6 +209,7 @@ const ProductDetail = () => {
   const { notify } = useNotification();
   const { addToCart } = useCart();
   const [offerAmount, setOfferAmount] = useState('');
+  const [floatingChatId, setFloatingChatId] = useState<string | null>(null);
 
   // Mock states for actions -> Real states
   const [isSaved, setIsSaved] = useState(false);
@@ -319,7 +321,7 @@ const ProductDetail = () => {
         displayName: sellerName,
         photoURL: sellerImg
       });
-      navigate(`/messages/${chatId}`);
+      setFloatingChatId(chatId);
     } catch (error: any) {
       console.error("Error contact seller:", error);
       notify({ type: 'error', title: 'Error', message: error.message || 'No se pudo iniciar el chat.', icon: 'error' });
@@ -430,9 +432,19 @@ const ProductDetail = () => {
         targetName={product.title}
       />
 
+      {/* Floating Chat Modal */}
+      {floatingChatId && (
+        <FloatingChat 
+          chatId={floatingChatId} 
+          onClose={() => setFloatingChatId(null)} 
+          sellerName={product.seller?.displayName || product.seller?.name || product.sellerName || 'Vendedor'}
+          sellerPhoto={product.seller?.avatar || product.seller?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller?.displayName || 'Vendedor')}&background=random`}
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8">
-        {/* IMAGE GALLERY - order-1: always first */}
-        <div className="lg:col-span-9 xl:col-span-9 order-1">
+        {/* LEFT COLUMN - IMAGE GALLERY */}
+        <div className="lg:col-span-7 xl:col-span-7 order-1 flex flex-col gap-2">
           <ProductMedia
             images={product.images}
             activeImg={activeImg}
@@ -448,7 +460,7 @@ const ProductDetail = () => {
         </div>
 
         {/* RIGHT COLUMN - PURCHASING HUB */}
-        <div className="lg:col-span-3 xl:col-span-3 lg:row-span-2 order-2 h-full">
+        <div className="lg:col-span-5 xl:col-span-5 lg:row-span-2 order-2 h-full">
           <div className="lg:sticky lg:top-24 flex flex-col h-full">
             
             {/* Breadcrumbs */}
@@ -530,15 +542,20 @@ const ProductDetail = () => {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {(Array.isArray(product.size) ? product.size : [product.size]).map((sz: string) => (
-                        <button 
-                          key={sz}
-                          onClick={() => setSelectedSize(sz)}
-                          className={`px-4 py-2 font-black text-xs rounded-xl border-2 transition-all ${selectedSize === sz ? 'border-primary text-primary bg-primary/5 shadow-sm' : 'border-outline-variant/30 text-on-surface-variant hover:border-primary/50'}`}
-                        >
-                          {sz}
-                        </button>
-                      ))}
+                      {(() => {
+                        const rawSizes = Array.isArray(product.size) ? product.size : [product.size];
+                        const cleaned = rawSizes.map((sz: string) => sz.replace(/^(Nº\s*|Talle\s*)/i, '').trim());
+                        const unique = [...new Set(cleaned)];
+                        return unique.map((sz: string) => (
+                          <button 
+                            key={sz}
+                            onClick={() => setSelectedSize(sz)}
+                            className={`px-4 py-2 font-black text-xs rounded-xl border-2 transition-all ${selectedSize === sz ? 'border-primary text-primary bg-primary/5 shadow-sm' : 'border-outline-variant/30 text-on-surface-variant hover:border-primary/50'}`}
+                          >
+                            {sz}
+                          </button>
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}
@@ -616,157 +633,156 @@ const ProductDetail = () => {
             {product.status === 'AVAILABLE' && (
               <p className="text-[10px] text-center text-on-surface-variant mb-8">Envío express gratuito disponible en esta zona.</p>
             )}
+          </div>
+        </div>
+      </div>
 
-            {/* Minimalist Tabs for Specs & Shipping */}
-            <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl overflow-hidden mb-6">
-              <div className="flex border-b border-outline-variant/20">
-                <button
-                  onClick={() => setActiveTab('specs')}
-                  className={`flex-1 py-3.5 text-center text-xs font-bold border-b-2 transition-colors ${activeTab === 'specs' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  Especificaciones
-                </button>
-                <button
-                  onClick={() => setActiveTab('shipping')}
-                  className={`flex-1 py-3.5 text-center text-xs font-bold border-b-2 transition-colors ${activeTab === 'shipping' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  Envíos y Retiros
-                </button>
-              </div>
+      {/* ROW 2: Details & Seller Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8 mt-6 lg:mt-8">
+        
+        {/* LEFT COLUMN - DETAILS */}
+        <div className="lg:col-span-7 xl:col-span-7 order-1 flex flex-col gap-6">
+          {/* Description */}
+          <div className="bg-surface-container-lowest rounded-3xl p-5 lg:p-6 border border-outline-variant/20 shadow-sm h-fit">
+            <h3 className="text-2xl font-black text-primary font-headline tracking-tighter mb-6">Descripción del Producto</h3>
+            <div className="prose prose-slate max-w-none text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
+              {product.description}
+            </div>
+          </div>
 
-              <div className="p-5">
-                {activeTab === 'specs' ? (
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant font-bold">Estado</span>
-                      <span className="text-primary font-medium">{product.condition === 'new' ? 'Nuevo' : product.condition === 'like-new' ? 'Como Nuevo' : product.condition === 'good' ? 'Buen Estado' : 'Usado'}</span>
+          {/* Minimalist Tabs for Specs & Shipping */}
+          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl overflow-hidden h-fit">
+            <div className="flex border-b border-outline-variant/20">
+              <button
+                onClick={() => setActiveTab('specs')}
+                className={`flex-1 py-4 text-center text-sm font-bold border-b-2 transition-colors ${activeTab === 'specs' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
+              >
+                Especificaciones Técnicas
+              </button>
+              <button
+                onClick={() => setActiveTab('shipping')}
+                className={`flex-1 py-4 text-center text-sm font-bold border-b-2 transition-colors ${activeTab === 'shipping' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
+              >
+                Envíos y Retiros
+              </button>
+            </div>
+
+            <div className="p-6 lg:p-8">
+              {activeTab === 'specs' ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                    <span className="text-on-surface-variant font-bold">Estado</span>
+                    <span className="text-primary font-medium">{product.condition === 'new' ? 'Nuevo' : product.condition === 'like-new' ? 'Como Nuevo' : product.condition === 'good' ? 'Buen Estado' : 'Usado'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                    <span className="text-on-surface-variant font-bold">Categoría</span>
+                    <span className="text-primary font-medium">{product.category}</span>
+                  </div>
+                  {product.brand && (
+                    <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                      <span className="text-on-surface-variant font-bold">Marca</span>
+                      <span className="text-primary font-medium">{product.brand}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant font-bold">Categoría</span>
-                      <span className="text-primary font-medium">{product.category}</span>
-                    </div>
-                    {product.brand && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant font-bold">Marca</span>
-                        <span className="text-primary font-medium">{product.brand}</span>
-                      </div>
-                    )}
-                    {product.productDimensions && (product.productDimensions.length || product.productDimensions.width || product.productDimensions.height) && (
-                      <>
-                        {product.productDimensions.length && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant font-bold">Largo</span>
-                            <span className="text-primary font-medium">{product.productDimensions.length} cm</span>
-                          </div>
-                        )}
-                        {product.productDimensions.width && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant font-bold">Ancho</span>
-                            <span className="text-primary font-medium">{product.productDimensions.width} cm</span>
-                          </div>
-                        )}
-                        {product.productDimensions.height && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant font-bold">Alto</span>
-                            <span className="text-primary font-medium">{product.productDimensions.height} cm</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {product.tags && (
-                      <div className="border-t border-outline-variant/20 pt-3 mt-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Etiquetas / SEO Tags</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(Array.isArray(product.tags) ? product.tags : typeof product.tags === 'string' ? product.tags.split(',') : []).map((t: string, idx: number) => {
-                            const cleanTag = t.trim();
-                            if (!cleanTag) return null;
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() => navigate(`/search?q=${encodeURIComponent(cleanTag)}`)}
-                                className="bg-surface-container-low hover:bg-primary/10 text-on-surface-variant hover:text-primary px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1"
-                              >
-                                <span className="material-symbols-outlined text-[12px]">tag</span>
-                                {cleanTag}
-                              </button>
-                            );
-                          })}
+                  )}
+                  {product.productDimensions && (product.productDimensions.length || product.productDimensions.width || product.productDimensions.height) && (
+                    <>
+                      {product.productDimensions.length && (
+                        <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                          <span className="text-on-surface-variant font-bold">Largo</span>
+                          <span className="text-primary font-medium">{product.productDimensions.length} cm</span>
                         </div>
+                      )}
+                      {product.productDimensions.width && (
+                        <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                          <span className="text-on-surface-variant font-bold">Ancho</span>
+                          <span className="text-primary font-medium">{product.productDimensions.width} cm</span>
+                        </div>
+                      )}
+                      {product.productDimensions.height && (
+                        <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                          <span className="text-on-surface-variant font-bold">Alto</span>
+                          <span className="text-primary font-medium">{product.productDimensions.height} cm</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {product.tags && (
+                    <div className="pt-4 mt-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Etiquetas / SEO Tags</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(Array.isArray(product.tags) ? product.tags : typeof product.tags === 'string' ? product.tags.split(',') : []).map((t: string, idx: number) => {
+                          const cleanTag = t.trim();
+                          if (!cleanTag) return null;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => navigate(`/search?q=${encodeURIComponent(cleanTag)}`)}
+                              className="bg-surface-container-low hover:bg-primary/10 text-on-surface-variant hover:text-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">tag</span>
+                              {cleanTag}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {product.deliveryMethods && product.deliveryMethods.length > 0 ? (
-                      product.deliveryMethods.map((m: string) => {
-                        const methodMap: Record<string, { label: string, icon: string }> = {
-                          'correo_argentino': { label: 'Correo Argentino (A todo el país)', icon: 'local_shipping' },
-                          'en_mano': { label: 'Retiro en persona', icon: 'handshake' },
-                          'acordar': { label: 'Acordar con vendedor', icon: 'chat' },
-                          'domicilio': { label: 'Envío a domicilio (Local)', icon: 'home' }
-                        };
-                        const method = methodMap[m] || { label: m, icon: 'package' };
-                        return (
-                          <div key={m} className="flex items-center gap-3 text-xs">
-                            <span className="material-symbols-outlined text-secondary text-base">{method.icon}</span>
-                            <span className="text-primary font-medium">{method.label}</span>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="material-symbols-outlined text-secondary text-base">chat</span>
-                        <span className="text-primary font-medium">Acordar envío con el vendedor</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Seller Info & Security */}
-            <div className="mt-auto">
-              <SellerSection seller={product.seller} onContactSeller={handleContactSeller} />
-              
-              <div className="mt-4 bg-primary/5 rounded-xl p-4 border border-primary/10 flex gap-3">
-                <span className="material-symbols-outlined text-primary text-xl">shield</span>
-                <div>
-                  <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1.5">Consejos de Seguridad</h5>
-                  <ul className="text-[10px] font-medium text-on-surface-variant space-y-1 list-disc pl-3">
-                    <li>Encuéntrese en un lugar público y bien iluminado</li>
-                    <li>Inspeccione el artículo antes de pagar</li>
-                    <li>Nunca envíe dinero por transferencia bancaria directa</li>
-                  </ul>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  {product.deliveryMethods && product.deliveryMethods.length > 0 ? (
+                    product.deliveryMethods.map((m: string) => {
+                      const methodMap: Record<string, { label: string, icon: string }> = {
+                        'correo_argentino': { label: 'Correo Argentino (A todo el país)', icon: 'local_shipping' },
+                        'en_mano': { label: 'Retiro en persona', icon: 'handshake' },
+                        'acordar': { label: 'Acordar con vendedor', icon: 'chat' },
+                        'domicilio': { label: 'Envío a domicilio (Local)', icon: 'home' }
+                      };
+                      const method = methodMap[m] || { label: m, icon: 'package' };
+                      return (
+                        <div key={m} className="flex items-center gap-4 text-sm p-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl">
+                          <span className="material-symbols-outlined text-secondary text-xl">{method.icon}</span>
+                          <span className="text-primary font-medium">{method.label}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center gap-4 text-sm p-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl">
+                      <span className="material-symbols-outlined text-secondary text-xl">chat</span>
+                      <span className="text-primary font-medium">Acordar envío con el vendedor</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN - SELLER INFO */}
+        <div className="lg:col-span-5 xl:col-span-5 order-2">
+          <div className="flex flex-col gap-6">
+            <SellerSection seller={product.seller} onContactSeller={handleContactSeller} />
+            
+            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex gap-3">
+              <span className="material-symbols-outlined text-primary text-xl">shield</span>
+              <div>
+                <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1.5">Consejos de Seguridad</h5>
+                <ul className="text-[10px] font-medium text-on-surface-variant space-y-1 list-disc pl-3">
+                  <li>Encuéntrese en un lugar público y bien iluminado</li>
+                  <li>Inspeccione el artículo antes de pagar</li>
+                  <li>Nunca envíe dinero por transferencia bancaria directa</li>
+                </ul>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* FEATURE SECTION (Editorial Layout) */}
-      <div className="mt-16 lg:mt-24 bg-surface-container-lowest rounded-3xl overflow-hidden border border-outline-variant/20 shadow-sm flex flex-col md:flex-row">
-        <div className="p-8 lg:p-16 flex-1 flex flex-col justify-center">
-          <h2 className="text-2xl lg:text-4xl font-black text-primary leading-tight font-headline tracking-tighter mb-4">
-            Diseñado para <br/><span className="text-secondary italic">destacar.</span>
-          </h2>
-          <div className="prose prose-slate max-w-none text-on-surface-variant text-sm lg:text-base leading-relaxed">
-            <p>{product.description}</p>
-          </div>
-        </div>
-        <div className="flex-1 relative min-h-[300px]">
-          <img 
-            src={product.images?.[1] || product.images?.[0] || 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=1000'} 
-            alt="Detalle" 
-            className="absolute inset-0 w-full h-full object-cover" 
-          />
-        </div>
-      </div>
+
 
       {/* YOU MAY ALSO LIKE */}
       <div className="mt-16 lg:mt-24 border-t border-outline-variant/30 pt-12">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2">Curated for you</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2">Recomendados para vos</h4>
         <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter mb-8">Te podría interesar</h2>
         
         {/* We use QuestionsSection here temporarily or replace it entirely. Let's keep it clean */}

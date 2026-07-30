@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useDialog } from '../context/DialogContext';
 import { subscribeToUserTransactions, TransactionData } from '../lib/transactions';
 import { subscribeToUserWalletMovements } from '../lib/users';
 
 const Wallet = () => {
   const { userProfile, user } = useAuth();
+  const { showAlert, showConfirm } = useDialog();
   const navigate = useNavigate();
   const wallet = userProfile?.wallet || { available: 0, inEscrow: 0, pending: 0, currency: 'ARS' };
   const [movements, setMovements] = useState<any[]>([]);
@@ -162,11 +164,11 @@ const Wallet = () => {
     const { updateUserProfile } = await import('../lib/users');
     const result = await updateUserProfile(user.uid, { bankDetails: bankForm });
     if (result.success) {
-      alert('Datos bancarios vinculados correctamente.');
+      await showAlert('Éxito', 'Datos bancarios vinculados correctamente.', 'check_circle');
       setShowBankModal(false);
       window.location.reload();
     } else {
-      alert('Error al guardar datos bancarios.');
+      await showAlert('Error', 'Error al guardar datos bancarios.', 'error');
     }
   };
 
@@ -175,39 +177,55 @@ const Wallet = () => {
   const handleWithdrawal = async () => {
     const amount = parseFloat(withdrawalAmount);
     if (isNaN(amount) || amount < 1000) {
-      alert('El retiro mínimo es de $1,000.');
+      await showAlert('Atención', 'El retiro mínimo es de $1,000.', 'warning');
+      return;
+    }
+    if (!user?.emailVerified) {
+      await showAlert('Atención', 'Debes verificar tu correo electrónico antes de retirar fondos. Revisa tu bandeja de entrada o spam.', 'mark_email_unread');
       return;
     }
     if (amount > wallet.available) {
-      alert('Fondos insuficientes.');
+      await showAlert('Atención', 'Fondos insuficientes.', 'warning');
       return;
     }
     if (!userProfile?.bankDetails?.cbu) {
-      alert('Debes vincular una cuenta bancaria primero.');
+      await showAlert('Atención', 'Debes vincular una cuenta bancaria primero.', 'account_balance');
       setShowBankModal(true);
       return;
     }
     if (userProfile?.trustLevel === 'Bajo' || !userProfile?.trustLevel) {
-      alert('Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.');
+      await showAlert('Atención', 'Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.', 'policy');
       navigate('/verification');
       return;
     }
+    if (!userProfile?.taxDetails?.cuit) {
+      await showAlert('Atención', 'Debes completar tus datos fiscales (AFIP) en Configuración antes de retirar fondos.', 'receipt_long');
+      navigate('/settings?tab=billing');
+      return;
+    }
 
-    if (confirm(`¿Confirmar retiro de $${amount.toLocaleString()} a ${userProfile.bankDetails.bankName}?`)) {
+    const isConfirmed = await showConfirm(
+      'Confirmar Retiro',
+      `¿Deseas retirar $${amount.toLocaleString()} a la cuenta ${userProfile.bankDetails.bankName}?`,
+      'Retirar',
+      'Cancelar',
+      'payments'
+    );
+    if (isConfirmed) {
       setProcessingWithdrawal(true);
       const { withdrawFunds } = await import('../lib/users');
       const result = await withdrawFunds(user!.uid, amount, userProfile.bankDetails);
 
       if (result.success) {
-        alert('Solicitud de retiro enviada. Los fondos estarán acreditados en 24hs hábiles.');
+        await showAlert('Solicitud Enviada', 'Los fondos estarán acreditados en 24hs hábiles.', 'check_circle');
         setWithdrawalAmount('');
         window.location.reload();
       } else {
         if (result.error === 'REQUIRE_KYC') {
-          alert('Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.');
+          await showAlert('Verificación Requerida', 'Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.', 'policy');
           navigate('/verification');
         } else {
-          alert('Error al procesar el retiro: ' + result.error);
+          await showAlert('Error', 'Error al procesar el retiro: ' + result.error, 'error');
         }
       }
       setProcessingWithdrawal(false);

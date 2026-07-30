@@ -179,53 +179,12 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
             updateData.disputeStartedAt = serverTimestamp();
         }
 
+        // PAID_HELD: La transición a este estado se maneja EXCLUSIVAMENTE
+        // desde el backend (webhook de MercadoPago en api/mercadopago-webhook.ts).
+        // No se permite ninguna escritura de wallet ni cambio de stock desde el cliente.
         if (status === 'PAID_HELD') {
-            const { getTransaction } = await import("./transactions");
-            const tx = await getTransaction(id);
-            if (tx) {
-                const { logWalletMovement } = await import("./users");
-                // 1. Buyer: Full deduction (Total paid)
-                await logWalletMovement({
-                    uid: tx.buyerId,
-                    type: 'BUY_DEDUCTION',
-                    amount: tx.amountTotal,
-                    referenceId: id,
-                    itemTitle: tx.itemTitle,
-                    description: `Pago procesado: ${tx.itemTitle}`
-                });
-                // 2. Seller: Escrow Hold (Product price)
-                await logWalletMovement({
-                    uid: tx.sellerId,
-                    type: 'ESCROW_HOLD',
-                    amount: tx.amountProduct,
-                    referenceId: id,
-                    itemTitle: tx.itemTitle,
-                    description: `Fondos en garantía: ${tx.itemTitle}`
-                });
-                
-                // ACTUALIZAR BASE DE DATOS CONTABLE:
-                const sellerRef = doc(db, "users", tx.sellerId);
-                await import("firebase/firestore").then(async ({ updateDoc, increment, getDoc }) => {
-                    await updateDoc(sellerRef, {
-                        "wallet.inEscrow": increment(tx.amountProduct)
-                    });
-                    
-                    // Deduct stock
-                    if (tx.itemId && !tx.itemId.startsWith('cart-')) {
-                        const itemRef = doc(db, "items", tx.itemId);
-                        const itemSnap = await getDoc(itemRef);
-                        if (itemSnap.exists()) {
-                            const currentQty = itemSnap.data().quantity || 1;
-                            const txQty = tx.quantity || 1;
-                            const newQty = Math.max(0, currentQty - txQty);
-                            await updateDoc(itemRef, {
-                                quantity: newQty,
-                                status: newQty === 0 ? 'SOLD' : itemSnap.data().status
-                            });
-                        }
-                    }
-                });
-            }
+            console.warn('PAID_HELD transition blocked on client. Must go through webhook.');
+            return { success: false, error: 'Esta operación solo puede realizarse desde el servidor.' };
         }
 
         await import("firebase/firestore").then(({ updateDoc }) =>
@@ -262,18 +221,14 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
             if (response.ok) {
                 return { success: true };
             }
-            console.warn("API release-funds returned error, attempting Firestore fallback...");
-        } catch (apiErr) {
-            console.warn("API unreachable, attempting Firestore fallback...", apiErr);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("API release-funds error:", errorData);
+            return { success: false, error: errorData.error || 'Error al liberar fondos. Intenta de nuevo.' };
+        } catch (apiErr: any) {
+            console.error("API unreachable:", apiErr);
+            // NO hay fallback — la distribución de fondos SOLO puede hacerse desde el servidor
+            return { success: false, error: 'No se pudo conectar con el servidor de pagos. Intenta de nuevo.' };
         }
-
-        // Fallback: update Firestore directly (permitted for buyer in firestore.rules)
-        const docRef = doc(db, "transactions", id);
-        await updateDoc(docRef, {
-            status: 'COMPLETED',
-            updatedAt: serverTimestamp()
-        });
-        return { success: true };
     } catch (error: any) {
         console.error("Network or execution error releasing funds:", error);
         return { success: false, error: error.message || 'Error de conexión' };

@@ -39,6 +39,12 @@ export const BottomNav = () => {
                         <Link 
                             key={item.path} 
                             to={item.path}
+                            onClick={(e) => {
+                                if (item.path === '/' && window.location.pathname === '/') {
+                                    window.dispatchEvent(new Event('reset-home-filters'));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            }}
                             className={`flex-1 flex flex-col items-center justify-center py-2 transition-colors ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}
                         >
                             <div className="relative mb-1">

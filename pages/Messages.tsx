@@ -1,26 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { subscribeToChats, subscribeToMessages, sendMessage, markChatAsRead, deleteChat, Chat, Message } from '../lib/chat';
+import { useDialog } from '../context/DialogContext';
+import { subscribeToChats, subscribeToMessages, sendMessage, markChatAsRead, deleteChat, setTypingStatus, updateUserPresence, Chat, Message } from '../lib/chat';
 import { uploadFile } from '../lib/storage';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function Messages() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { chatId } = useParams();
+    const { showConfirm } = useDialog();
 
     const [chats, setChats] = useState<Chat[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
-    const [showMenu, setShowMenu] = useState(false);
+    const [sending, setSending] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const presenceIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+
+    useEffect(() => {
+        if (!user) return;
+        updateUserPresence(user.uid);
+        presenceIntervalRef.current = setInterval(() => {
+            updateUserPresence(user.uid);
+        }, 60000); // update every minute
+
+        return () => {
+            if (presenceIntervalRef.current) clearInterval(presenceIntervalRef.current);
+        };
+    }, [user]);
 
     // Subscribe to list of chats
     useEffect(() => {
@@ -86,11 +106,26 @@ export default function Messages() {
         try {
             const text = newMessage;
             setNewMessage('');
+            setTypingStatus(selectedChat.id, user.uid, false);
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
             await sendMessage(selectedChat.id, user.uid, text);
             scrollToBottom();
         } catch (error) {
             console.error("Failed to send", error);
         }
+    };
+
+    const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+        if (!selectedChat || !user) return;
+
+        setTypingStatus(selectedChat.id, user.uid, true);
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            setTypingStatus(selectedChat.id, user.uid, false);
+        }, 2000);
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +147,9 @@ export default function Messages() {
     };
 
     const handleDeleteChat = async () => {
-        if (!selectedChat || !confirm("¿Estás seguro de que quieres eliminar esta conversación?")) return;
+        if (!selectedChat) return;
+        const confirmed = await showConfirm("Eliminar Chat", "¿Estás seguro de que quieres eliminar esta conversación?", "Eliminar", "Cancelar", "delete");
+        if (!confirmed) return;
 
         try {
             await deleteChat(selectedChat.id);
@@ -140,6 +177,22 @@ export default function Messages() {
 
     const getOtherParticipantId = (chat: Chat) => {
         return chat.participants.find(p => p !== user?.uid) || '';
+    };
+
+    const isOtherUserTyping = () => {
+        if (!selectedChat) return false;
+        const otherId = getOtherParticipantId(selectedChat);
+        return selectedChat.typing?.[otherId] === true;
+    };
+
+    const getOnlineStatus = (chat: Chat) => {
+        const otherId = getOtherParticipantId(chat);
+        const lastSeen = chat.participantsData?.[otherId]?.lastSeen;
+        if (!lastSeen) return 'Desconectado';
+        
+        // If seen in the last 3 minutes, consider online
+        const isOnline = (Date.now() - lastSeen) < 3 * 60 * 1000;
+        return isOnline ? 'En línea' : `Últ. vez ${format(new Date(lastSeen), 'HH:mm', { locale: es })}`;
     };
 
     const getDisplayName = (chat: Chat) => {
@@ -226,9 +279,15 @@ export default function Messages() {
                                     <img src={getPhotoURL(selectedChat)} className="size-10 rounded-full object-cover" />
                                     <div>
                                         <h3 className="font-black text-dark-800 text-sm">{getDisplayName(selectedChat)}</h3>
-                                        <div className="flex items-center gap-1.5 opacity-50">
-                                            <div className="size-1.5 bg-emerald-500 rounded-full" />
-                                            <p className="text-[9px] font-bold uppercase tracking-widest text-dark-600">En línea</p>
+                                        <div className="flex items-center gap-1.5 opacity-60">
+                                            {getOnlineStatus(selectedChat) === 'En línea' ? (
+                                                <div className="size-1.5 bg-emerald-500 rounded-full" />
+                                            ) : (
+                                                <span className="material-symbols-outlined text-[10px]">schedule</span>
+                                            )}
+                                            <p className="text-[9px] font-bold uppercase tracking-widest text-dark-600">
+                                                {getOnlineStatus(selectedChat)}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -274,21 +333,54 @@ export default function Messages() {
                                                 ) : (
                                                     msg.text
                                                 )}
-                                                <div className={`text-[9px] font-bold mt-1 text-right opacity-60 uppercase tracking-wider ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
+                                                <div className={`text-[9px] font-bold mt-1 text-right opacity-60 uppercase tracking-wider flex items-center justify-end gap-1 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
                                                     {msg.createdAt ? format(msg.createdAt.toDate(), 'HH:mm') : '...'}
+                                                    {isMe && (
+                                                        <span className={`material-symbols-outlined text-[12px] ${msg.read ? 'text-blue-200' : ''}`}>
+                                                            {msg.read ? 'done_all' : 'check'}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
+                                
+                                {isOtherUserTyping() && (
+                                    <div className="flex justify-start">
+                                        <div className="bg-white border border-light-200 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex gap-1.5 items-center">
+                                            <div className="size-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                            <div className="size-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                            <div className="size-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Input Area */}
-                            <div className="p-4 bg-white border-t border-light-200 shrink-0">
+                            <div className="p-4 bg-white border-t border-light-200 shrink-0 relative">
+                                {showEmojiPicker && (
+                                    <div className="absolute bottom-full left-4 mb-2 z-50 shadow-2xl rounded-lg overflow-hidden">
+                                        <EmojiPicker 
+                                            onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)} 
+                                            width={280}
+                                            height={300}
+                                            previewConfig={{ showPreview: false }}
+                                        />
+                                    </div>
+                                )}
                                 <form onSubmit={handleSendMessage} className="flex gap-3 max-w-4xl mx-auto">
                                     <button
                                         type="button"
-                                        onClick={() => fileInputRef.current?.click()}
+                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                        className="p-3 text-gray-400 hover:text-primary-vibrant transition-colors bg-light-50 rounded-xl"
+                                        title="Insertar emoji"
+                                    >
+                                        <span className="material-symbols-outlined">mood</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowEmojiPicker(false); fileInputRef.current?.click(); }}
                                         className="p-3 text-gray-400 hover:text-primary-vibrant transition-colors bg-light-50 rounded-xl"
                                         disabled={uploading}
                                     >
@@ -304,13 +396,15 @@ export default function Messages() {
                                     <input
                                         type="text"
                                         value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onChange={handleTyping}
+                                        onClick={() => setShowEmojiPicker(false)}
                                         placeholder="Escribe un mensaje..."
                                         className="flex-1 bg-light-50 border-none rounded-xl px-5 font-medium text-dark-800 focus:ring-2 focus:ring-primary-100 outline-none transition-all"
                                     />
                                     <button
                                         type="submit"
                                         disabled={!newMessage.trim()}
+                                        onClick={() => setShowEmojiPicker(false)}
                                         className="bg-primary-vibrant text-white p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg shadow-primary-500/20"
                                     >
                                         <span className="material-symbols-outlined">send</span>

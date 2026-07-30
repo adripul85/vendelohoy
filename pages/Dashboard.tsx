@@ -10,6 +10,7 @@ import { updateUserProfile } from '../lib/users';
 import { uploadFile } from '../lib/storage';
 import { useNotification } from '../context/NotificationContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useDialog } from '../context/DialogContext';
 import ReviewModal from '../components/ReviewModal';
 import MyPurchases from '../components/dashboard/MyPurchases';
 import MySales from '../components/dashboard/MySales';
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const notify = useNotification().notify;
+  const { showConfirm, showAlert } = useDialog();
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'N/A';
@@ -974,14 +976,15 @@ export default function Dashboard() {
           <div className="max-w-[1440px] mx-auto px-6 py-8 flex justify-center">
             <button
               onClick={async () => {
-                if (confirm("⚠️ ¿RESET TOTAL? Esto borrará TODAS las transacciones y reseteará las billeteras a $0. Esta acción es irreversible.")) {
+                const confirm1 = await showConfirm("RESET TOTAL", "⚠️ ¿RESET TOTAL? Esto borrará TODAS las transacciones y reseteará las billeteras a $0. Esta acción es irreversible.", "Resetear", "Cancelar", "dangerous");
+                if (confirm1) {
                   const { resetPlatformData } = await import('../lib/admin');
                   const result = await resetPlatformData();
                   if (result.success) {
-                    alert("Base de datos reseteada correctamente.");
+                    await showAlert("Base de datos reseteada", "Base de datos reseteada correctamente.", "check_circle");
                     window.location.reload();
                   } else {
-                    alert("Error al resetear: " + result.error);
+                    await showAlert("Error", "Error al resetear: " + result.error, "error");
                   }
                 }
               }}

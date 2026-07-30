@@ -32,7 +32,12 @@ export default function Logo({ className = '', size = 'md', link = true }: LogoP
     }
 
     return (
-        <Link to="/" className="inline-flex items-center">
+        <Link to="/" className="inline-flex items-center" onClick={(e) => {
+            if (window.location.pathname === '/') {
+                window.dispatchEvent(new Event('reset-home-filters'));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }}>
             {content}
         </Link>
     );

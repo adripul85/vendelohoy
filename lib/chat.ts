@@ -14,7 +14,8 @@ import {
     getDocs,
     limit,
     getDoc,
-    deleteDoc
+    deleteDoc,
+    writeBatch
 } from "firebase/firestore";
 
 export interface Message {
@@ -30,12 +31,13 @@ export interface Message {
 export interface Chat {
     id: string;
     participants: string[];
-    participantsData?: Record<string, { displayName: string, photoURL: string }>;
+    participantsData?: Record<string, { displayName: string, photoURL: string, lastSeen?: number }>;
     lastMessage: string;
     lastMessageTimestamp: Timestamp;
     unreadCount: Record<string, number>;
     type?: 'private' | 'support';
     archivedBy?: string[];
+    typing?: Record<string, boolean>;
 }
 
 // Start a chat or return existing one
@@ -239,10 +241,15 @@ export const subscribeToChats = (userId: string, callback: (chats: Chat[]) => vo
                             const newPhoto = (profile as any).photoURL || (profile as any).avatar || `https://ui-avatars.com/api/?name=${newParticipantsData[uid]?.displayName || 'User'}&background=random`;
 
                             // Check if changed
-                            if (newParticipantsData[uid]?.displayName !== newName || newParticipantsData[uid]?.photoURL !== newPhoto) {
+                            if (
+                                newParticipantsData[uid]?.displayName !== newName || 
+                                newParticipantsData[uid]?.photoURL !== newPhoto ||
+                                newParticipantsData[uid]?.lastSeen !== profile.lastSeen
+                            ) {
                                 newParticipantsData[uid] = {
                                     displayName: newName,
-                                    photoURL: newPhoto
+                                    photoURL: newPhoto,
+                                    lastSeen: profile.lastSeen
                                 };
                                 hasChanges = true;
                             }
@@ -315,8 +322,48 @@ export const markChatAsRead = async (chatId: string, userId: string) => {
         await updateDoc(chatRef, {
             [`unreadCount.${userId}`]: 0
         });
+
+        // Update all individual messages not sent by the user to read: true
+        const messagesRef = collection(db, "chats", chatId, "messages");
+        const q = query(messagesRef, where("read", "==", false));
+        const unreadSnaps = await getDocs(q);
+        
+        if (!unreadSnaps.empty) {
+            const batch = writeBatch(db);
+            unreadSnaps.forEach(docSnap => {
+                if (docSnap.data().senderId !== userId) {
+                    batch.update(docSnap.ref, { read: true });
+                }
+            });
+            await batch.commit();
+        }
+
     } catch (error) {
         console.error("Error marking as read:", error);
+    }
+};
+
+// Update typing status
+export const setTypingStatus = async (chatId: string, userId: string, isTyping: boolean) => {
+    try {
+        const chatRef = doc(db, "chats", chatId);
+        await updateDoc(chatRef, {
+            [`typing.${userId}`]: isTyping
+        });
+    } catch (error) {
+        console.error("Error setting typing status:", error);
+    }
+};
+
+// Update global user presence
+export const updateUserPresence = async (userId: string) => {
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, {
+            lastSeen: Date.now()
+        });
+    } catch (error) {
+        // ignore quietly
     }
 };
 

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { getPlatformSettings, PlatformSettings } from '../lib/settings';
 import { useAuth } from '../lib/auth';
+import { useDialog } from '../context/DialogContext';
 import { getTrendingItems, getSmartSuggestions, ItemData } from '../lib/items';
 
 const Cart = () => {
@@ -10,6 +11,7 @@ const Cart = () => {
     const navigate = useNavigate();
     const [settings, setSettings] = useState<PlatformSettings | null>(null);
     const { user } = useAuth();
+    const { showAlert } = useDialog();
     const [recommendations, setRecommendations] = useState<(ItemData & { id: string })[]>([]);
     const [couponCode, setCouponCode] = useState('');
     const [discountInfo, setDiscountInfo] = useState<{ code: string; amount: number } | null>(null);
@@ -23,13 +25,13 @@ const Cart = () => {
             const res = await validateCoupon(couponCode, subtotal);
             if (res.success && res.discount !== undefined) {
                 setDiscountInfo({ code: res.couponCode || couponCode.toUpperCase(), amount: res.discount });
-                alert(`¡Cupón aplicado! Descuento: $${res.discount.toLocaleString()}`);
+                await showAlert('Cupón Aplicado', `¡Cupón aplicado! Descuento: $${res.discount.toLocaleString()}`, 'local_activity');
             } else {
                 setDiscountInfo(null);
-                alert(res.error || 'Cupón inválido o expirado.');
+                await showAlert('Error', res.error || 'Cupón inválido o expirado.', 'error');
             }
         } catch (e) {
-            alert('Error al validar el cupón.');
+            await showAlert('Error', 'Error al validar el cupón.', 'error');
         }
         setIsValidating(false);
     };

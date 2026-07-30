@@ -44,7 +44,7 @@ const ProductMedia: React.FC<Props> = ({
             {/* Primary Viewer */}
             <div
                 ref={imageRef}
-                className="order-1 md:order-2 flex-1 w-full bg-surface-container-lowest rounded-2xl overflow-hidden cursor-zoom-in relative group h-[50vh] md:h-[70vh] lg:h-[80vh] max-h-[800px]"
+                className="order-1 md:order-2 flex-1 w-full bg-surface-container-lowest rounded-2xl overflow-hidden cursor-zoom-in relative group h-[400px] md:h-[500px] lg:h-[600px] max-h-[70vh]"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseMove={onMouseMove}

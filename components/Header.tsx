@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useNotification } from '../context/NotificationContext';
+import { useDialog } from '../context/DialogContext';
 import { useFirestoreNotifications } from '../hooks/useFirestoreNotifications';
 import { useCart } from '../context/CartContext';
 import { subscribeToChats } from '../lib/chat';
@@ -12,6 +13,7 @@ import { HeartIcon } from './animate-ui/icons';
 import { getUserFavorites, FavoriteItem } from '../lib/interactions';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
+import { sendEmailVerification } from 'firebase/auth';
 
 const dropdownMotion = {
     initial: { opacity: 0, y: -15, scale: 0.88, filter: 'blur(8px)' },
@@ -35,6 +37,7 @@ const dropdownMotion = {
 const VoiceSearchModal = ({ isOpen, onClose, onResult }: { isOpen: boolean, onClose: () => void, onResult: (text: string) => void }) => {
     const [transcription, setTranscription] = useState('');
     const [isListening, setIsListening] = useState(false);
+    const { showAlert } = useDialog();
     const recognitionRef = useRef<any>(null);
 
     const stopListening = useCallback(() => {
@@ -46,7 +49,7 @@ const VoiceSearchModal = ({ isOpen, onClose, onResult }: { isOpen: boolean, onCl
 
     const startListening = useCallback(() => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert("Su navegador no soporta búsqueda por voz.");
+            showAlert("No Soportado", "Su navegador no soporta búsqueda por voz.", "mic_off");
             onClose();
             return;
         }
@@ -136,17 +139,29 @@ const Header = () => {
 
     const { user, userProfile, logout } = useAuth();
     const { notifications, unreadCount, markAsRead, clearAllNotifications } = useFirestoreNotifications();
+    const { notify } = useNotification();
     const navigate = useNavigate();
     const { cart } = useCart();
+    const prevUnreadCountRef = useRef(0);
 
     useEffect(() => {
         if (!user) return;
         const unsubscribe = subscribeToChats(user.uid, (chats) => {
             const count = chats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
             setUnreadChatCount(count);
+
+            if (count > prevUnreadCountRef.current && !window.location.pathname.startsWith('/messages')) {
+                notify({
+                    type: 'info',
+                    title: 'Nuevo Mensaje',
+                    message: 'Tenés un nuevo mensaje sin leer.',
+                    icon: 'chat'
+                });
+            }
+            prevUnreadCountRef.current = count;
         });
         return () => unsubscribe();
-    }, [user]);
+    }, [user, notify]);
 
     useEffect(() => {
         getMarketingNotifications().then(setMarketingNotifications);
@@ -186,6 +201,25 @@ const Header = () => {
 
     return (
         <header className="sticky top-0 z-50 w-full glass font-sans">
+            {user && !user.emailVerified && (
+                <div className="bg-amber-100 text-amber-900 px-4 py-2 text-center text-xs font-bold border-b border-amber-200 flex items-center justify-center gap-4 flex-wrap">
+                    <span className="material-symbols-outlined text-sm">mark_email_unread</span>
+                    <span>Por favor, verifica tu correo electrónico para poder usar todas las funciones de la plataforma.</span>
+                    <button 
+                        onClick={async () => {
+                            try {
+                                await sendEmailVerification(user);
+                                notify({ type: 'success', title: 'Correo Enviado', message: 'Revisa tu bandeja de entrada o spam.', icon: 'forward_to_inbox' });
+                            } catch (error: any) {
+                                notify({ type: 'error', title: 'Error', message: error.message || 'No se pudo enviar el correo.', icon: 'error' });
+                            }
+                        }}
+                        className="bg-amber-900 text-white px-3 py-1 rounded-md text-[10px] uppercase tracking-wider hover:bg-amber-800 transition-colors"
+                    >
+                        Reenviar Link
+                    </button>
+                </div>
+            )}
             <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 md:gap-8">
 
                 {/* LOGO */}
@@ -193,7 +227,12 @@ const Header = () => {
 
                 {/* NAV LINKS DESKTOP */}
                 <nav className="hidden lg:flex items-center gap-6 text-sm font-bold ml-4">
-                    <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors">Inicio</Link>
+                    <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors" onClick={(e) => {
+                        if (window.location.pathname === '/') {
+                            window.dispatchEvent(new Event('reset-home-filters'));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }}>Inicio</Link>
                     <Link to="/search" className="text-on-surface-variant hover:text-primary transition-colors">Explorar Market</Link>
                     <Link to="/deals" className="text-on-surface-variant hover:text-primary transition-colors">Ofertas Flash</Link>
                 </nav>

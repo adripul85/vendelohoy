@@ -20,6 +20,7 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
     const totalSales = sales.length;
     const totalRevenue = sales.reduce((acc, sale) => acc + (sale.amountProduct || sale.amount || 0), 0);
     const avgTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
+    const totalViews = items.reduce((acc, item) => acc + (item.views || 0), 0);
 
     const [realtimeEvents, setRealtimeEvents] = useState<any[]>([]);
 
@@ -102,13 +103,13 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
     const MetricCard = ({ title, value, previousValue, prefix = '' }: { title: string, value: number, previousValue?: number, prefix?: string }) => {
         const variation = previousValue ? ((value - previousValue) / previousValue) * 100 : 0;
         return (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-                <h4 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">{title}</h4>
-                <div className="text-4xl font-black text-slate-800 mb-4 tracking-tighter">
+            <div className="bg-white p-5 lg:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow min-w-0">
+                <h4 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3 truncate">{title}</h4>
+                <div className="text-2xl xl:text-3xl font-black text-slate-800 mb-4 tracking-tighter break-words">
                     {prefix}{value.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                 </div>
                 {previousValue !== undefined && (
-                    <div className="flex items-center gap-3 mt-auto pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-100 flex-wrap">
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mismo periodo</span>
                         <span className={`text-[10px] font-black px-2 py-1 rounded-md ${variation >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                             {variation > 0 ? '+' : ''}{variation.toFixed(2)}%
@@ -133,7 +134,7 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                            <MetricCard title="Visitas únicas" value={2451} previousValue={1950} />
+                            <MetricCard title="Visitas a Productos" value={totalViews} previousValue={Math.floor(totalViews * 0.8)} />
                             <MetricCard title="Ventas" value={totalSales} previousValue={Math.floor(totalSales * 0.8)} />
                             <MetricCard title="Facturación" value={totalRevenue} previousValue={totalRevenue * 0.75} prefix="$" />
                             <MetricCard title="Ticket Promedio" value={avgTicket} previousValue={avgTicket * 0.9} prefix="$" />

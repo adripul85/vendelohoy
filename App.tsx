@@ -34,6 +34,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ReportedItems from './pages/admin/ReportedItems';
 import { AuthProvider, useAuth } from './lib/auth';
 import { NotificationProvider } from './context/NotificationContext';
+import { DialogProvider } from './context/DialogContext';
 import { CartProvider } from './context/CartContext';
 import TermsAndConditions from './pages/legal/TermsAndConditions';
 import LegalNotice from './pages/legal/LegalNotice';
@@ -51,13 +52,14 @@ import SecurityInfo from './pages/SecurityInfo';
 import GamificationRules from './pages/GamificationRules';
 import Favorites from './pages/Favorites';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lenis from 'lenis';
 
 // --- App Infrastructure ---
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
     const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' as any });
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }, 150);
     return () => clearTimeout(timer);
   }, [pathname]);
@@ -175,14 +177,14 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.98 }}
         transition={{
-          duration: 0.32,
+          duration: 0.4,
           ease: [0.22, 1, 0.36, 1]
         }}
-        className="w-full flex-grow flex flex-col"
+        className="w-full flex-grow flex flex-col origin-top"
       >
         {React.isValidElement(children) ? React.cloneElement(children as React.ReactElement, { location } as any) : children}
       </motion.div>
@@ -194,9 +196,27 @@ import { BroadcastBar } from './components/BroadcastBar';
 import { BottomNav } from './components/BottomNav';
 
 function App() {
+  useEffect(() => {
+    const lenis = new Lenis({
+      autoRaf: true,
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    });
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
   return (
     <NotificationProvider>
-      <AuthProvider>
+      <DialogProvider>
+        <AuthProvider>
         <CartProvider>
           <BrowserRouter>
             <ScrollToTop />
@@ -263,6 +283,7 @@ function App() {
           </BrowserRouter>
         </CartProvider>
       </AuthProvider>
+      </DialogProvider>
     </NotificationProvider>
   );
 }
