@@ -10,6 +10,7 @@ import CountdownTimer from '../../components/product/CountdownTimer';
 import ProductCard from '../../components/ProductCard';
 import SkeletonCard from '../../components/SkeletonCard';
 import HomeHero from '../../components/HomeHero';
+import { MobileHeader } from '../../components/ui/MobileHeader';
 
 const CONDITION_LABELS: Record<string, string> = {
   'new': 'Nuevo',
@@ -774,7 +775,55 @@ const Home = () => {
       </aside>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 pt-16 pb-16 overflow-x-hidden px-4 lg:px-8 w-full bg-background/50">
+      <main className="flex-1 pt-0 md:pt-16 pb-16 overflow-x-hidden px-0 md:px-4 lg:px-8 w-full bg-background/50">
+        
+        {/* MOBILE SPECIFIC UI */}
+        <MobileHeader variant="home" />
+        
+        <div className="md:hidden px-4 pt-4 pb-2 space-y-4">
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+            <input 
+              type="text"
+              placeholder="Busca en el marketplace..."
+              className="w-full bg-surface-container-low text-on-surface rounded-2xl py-4 pl-12 pr-4 font-medium outline-none border border-transparent focus:border-primary/20 transition-all shadow-sm"
+              onClick={() => {
+                // Navegar a búsqueda o abrir modal
+              }}
+            />
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 snap-x">
+            <button 
+              onClick={() => setActiveCategory(null)}
+              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${!activeCategory ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
+            >
+              <span className="material-symbols-outlined text-sm">grid_view</span>
+              All
+            </button>
+            <button 
+              onClick={() => setActiveCategory('Herramientas')}
+              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Herramientas' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
+            >
+              <span className="material-symbols-outlined text-sm">build</span>
+              Tools
+            </button>
+            <button 
+              onClick={() => setActiveCategory('Tecnología')}
+              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Tecnología' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
+            >
+              <span className="material-symbols-outlined text-sm">devices</span>
+              Tech
+            </button>
+            <button 
+              onClick={() => setActiveCategory('Hogar, Muebles y Jardín')}
+              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Hogar, Muebles y Jardín' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
+            >
+              <span className="material-symbols-outlined text-sm">chair</span>
+              Hogar
+            </button>
+          </div>
+        </div>
         
         {/* TEMPORARY SEED BUTTON */}
         {recentProducts.length === 0 && (
@@ -828,7 +877,7 @@ const Home = () => {
                <p className="text-sm text-on-surface-variant font-bold">{filteredProducts.length} productos encontrados</p>
              </div>
              
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6 px-4 md:px-0">
                 {loading ? (
                   Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)
                 ) : filteredProducts.length > 0 ? (
@@ -893,7 +942,7 @@ const Home = () => {
                   Ver Más <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6 px-4 md:px-0">
                 {loading ? (
                   Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)
                 ) : (

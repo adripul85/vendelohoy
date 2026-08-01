@@ -15,6 +15,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { trackEvent } from '../../lib/analytics';
 
 // Components
+import { MobileHeader } from '../../components/ui/MobileHeader';
 import FloatingChat from '../../components/chat/FloatingChat';
 import ShareModal from '../../components/product/ShareModal';
 import SellerSection from '../../components/product/SellerSection';
@@ -219,14 +220,15 @@ const ProductDetail = () => {
   const [isMatingPayment, setIsMatingPayment] = useState(false);
 
   // New UI states
-  const [selectedColor, setSelectedColor] = useState<number>(0);
-  const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [selectedColor, setSelectedColor] = useState<number | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'shipping'>('specs');
 
   // Check initial state & Track View
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (user && product.id) {
       checkIsFavorite(user.uid, product.id).then(setIsSaved);
       checkHasAlert(user.uid, product.id).then(setHasAlert);
@@ -345,6 +347,15 @@ const ProductDetail = () => {
       return;
     }
 
+    if (product.color && (Array.isArray(product.color) ? product.color.length > 0 : true) && selectedColor === null) {
+      notify({ type: 'warning', title: 'Selecciona un Color', message: 'Por favor seleccioná un color para continuar.', icon: 'palette' });
+      return;
+    }
+    if (product.size && (Array.isArray(product.size) ? product.size.length > 0 : true) && selectedSize === null) {
+      notify({ type: 'warning', title: 'Selecciona un Talle', message: 'Por favor seleccioná un talle para continuar.', icon: 'straighten' });
+      return;
+    }
+
     // Redirigir al Checkout con la información del producto
     navigate('/checkout', {
       state: {
@@ -356,7 +367,9 @@ const ProductDetail = () => {
         sellerName: product.seller.displayName || product.seller.name,
         deliveryMethods: product.deliveryMethods,
         condition: product.condition,
-        productQuantity: quantity
+        productQuantity: quantity,
+        selectedColor: selectedColor !== null ? (Array.isArray(product.color) ? product.color[selectedColor] : product.color) : null,
+        selectedSize: selectedSize
       }
     });
   };
@@ -366,6 +379,15 @@ const ProductDetail = () => {
       notify({ type: 'error', title: 'Operación inválida', message: 'No podés agregar tu propio producto al carrito.', icon: 'block' });
       return;
     }
+    if (product.color && (Array.isArray(product.color) ? product.color.length > 0 : true) && selectedColor === null) {
+      notify({ type: 'warning', title: 'Selecciona un Color', message: 'Por favor seleccioná un color para continuar.', icon: 'palette' });
+      return;
+    }
+    if (product.size && (Array.isArray(product.size) ? product.size.length > 0 : true) && selectedSize === null) {
+      notify({ type: 'warning', title: 'Selecciona un Talle', message: 'Por favor seleccioná un talle para continuar.', icon: 'straighten' });
+      return;
+    }
+
     addToCart({
       id: product.id,
       title: product.title,
@@ -373,7 +395,9 @@ const ProductDetail = () => {
       image: product.images?.[0],
       quantity: quantity,
       sellerId: product.seller.id,
-      sellerName: product.seller.displayName || product.seller.name
+      sellerName: product.seller.displayName || product.seller.name,
+      selectedColor: selectedColor !== null ? (Array.isArray(product.color) ? product.color[selectedColor] : product.color) : null,
+      selectedSize: selectedSize
     });
   };
 
@@ -405,7 +429,7 @@ const ProductDetail = () => {
   };
 
   return (
-    <main className="max-w-[1280px] mx-auto px-3 py-3 lg:px-6 lg:py-6 bg-background min-h-screen font-body">
+    <main className="max-w-[1280px] mx-auto px-0 md:px-3 lg:px-6 py-0 md:py-3 lg:py-6 bg-background min-h-screen font-body relative pb-24 md:pb-0">
       <Helmet>
         <title>{`${product.seoTitle || product.title} | Vendelo Hoy!`}</title>
         <meta name="description" content={product.seoDescription || product.description.substring(0, 150) + '...'} />
@@ -417,6 +441,8 @@ const ProductDetail = () => {
           {JSON.stringify(getJsonLd())}
         </script>
       </Helmet>
+
+      <MobileHeader variant="product" />
 
       <SizeGuideModal isOpen={isSizeGuideOpen} onClose={() => setIsSizeGuideOpen(false)} />
 
@@ -585,8 +611,8 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Purchase Actions */}
-            <div className="flex flex-col gap-3 mb-4">
+            {/* Purchase Actions (Desktop Only) */}
+            <div className="hidden md:flex flex-col gap-3 mb-4">
               <div className="flex gap-3">
                 {preferenceId ? (
                   <div className="flex-1 animate-in zoom-in-95 duration-300">
@@ -786,7 +812,28 @@ const ProductDetail = () => {
         <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter mb-8">Te podría interesar</h2>
         
         {/* We use QuestionsSection here temporarily or replace it entirely. Let's keep it clean */}
-        <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
+        <div className="px-4 md:px-0">
+          <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
+        </div>
+      </div>
+
+      {/* MOBILE FIXED BOTTOM ACTION BAR */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface border-t border-outline-variant/30 px-4 py-3 pb-safe flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <button
+          onClick={handleContactSeller}
+          className="flex-1 max-w-[120px] bg-surface-container text-on-surface py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border border-outline-variant/50 active:scale-95 transition-transform"
+        >
+          <span className="material-symbols-outlined text-lg">chat_bubble</span>
+          Chat
+        </button>
+        <button
+          onClick={handleBuyNow}
+          disabled={isMatingPayment || product.status !== 'AVAILABLE'}
+          className="flex-1 bg-primary text-on-primary py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-premium active:scale-95 transition-transform disabled:opacity-50"
+        >
+          <span className="material-symbols-outlined text-lg">{isMatingPayment ? 'sync' : 'shopping_bag'}</span>
+          {isMatingPayment ? 'Procesando' : product.status !== 'AVAILABLE' ? 'No disponible' : 'Comprar Ahora'}
+        </button>
       </div>
 
     </main>

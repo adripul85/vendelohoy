@@ -75,8 +75,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                 className={`flex flex-col h-full ${isSold ? 'cursor-default' : ''}`}
                 onPointerDown={(e) => isSold && e.preventDefault()}
             >
-                {/* Image Container: Square aspect ratio makes product photos larger and fuller */}
-                <div className="aspect-square bg-surface-container-low relative overflow-hidden">
+                {/* Image Container: 4:3 aspect ratio on mobile makes product photos more compact, square on desktop */}
+                <div className="aspect-[4/3] md:aspect-square bg-surface-container-low relative overflow-hidden">
                     <img
                         src={product.images?.[0] || 'https://picsum.photos/400/400?tech'}
                         alt={product.title}
@@ -119,7 +119,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                     )}
                 </div>
 
-                <div className="p-4 sm:p-5 flex flex-col flex-1 space-y-3">
+                <div className="p-3 md:p-4 sm:p-5 flex flex-col flex-1 space-y-2 md:space-y-3">
                     <div className="flex flex-col">
                         <span className="text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-1">
                             {product.category || 'Selección'}

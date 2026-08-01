@@ -43,37 +43,7 @@ const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onSelect }) =>
                 </div>
             </div>
 
-            {/* MODO */}
-            <div
-                onClick={() => onSelect('MODO')}
-                className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 hover:shadow-md ${selectedMethod === 'MODO'
-                    ? 'border-emerald-600 bg-emerald-50/50'
-                    : 'border-border-light bg-white hover:border-gray-300'
-                    }`}
-            >
-                <div className="size-10 rounded-full bg-white border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden p-0.5">
-                    <img
-                        src="https://www.modo.com.ar/brand/MODO_Brand_Assets-Isologo_Vert-Green.png"
-                        alt="MODO"
-                        className="w-full h-full object-contain"
-                    />
-                </div>
-                <div className="flex-1">
-                    <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-dark-charcoal text-sm">MODO</h4>
-                            <span className="text-[7px] font-black uppercase tracking-[0.2em] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[10px]">verified_user</span>
-                                Protegido
-                            </span>
-                        </div>
-                        {selectedMethod === 'MODO' && <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>}
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                        Paga con QR usando tu app bancaria o billetera favorita. Sin comisiones extra.
-                    </p>
-                </div>
-            </div>
+
 
             {/* Transferencia */}
             <div

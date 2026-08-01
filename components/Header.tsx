@@ -189,6 +189,12 @@ const Header = () => {
         }
     }, [isFavMenuOpen, isNotifOpen, isUserMenuOpen]);
 
+    useEffect(() => {
+        const handleOpenMenu = () => setIsMobileMenuOpen(true);
+        window.addEventListener('open-mobile-menu', handleOpenMenu);
+        return () => window.removeEventListener('open-mobile-menu', handleOpenMenu);
+    }, []);
+
     const handleSearch = (e?: React.FormEvent, term?: string) => {
         if (e) e.preventDefault();
         const finalTerm = (term || searchTerm).trim();
@@ -200,7 +206,7 @@ const Header = () => {
     };
 
     return (
-        <header className="sticky top-0 z-50 w-full glass font-sans">
+        <header className="hidden md:block sticky top-0 z-50 w-full glass font-sans">
             {user && !user.emailVerified && (
                 <div className="bg-amber-100 text-amber-900 px-4 py-2 text-center text-xs font-bold border-b border-amber-200 flex items-center justify-center gap-4 flex-wrap">
                     <span className="material-symbols-outlined text-sm">mark_email_unread</span>

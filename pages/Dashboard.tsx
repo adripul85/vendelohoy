@@ -469,7 +469,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex bg-surface-container-lowest p-2 rounded-[24px] border border-outline-variant/50 shadow-premium">
+          <div className="flex overflow-x-auto snap-x scrollbar-hide bg-surface-container-lowest p-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0">
             {[
               { id: 'publicaciones', label: 'Publicaciones', icon: 'inventory_2' },
               { id: 'compras', label: 'Compras', icon: 'shopping_bag' },
@@ -480,7 +480,7 @@ export default function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => tab.action ? tab.action() : setActiveTab(tab.id as any)}
-                className={`px-8 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-3 ${activeTab === tab.id
+                className={`snap-start shrink-0 px-6 md:px-8 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-3 ${activeTab === tab.id
                   ? 'bg-primary text-on-primary shadow-xl translate-y-[-2px]'
                   : 'text-on-surface-variant hover:text-on-surface'
                   }`}
@@ -571,6 +571,16 @@ export default function Dashboard() {
                         if (!dayActivities.has(d)) dayActivities.set(d, []);
                         dayActivities.get(d)!.push({ type: t.type === 'compra' ? 'Compra' : 'Venta', detail: t.itemTitle || 'Producto' });
                       }
+                      
+                      if (t.status === 'CANCELLED' && t.updatedAt) {
+                        const cancelDate = t.updatedAt?.toDate ? t.updatedAt.toDate() : new Date(t.updatedAt);
+                        if (cancelDate.getMonth() === today.getMonth() && cancelDate.getFullYear() === today.getFullYear()) {
+                          const cd = cancelDate.getDate();
+                          activityDays.add(cd);
+                          if (!dayActivities.has(cd)) dayActivities.set(cd, []);
+                          dayActivities.get(cd)!.push({ type: 'Cancelación', detail: t.itemTitle || 'Producto' });
+                        }
+                      }
                     });
                     userItems.forEach(item => {
                       const date = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
@@ -615,7 +625,7 @@ export default function Dashboard() {
                                   <ul className="space-y-1.5 text-left text-[10px] font-bold">
                                     {activities.slice(0, 4).map((act, idx) => (
                                       <li key={idx} className="truncate">
-                                        <span className={`mr-1.5 ${act.type === 'Compra' ? 'text-secondary' : act.type === 'Venta' ? 'text-emerald-400' : 'text-amber-400'}`}>[{act.type}]</span>
+                                        <span className={`mr-1.5 ${act.type === 'Compra' ? 'text-secondary' : act.type === 'Venta' ? 'text-emerald-400' : act.type === 'Cancelación' ? 'text-rose-500' : 'text-amber-400'}`}>[{act.type}]</span>
                                         <span className="text-outline-variant">{act.detail}</span>
                                       </li>
                                     ))}

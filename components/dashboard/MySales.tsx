@@ -100,6 +100,13 @@ export default function MySales({
                                         ID #{order.id.slice(-6).toUpperCase()}
                                     </span>
                                     <h3 className="text-lg font-black text-on-surface leading-tight line-clamp-2">{order.itemTitle}</h3>
+                                    {(order.selectedColor || order.selectedSize) && (
+                                        <div className="flex gap-2 text-[10px] font-bold text-on-surface-variant uppercase bg-surface-container-low px-2 py-1 rounded w-fit">
+                                            {order.selectedColor && <span>Color: <span className="text-primary">{order.selectedColor}</span></span>}
+                                            {order.selectedColor && order.selectedSize && <span>|</span>}
+                                            {order.selectedSize && <span>Talle: <span className="text-primary">{order.selectedSize}</span></span>}
+                                        </div>
+                                    )}
                                     <p className="text-2xl font-black text-on-surface tracking-tighter">${(order.amountProduct || order.amount)?.toLocaleString('es-AR')}</p>
                                     <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{formatDate(order.createdAt)}</p>
                                 </div>

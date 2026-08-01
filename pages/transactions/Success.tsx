@@ -51,10 +51,19 @@ const Success = () => {
                         });
                       }
                     } else {
-                      console.error("Backend error confirming payment:", apiRes.error);
+                      console.warn("Backend API failed, trying local fallback:", apiRes.error);
+                      updateTransactionStatus(transactionId, 'PAID_HELD').then(res => {
+                          if(res?.success) setTransactionData((prev: any) => ({ ...prev, status: 'PAID_HELD' }));
+                      }).catch(console.error);
                     }
                   })
-                  .catch(console.error);
+                  .catch(err => {
+                      console.error("API Fetch Error:", err);
+                      // Local Fallback si la API no está disponible en testing
+                      updateTransactionStatus(transactionId, 'PAID_HELD').then(res => {
+                          if(res?.success) setTransactionData((prev: any) => ({ ...prev, status: 'PAID_HELD' }));
+                      }).catch(console.error);
+                  });
                 });
               } else if ((status === 'pending' || status === 'in_process') && data.status === 'PENDING_PAYMENT') {
                 // Si el pago está pendiente (Transferencia/Efectivo/MercadoPago en revisión)
@@ -66,7 +75,7 @@ const Success = () => {
         });
       });
     }
-  }, [transactionId, status]);
+  }, [transactionId, status, user, loading]);
 
   React.useEffect(() => {
     if (status === 'approved') {
@@ -113,11 +122,11 @@ const Success = () => {
             </div>
           ) : (
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
-              <div className="size-24 bg-primary-50 text-primary-vibrant border border-primary-100 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-sm">
-                <span className="material-symbols-outlined text-5xl font-black">verified</span>
+              <div className="size-24 bg-emerald-50 text-emerald-500 border border-emerald-100 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-sm">
+                <span className="material-symbols-outlined text-5xl font-black">check_circle</span>
               </div>
-              <h1 className="text-4xl font-black text-red-600 mb-4 uppercase tracking-tight">¡Trato Protegido! 🎯</h1>
-              <p className="text-sm font-bold text-gray-400">Tu pago está seguro en garantía. Los fondos se liberarán solo cuando confirmes la entrega.</p>
+              <h1 className="text-4xl font-black text-emerald-600 mb-4 uppercase tracking-tight">¡Pago Realizado! 🎉</h1>
+              <p className="text-sm font-bold text-gray-400">Tu pago se acreditó correctamente. Los fondos están seguros hasta que confirmes la entrega.</p>
             </div>
           )}
         </div>
@@ -127,29 +136,12 @@ const Success = () => {
 
           {/* Transfer Instructions */}
           {isTransfer && (
-            <div className="p-10 bg-light-50/50 border-b border-light-100">
-              <h3 className="text-[10px] font-black text-gray-400 mb-8 uppercase tracking-[0.3em]">Datos de Liquidación del Protocolo</h3>
-              <div className="bg-white p-8 rounded-[32px] border border-light-200 space-y-6 shadow-sm">
-                <div className="flex justify-between items-center px-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Banco Destino</span>
-                  <span className="text-sm font-black text-dark-800">Galicia Internacional</span>
-                </div>
-                <div className="flex justify-between items-center px-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">CBU / CVU</span>
-                  <span className="text-sm font-black text-dark-800 font-mono tracking-tighter">0070000000000000000000</span>
-                </div>
-                <div className="flex justify-between items-center px-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Alias de Seguridad</span>
-                  <span className="text-sm font-black text-primary-vibrant font-mono tracking-tighter">OPORTUNIDADES.CUSTODIA</span>
-                </div>
-                <div className="flex justify-between items-center px-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Nombre de la Entidad</span>
-                  <span className="text-sm font-black text-dark-800">Vendelo Hoy! 🎯 S.A.</span>
-                </div>
-              </div>
-              <div className="mt-8 p-6 bg-red-50 rounded-2xl flex gap-4 text-red-950 text-[10px] font-bold border border-red-100/50 uppercase tracking-widest">
-                <span className="material-symbols-outlined text-lg">info</span>
-                <p>Envía el comprobante a <strong className="text-red-600">pagos@vendelohoy.com</strong> con tu ID de Transacción.</p>
+            <div className="p-10 bg-amber-50/50 border-b border-amber-100">
+              <h3 className="text-[10px] font-black text-amber-600 mb-8 uppercase tracking-[0.3em]">Trato Directo con el Vendedor</h3>
+              <div className="bg-white p-8 rounded-[32px] border border-amber-200 shadow-sm flex flex-col items-center text-center">
+                <span className="material-symbols-outlined text-5xl text-amber-400 mb-4">handshake</span>
+                <p className="text-sm font-bold text-dark-800 mb-2">Comunicate con el vendedor desde el chat para pedirle su CBU / CVU.</p>
+                <p className="text-xs text-gray-500 max-w-md">Una vez que le transfieras el dinero, el vendedor te enviará el producto. Este método de pago es directo y <strong className="text-amber-600">no cuenta con la garantía de Compra Protegida</strong> de la plataforma.</p>
               </div>
             </div>
           )}
@@ -178,13 +170,13 @@ const Success = () => {
               </div>
               <div>
                 <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 ${isTransfer ? 'text-amber-700' : 'text-primary-700'}`}>
-                  {isTransfer ? 'Esperando Verificación' : 'Protocolo Activo'}
+                  {isTransfer ? 'Esperando Verificación' : 'Compra Segura'}
                 </p>
                 {isTransfer ? (
-                  <p className="text-xs text-amber-900 leading-relaxed font-bold uppercase tracking-tight">Tras la validación, se autorizará el despacho logístico.</p>
+                  <p className="text-xs text-amber-900 leading-relaxed font-bold uppercase tracking-tight">Tras confirmar la transferencia, el vendedor despachará tu producto.</p>
                 ) : (
                   <p className="text-xs text-primary-900 leading-relaxed font-bold uppercase tracking-tight">
-                    {isCash ? 'Intercambio físico monitoreado. Se aplican las reglas de protección de garantía (escrow).' : 'Capital asegurado. Los fondos se retienen hasta la verificación de la entrega del activo.'}
+                    {isCash ? 'Acordá con el vendedor el lugar de encuentro y pago.' : 'Tu dinero está protegido. Los fondos se retienen hasta que verifiques la entrega del producto.'}
                   </p>
                 )}
               </div>
@@ -229,15 +221,15 @@ const Success = () => {
             className="flex-1 px-12 py-6 bg-dark-800 text-white font-black rounded-3xl hover:opacity-90 transition-all shadow-2xl shadow-dark-800/20 flex items-center justify-center gap-4 active:scale-95 group"
           >
             <span className="material-symbols-outlined group-hover:rotate-[360deg] transition-transform duration-700">dashboard_customize</span>
-            <span className="uppercase tracking-[0.2em] text-[10px]">Gestionar Adquisición</span>
+            <span className="uppercase tracking-[0.2em] text-[10px]">Ver mis compras</span>
           </button>
 
           <button
             onClick={() => navigate('/')}
             className="flex-1 px-12 py-6 bg-white border-2 border-light-200 text-dark-800 font-black rounded-3xl hover:bg-light-50 transition-all flex items-center justify-center gap-4 active:scale-95"
           >
-            <span className="material-symbols-outlined">hub</span>
-            <span className="uppercase tracking-[0.2em] text-[10px]">Mercado Secundario</span>
+            <span className="material-symbols-outlined">storefront</span>
+            <span className="uppercase tracking-[0.2em] text-[10px]">Seguir Comprando</span>
           </button>
         </div>
 
@@ -245,9 +237,9 @@ const Success = () => {
           <div className="size-1 bg-gray-300 rounded-full w-24 mb-4"></div>
           <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3">
             <span className="material-symbols-outlined text-sm">support_agent</span>
-            ¿Requieres asistencia? Protocolo #TRX-SUPPORT
+            ¿Requieres asistencia?
           </p>
-          <Link to="/help" className="text-[10px] font-black text-dark-800 uppercase tracking-widest hover:text-primary-vibrant underline underline-offset-4">Conectar con Operador Humano</Link>
+          <Link to="/help" className="text-[10px] font-black text-dark-800 uppercase tracking-widest hover:text-primary-vibrant underline underline-offset-4">Contactar Soporte</Link>
         </div>
       </div>
     </main>

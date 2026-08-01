@@ -8,11 +8,15 @@ export const BottomNav = () => {
 
     const navItems = [
         { path: '/', icon: 'home', label: 'Inicio' },
-        { path: '/favorites', icon: 'favorite', label: 'Favoritos' },
-        { path: '/publish', icon: 'add_circle', label: 'Vender', isPrimary: true },
-        { path: '/cart', icon: 'shopping_cart', label: 'Carrito', badge: cart.length },
-        { path: '/dashboard', icon: 'person', label: 'Mi Perfil' },
+        { path: '/search', icon: 'search', label: 'Buscar' },
+        { path: '/publish', icon: 'add', label: 'Publicar', isPrimary: true },
+        { path: '/dashboard', icon: 'notifications', label: 'Avisos' }, // Usamos dashboard/notificaciones temporalmente
+        { path: '/dashboard', icon: 'person', label: 'Perfil' },
     ];
+
+    if (location.pathname.startsWith('/product/')) {
+        return null;
+    }
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 w-full z-[100] bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 pb-safe">
@@ -23,21 +27,21 @@ export const BottomNav = () => {
                     if (item.isPrimary) {
                         return (
                             <Link 
-                                key={item.path} 
+                                key={item.label} 
                                 to={item.path}
-                                className="flex-1 flex flex-col items-center justify-center -translate-y-4"
+                                className="flex-[1.2] flex flex-col items-center justify-end pb-2 relative z-10"
                             >
-                                <div className="bg-primary text-on-primary size-14 rounded-full flex items-center justify-center shadow-premium border-4 border-surface transform transition-transform active:scale-95">
-                                    <span className="material-symbols-outlined text-3xl font-black">{item.icon}</span>
+                                <div className="absolute bottom-6 bg-primary text-on-primary size-16 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-[6px] border-surface transform transition-transform active:scale-95">
+                                    <span className="material-symbols-outlined text-4xl font-light">{item.icon}</span>
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">{item.label}</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-primary mt-12">{item.label}</span>
                             </Link>
                         );
                     }
 
                     return (
                         <Link 
-                            key={item.path} 
+                            key={item.label} 
                             to={item.path}
                             onClick={(e) => {
                                 if (item.path === '/' && window.location.pathname === '/') {

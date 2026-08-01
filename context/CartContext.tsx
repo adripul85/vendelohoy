@@ -9,6 +9,9 @@ export interface CartItem {
     image: string;
     sellerId: string;
     sellerName: string;
+    quantity?: number;
+    selectedColor?: string | null;
+    selectedSize?: string | null;
 }
 
 interface CartContextType {

@@ -103,7 +103,14 @@ export default function MyPurchases({ purchases, formatDate, onConfirmReceipt, o
                                         <p className="text-2xl font-black text-on-surface tracking-tighter">${(order.amountTotal || order.total)?.toLocaleString('es-AR')}</p>
                                     </div>
                                     <h3 className="text-xl font-black text-on-surface leading-tight group-hover:text-primary transition-colors">{order.itemTitle}</h3>
-                                    <div className="flex items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                                    {(order.selectedColor || order.selectedSize) && (
+                                        <div className="flex gap-2 text-[10px] font-bold text-on-surface-variant uppercase bg-surface-container-low px-2 py-1 rounded w-fit">
+                                            {order.selectedColor && <span>Color: <span className="text-primary">{order.selectedColor}</span></span>}
+                                            {order.selectedColor && order.selectedSize && <span>|</span>}
+                                            {order.selectedSize && <span>Talle: <span className="text-primary">{order.selectedSize}</span></span>}
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-2">
                                         <span>Fecha: {formatDate(order.createdAt)}</span>
                                         <span className="size-1 bg-gray-200 rounded-full"></span>
                                         <span className={`flex items-center gap-1 px-3 py-1 rounded-full border border-current shadow-sm ${statusColor}`}>

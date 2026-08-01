@@ -57,7 +57,6 @@ export default function Checkout() {
   const productQuantity = state.productQuantity || (isCartMode ? cart.length : 1);
 
   const [isDeleted, setIsDeleted] = useState(false);
-  const [showModoModal, setShowModoModal] = useState(false);
   const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(resumedTxId || null);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
@@ -179,8 +178,8 @@ export default function Checkout() {
   const escrowFeePercentage = platformSettings?.escrowFeePercentage ?? 0.05;
   const gatewayFeePercentage = platformSettings?.paymentProcessingFeePercentage ?? 0.06;
 
-  // El Pago Protegido solo aplica a medios digitales (MP / MODO)
-  const isDigitalPayment = selectedMethod === 'MERCADO_PAGO' || selectedMethod === 'MODO';
+  // El Pago Protegido solo aplica a medios digitales (MP)
+  const isDigitalPayment = selectedMethod === 'MERCADO_PAGO';
 
   const protectionFee = isDigitalPayment
     ? (platformSettings?.useFixedPagoProtegidoFee
@@ -350,21 +349,12 @@ export default function Checkout() {
         return;
       }
 
-    } else if (selectedMethod === 'MODO') {
-      setCurrentTransactionId(transactionId);
-      setShowModoModal(true);
-      setLoading(false);
-      return;
     } else {
       navigate(`/success?collection_status=pending&external_reference=${transactionId}&payment_method=${selectedMethod}`);
     }
   };
 
-  const confirmModoPayment = () => {
-    if (currentTransactionId) {
-      navigate(`/success?collection_status=approved&external_reference=${currentTransactionId}&payment_type=modo`);
-    }
-  };
+
 
   return (
     <>
@@ -403,6 +393,13 @@ export default function Checkout() {
                   <div className="relative z-10">
                     <p className="text-primary text-[9px] uppercase font-black tracking-[0.4em] mb-2">Protocolo de Adquisición</p>
                     <h2 className="text-2xl font-black tracking-tight capitalize line-clamp-2 leading-tight">{productTitle}</h2>
+                    {(state.selectedColor || state.selectedSize) && (
+                        <div className="flex gap-2 text-[10px] font-bold text-white/80 uppercase mt-2">
+                            {state.selectedColor && <span>Color: <span className="text-white">{state.selectedColor}</span></span>}
+                            {state.selectedColor && state.selectedSize && <span>|</span>}
+                            {state.selectedSize && <span>Talle: <span className="text-white">{state.selectedSize}</span></span>}
+                        </div>
+                    )}
                   </div>
                 </div>
 
@@ -703,8 +700,7 @@ export default function Checkout() {
                       <span className="material-symbols-outlined font-black text-base">verified_user</span>
                       <span className="uppercase tracking-[0.2em]">
                         {selectedMethod === 'MERCADO_PAGO' ? 'Autorizar Pago MP' :
-                          selectedMethod === 'TRANSFER' ? 'Confirmar Transferencia' :
-                            selectedMethod === 'MODO' ? 'Pagar con MODO' : 'Finalizar Adquisición'}
+                            'Finalizar Adquisición'}
                       </span>
                     </>
                   )}
@@ -714,66 +710,6 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-
-      {/* MODO QR MODAL */}
-      {showModoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-inverse-surface/80 backdrop-blur-sm" onClick={() => setShowModoModal(false)}></div>
-          <div className="bg-surface-container-lowest rounded-3xl p-8 max-w-sm w-full relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            <button
-              onClick={() => setShowModoModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-
-            <div className="text-center mb-8">
-              <img
-                src="https://www.modo.com.ar/brand/MODO_Brand_Assets-Isologo_Vert-Green.png"
-                alt="MODO"
-                className="h-12 mx-auto mb-4 object-contain"
-              />
-              <h3 className="text-xl font-black text-on-surface">Escanea para Pagar</h3>
-              <p className="text-xs text-on-surface-variant font-bold mt-2">Usa tu App Bancaria o MODO</p>
-            </div>
-
-            <div className="bg-surface-container-lowest p-4 rounded-xl border-2 border-dashed border-emerald-500/30 mb-8 flex justify-center relative group">
-              <div className="absolute inset-0 bg-emerald-500/5 animate-pulse rounded-xl pointer-events-none"></div>
-              <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://modo.com.ar"
-                alt="QR MODO"
-                className="size-48 mix-blend-multiply"
-              />
-              {discountInfo?.couponId && (
-                <div className="absolute top-2 right-2 bg-emerald-500 text-on-primary text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm z-20">
-                  CUPÓN APLICADO
-                </div>
-              )}
-              <div className="absolute bottom-2 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full border border-emerald-100 shadow-sm">
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
-                  <span className="size-1.5 bg-emerald-500 rounded-full animate-bounce"></span>
-                  Esperando pago...
-                </span>
-              </div>
-            </div>
-
-            <div className="text-center space-y-3">
-              <p className="text-2xl font-black text-on-surface">$ {total.toLocaleString()}</p>
-
-              <button
-                onClick={confirmModoPayment}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
-              >
-                Simular Pago Aprobado
-              </button>
-
-              <p className="text-[9px] text-on-surface-variant font-bold max-w-[200px] mx-auto pt-2">
-                Al escanear aceptas los términos y condiciones de MODO.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

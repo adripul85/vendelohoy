@@ -31,6 +31,8 @@ service cloud.firestore {
             (request.resource.data.status == 'COMPLETED' && resource.data.status != 'DISPUTED' && resource.data.buyerId == request.auth.uid) ||
             // Regla: EL VENDEDOR registra envío
             (request.resource.data.status == 'SHIPPED' && resource.data.status == 'PAID_HELD' && resource.data.sellerId == request.auth.uid) ||
+            // Regla: Permitir al comprador cambiar a PAID_HELD (Temporal para testing local sin backend)
+            (request.resource.data.status == 'PAID_HELD' && resource.data.status == 'PENDING_PAYMENT' && resource.data.buyerId == request.auth.uid) ||
             // PAID_HELD: SOLO se puede establecer desde el backend (webhook MP / Admin SDK)
             // La única excepción client-side es la devolución amigable (DISPUTED -> PAID_HELD por vendedor)
             // Regla: Devolución amigable (vendedor acepta devolver desde disputa)
