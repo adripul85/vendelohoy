@@ -765,7 +765,7 @@ const ProductDetail = () => {
                         'correo_argentino': { label: 'Correo Argentino (A todo el país)', icon: 'local_shipping' },
                         'en_mano': { label: 'Retiro en persona', icon: 'handshake' },
                         'acordar': { label: 'Acordar con vendedor', icon: 'chat' },
-                        'domicilio': { label: 'Envío a domicilio (Local)', icon: 'home' }
+                        'domicilio': { label: 'App de Transporte (Uber/Didi/Cabify)', icon: 'local_taxi' }
                       };
                       const method = methodMap[m] || { label: m, icon: 'package' };
                       return (

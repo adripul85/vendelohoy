@@ -550,7 +550,7 @@ export default function Checkout() {
                     { id: 'correo_argentino', label: 'Correo Argentino', icon: 'local_shipping', sub: 'Servicio postal' },
                     { id: 'en_mano', label: 'En mano', icon: 'handshake', sub: 'En persona' },
                     { id: 'acordar', label: 'Acordar', icon: 'chat', sub: 'Con vendedor' },
-                    { id: 'domicilio', label: 'Domicilio', icon: 'home', sub: 'Puerta a puerta' }
+                    { id: 'domicilio', label: 'App de Transporte', icon: 'local_taxi', sub: 'Uber / Didi / Cabify' }
                   ].filter(m => (resumedTxData?.deliveryMethods || productDeliveryMethods || state.deliveryMethods || ['en_mano']).includes(m.id))
                     .map((method) => (
                       <div

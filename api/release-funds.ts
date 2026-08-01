@@ -141,10 +141,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const sellerProceeds = baseSellerProceeds - totalCommissions;
         const platformRevenue = basePlatformRevenue + totalCommissions;
 
-        // A. Pay Seller
+        // A. Pay Seller (DIRECT TRANSFER MODEL)
+        // Se descuenta del Escrow y se genera la orden de pago directa al CBU
         batch.update(sellerRef, {
-            "wallet.available": FieldValue.increment(sellerProceeds),
             "wallet.inEscrow": FieldValue.increment(-baseSellerProceeds)
+        });
+
+        const payoutRef = adminDb.collection('payouts').doc();
+        batch.set(payoutRef, {
+            sellerId: data.sellerId,
+            transactionId: transactionId,
+            amount: sellerProceeds,
+            status: 'PROCESSING',
+            method: 'DIRECT_TRANSFER',
+            bankDetails: sellerData.bankDetails || {},
+            timestamp: FieldValue.serverTimestamp()
         });
 
         // B. Pay Admin
@@ -203,11 +214,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const saleLogRef = adminDb.collection('wallet_movements').doc();
         batch.set(saleLogRef, {
             uid: data.sellerId,
-            type: 'SALE_REVENUE',
+            type: 'DIRECT_TRANSFER',
             amount: sellerProceeds,
             referenceId: transactionId,
             itemTitle: data.itemTitle || 'Producto',
-            description: `Ganancia por venta: ${data.itemTitle || 'Producto'}`,
+            description: `Transferencia automática a CBU/CVU por venta: ${data.itemTitle || 'Producto'}`,
             timestamp: FieldValue.serverTimestamp()
         });
 

@@ -487,73 +487,7 @@ export interface Withdrawal {
     updatedAt: any;
 }
 
-/**
- * Handle fund withdrawal request
- */
-export const withdrawFunds = async (uid: string, amount: number, bankDetails: UserProfile['bankDetails']) => {
-    try {
-        const { runTransaction } = await import("firebase/firestore");
-        
-        if (!bankDetails?.cbu) {
-            return { success: false, error: 'CBU no proporcionado.' };
-        }
 
-        // Validación estricta de CBU en backend
-        const { validateCbuChecksum } = await import('./banking');
-        // Check if it's 22 digits to avoid checking ALIAS format incorrectly. Wait, banking.ts supports aliases too? No, validateCbuChecksum is only for 22 digits.
-        if (/^\d{22}$/.test(bankDetails.cbu.trim()) && !validateCbuChecksum(bankDetails.cbu.trim())) {
-            return { success: false, error: 'El CBU/CVU ingresado es inválido según su suma de verificación.' };
-        }
-
-        let withdrawalId = '';
-
-        await runTransaction(db, async (transaction) => {
-            const userRef = doc(db, "users", uid);
-            const userDoc = await transaction.get(userRef);
-            
-            if (!userDoc.exists()) {
-                throw new Error('Usuario no encontrado.');
-            }
-            
-            const userData = userDoc.data() as UserProfile;
-            
-            // 1. Validar KYC
-            if (userData.trustLevel === 'Bajo' || !userData.trustLevel) {
-                throw new Error('REQUIRE_KYC');
-            }
-
-            // 2. Validar Fondos
-            const currentAvailable = userData.wallet?.available || 0;
-            if (currentAvailable < amount) {
-                throw new Error('Fondos insuficientes.');
-            }
-
-            // 3. Crear registro de retiro
-            const withdrawalRef = doc(collection(db, "withdrawals"));
-            withdrawalId = withdrawalRef.id;
-            
-            transaction.set(withdrawalRef, {
-                uid,
-                amount,
-                bankDetails,
-                status: 'pending',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-
-            // 4. Deducir fondos
-            transaction.update(userRef, {
-                "wallet.available": currentAvailable - amount,
-                "wallet.lastUpdated": serverTimestamp()
-            });
-        });
-
-        return { success: true, id: withdrawalId };
-    } catch (error: any) {
-        console.error("Error withdrawing funds:", error);
-        return { success: false, error: error.message };
-    }
-};
 
 /**
  * Fetch top sellers based on reputation

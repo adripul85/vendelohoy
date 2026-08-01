@@ -109,8 +109,7 @@ const Wallet = () => {
     return data.map(val => ({ value: val, height: Math.max((val / maxVal) * 100, 10) }));
   }, [movements]);
 
-  // Bank & Withdrawal Logic
-  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  // Bank Logic
   const [showBankModal, setShowBankModal] = useState(false);
   const [bankForm, setBankForm] = useState({
     cbu: userProfile?.bankDetails?.cbu || '',
@@ -172,65 +171,7 @@ const Wallet = () => {
     }
   };
 
-  const [processingWithdrawal, setProcessingWithdrawal] = useState(false);
 
-  const handleWithdrawal = async () => {
-    const amount = parseFloat(withdrawalAmount);
-    if (isNaN(amount) || amount < 1000) {
-      await showAlert('Atención', 'El retiro mínimo es de $1,000.', 'warning');
-      return;
-    }
-    if (!user?.emailVerified) {
-      await showAlert('Atención', 'Debes verificar tu correo electrónico antes de retirar fondos. Revisa tu bandeja de entrada o spam.', 'mark_email_unread');
-      return;
-    }
-    if (amount > wallet.available) {
-      await showAlert('Atención', 'Fondos insuficientes.', 'warning');
-      return;
-    }
-    if (!userProfile?.bankDetails?.cbu) {
-      await showAlert('Atención', 'Debes vincular una cuenta bancaria primero.', 'account_balance');
-      setShowBankModal(true);
-      return;
-    }
-    if (userProfile?.trustLevel === 'Bajo' || !userProfile?.trustLevel) {
-      await showAlert('Atención', 'Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.', 'policy');
-      navigate('/verification');
-      return;
-    }
-    if (!userProfile?.taxDetails?.cuit) {
-      await showAlert('Atención', 'Debes completar tus datos fiscales (AFIP) en Configuración antes de retirar fondos.', 'receipt_long');
-      navigate('/settings?tab=billing');
-      return;
-    }
-
-    const isConfirmed = await showConfirm(
-      'Confirmar Retiro',
-      `¿Deseas retirar $${amount.toLocaleString()} a la cuenta ${userProfile.bankDetails.bankName}?`,
-      'Retirar',
-      'Cancelar',
-      'payments'
-    );
-    if (isConfirmed) {
-      setProcessingWithdrawal(true);
-      const { withdrawFunds } = await import('../lib/users');
-      const result = await withdrawFunds(user!.uid, amount, userProfile.bankDetails);
-
-      if (result.success) {
-        await showAlert('Solicitud Enviada', 'Los fondos estarán acreditados en 24hs hábiles.', 'check_circle');
-        setWithdrawalAmount('');
-        window.location.reload();
-      } else {
-        if (result.error === 'REQUIRE_KYC') {
-          await showAlert('Verificación Requerida', 'Por normativas financieras, debes verificar tu identidad (DNI) antes de retirar fondos.', 'policy');
-          navigate('/verification');
-        } else {
-          await showAlert('Error', 'Error al procesar el retiro: ' + result.error, 'error');
-        }
-      }
-      setProcessingWithdrawal(false);
-    }
-  };
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-12 pb-24 bg-light-50 min-h-screen">
@@ -383,50 +324,27 @@ const Wallet = () => {
         <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-24 h-fit">
           <div className="bg-white p-10 rounded-4xl border-2 border-dark-800 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 size-20 bg-dark-800/5 -mr-5 -mt-5 rounded-full"></div>
-            <h3 className="text-2xl font-black text-dark-800 mb-10">Retirar Fondos</h3>
-            <div className="space-y-12">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-4 uppercase tracking-widest ml-1">Monto a Transferir</label>
-                <div className="relative">
-                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-dark-800/20 font-black text-2xl">$</span>
-                  <input
-                    value={withdrawalAmount}
-                    onChange={(e) => setWithdrawalAmount(e.target.value)}
-                    type="number"
-                    className="w-full pl-12 pr-8 py-6 bg-light-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-3xl text-3xl font-black text-dark-800 outline-none transition-all placeholder:text-light-200"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-4 px-2">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Retiro Mín.: $1,000</p>
-                  <button onClick={() => setWithdrawalAmount(wallet.available.toString())} className="text-[10px] text-primary-vibrant font-black uppercase tracking-widest hover:underline">Retirar Todo</button>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-light-100">
+            <h3 className="text-2xl font-black text-dark-800 mb-2">Cobros Automáticos</h3>
+            <p className="text-[10px] text-gray-400 font-bold mb-10 leading-relaxed">
+              El dinero de tus ventas se transferirá directamente a esta cuenta.
+            </p>
+            <div className="space-y-6">
+              <div className="pt-4">
                 <label className="block text-[10px] font-black text-gray-400 mb-6 uppercase tracking-widest ml-1">Cuenta de Destino</label>
                 <button
                   onClick={() => setShowBankModal(true)}
-                  className={`w-full py-5 border-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${userProfile?.bankDetails ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'border-dashed border-light-200 text-gray-400 hover:bg-light-50'}`}
+                  className={`w-full py-5 border-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${userProfile?.bankDetails?.cbu ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'border-dashed border-light-200 text-gray-400 hover:bg-light-50'}`}
                 >
                   <span className="material-symbols-outlined text-sm">account_balance</span>
-                  {userProfile?.bankDetails ? `Cuenta: ${userProfile.bankDetails.bankName} (...${userProfile.bankDetails.cbu.slice(-4)})` : 'Vincular Cuenta Bancaria (CBU/CVU)'}
+                  {userProfile?.bankDetails?.cbu ? `Cuenta: ${userProfile.bankDetails.bankName} (...${userProfile.bankDetails.cbu.slice(-4)})` : 'Vincular Cuenta (CBU/CVU)'}
                 </button>
               </div>
 
-              <button
-                onClick={handleWithdrawal}
-                className="w-full bg-dark-800 text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl shadow-dark-800/10 hover:opacity-95 transition-all active:scale-95 flex items-center justify-center gap-3"
-              >
-                <span className="material-symbols-outlined text-lg">bolt</span>
-                Procesar Retiro
-              </button>
-
               <div className="bg-primary-50/50 p-6 rounded-3xl border border-primary-100/50">
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary-vibrant text-xl font-black">shield</span>
+                  <span className="material-symbols-outlined text-primary-vibrant text-xl font-black">autorenew</span>
                   <p className="text-[10px] font-bold text-primary-800/60 leading-relaxed uppercase">
-                    Los retiros se procesan al instante en días hábiles (09:00 - 18:00). Todos los fondos están protegidos por nuestro fondo de garantía de satisfacción.
+                    Cuando el comprador confirma la entrega, el pago se procesa y envía automáticamente. No necesitas solicitar retiros manuales.
                   </p>
                 </div>
               </div>
