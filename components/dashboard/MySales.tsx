@@ -190,7 +190,40 @@ export default function MySales({
                             <div className="flex flex-col gap-3 justify-center min-w-[200px]">
                                 {order.status === 'PAID_HELD' && (
                                     <>
-                                        {shippingTx === order.id ? (
+                                        {order.deliveryMethod === 'domicilio' ? (
+                                            <div className="flex flex-col gap-2">
+                                                <div className="p-2 bg-surface rounded-xl border border-outline-variant/50 text-center">
+                                                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-0.5">Envío On-Demand</p>
+                                                    <p className="text-[10px] font-bold text-on-surface">
+                                                        {order.shippingPaymentMethod === 'pay_now' ? 'Viaje prepagado' : 'Pago en destino'}
+                                                    </p>
+                                                </div>
+                                                <button 
+                                                    onClick={async () => {
+                                                        try {
+                                                            setIsGeneratingLabel(true);
+                                                            const { requestCourier } = await import('../../api/request-courier');
+                                                            await requestCourier(order.id);
+                                                            notify({ type: 'success', title: 'Vehículo Solicitado', message: 'El chofer va en camino.', icon: 'local_taxi' });
+                                                            // Forzar actualización optimista o refresco
+                                                            setTransactions(prev => ({
+                                                                ...prev,
+                                                                ventas: prev.ventas.map(t => t.id === order.id ? { ...t, status: 'SHIPPED', trackingId: 'Pendiente', courier: 'Uber/Cabify' } : t)
+                                                            }));
+                                                        } catch (err: any) {
+                                                            notify({ type: 'error', title: 'Error', message: err.message, icon: 'error' });
+                                                        } finally {
+                                                            setIsGeneratingLabel(false);
+                                                        }
+                                                    }}
+                                                    disabled={isGeneratingLabel}
+                                                    className="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl"
+                                                >
+                                                    <span className={`material-symbols-outlined text-base ${isGeneratingLabel ? 'animate-spin' : ''}`}>{isGeneratingLabel ? 'refresh' : 'local_taxi'}</span>
+                                                    Solicitar Uber/Cabify
+                                                </button>
+                                            </div>
+                                        ) : shippingTx === order.id ? (
                                             <div className="flex flex-col gap-2 p-3 bg-surface rounded-2xl border border-outline-variant/50 animate-in zoom-in-95 duration-200">
                                                 <select
                                                     value={courierInput}

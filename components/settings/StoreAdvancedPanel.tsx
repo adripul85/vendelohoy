@@ -11,9 +11,11 @@ interface StoreAdvancedPanelProps {
     user: UserProfile;
 }
 
-const BuyerCell = ({ buyerId, transaction }: { buyerId: string, transaction: any }) => {
+const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, transaction: any, onStatusChange?: () => void }) => {
     const [buyer, setBuyer] = useState<UserProfile | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isRequestingCourier, setIsRequestingCourier] = useState(false);
+    const { notify } = useNotification();
     useEffect(() => {
         import('../../lib/users').then(({ getUserProfile }) => {
             getUserProfile(buyerId).then(setBuyer);
@@ -54,6 +56,38 @@ const BuyerCell = ({ buyerId, transaction }: { buyerId: string, transaction: any
                                             {transaction.deliveryAddress.zipCode ? ` (CP: ${transaction.deliveryAddress.zipCode})` : ''}
                                         </p>
                                     </div>
+                                )}
+                                {transaction.deliveryMethod === 'domicilio' && (
+                                    <div className="mt-2 p-2 bg-slate-100/80 rounded-xl border border-slate-200">
+                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5 flex items-center gap-1"><span className="material-symbols-outlined text-[12px]">payments</span> Pago del Envío</p>
+                                        <p className="text-xs font-bold text-slate-800">
+                                            {transaction.shippingPaymentMethod === 'pay_now' ? 'Pagado por adelantado' : 'Pago en destino (Se le abona al chofer)'}
+                                        </p>
+                                    </div>
+                                )}
+                                {transaction.deliveryMethod === 'domicilio' && !transaction.trackingNumber && transaction.status !== 'CANCELLED' && transaction.status !== 'REFUNDED' && (
+                                    <button 
+                                        type="button"
+                                        disabled={isRequestingCourier}
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            setIsRequestingCourier(true);
+                                            try {
+                                                const { requestCourier } = await import('../../api/request-courier');
+                                                await requestCourier(transaction.id);
+                                                notify({ type: 'success', title: 'Vehículo Solicitado', message: 'El chofer va en camino.', icon: 'local_taxi' });
+                                                if (onStatusChange) onStatusChange();
+                                                setIsModalOpen(false);
+                                            } catch (err: any) {
+                                                notify({ type: 'error', title: 'Error', message: err.message, icon: 'error' });
+                                            }
+                                            setIsRequestingCourier(false);
+                                        }}
+                                        className="w-full mt-3 py-2 bg-black text-white rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors disabled:opacity-50"
+                                    >
+                                        <span className={`material-symbols-outlined text-sm ${isRequestingCourier ? 'animate-spin' : ''}`}>{isRequestingCourier ? 'refresh' : 'local_taxi'}</span>
+                                        {isRequestingCourier ? 'Solicitando...' : 'Solicitar Vehículo (Uber/Cabify)'}
+                                    </button>
                                 )}
                                 {transaction.trackingNumber && <p className="text-[10px] text-slate-500 font-medium mt-1">Tracking: {transaction.trackingNumber}</p>}
                             </div>
@@ -485,6 +519,11 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user }) => {
                                     </div>
                                     <div className="col-span-2 text-center text-xs font-bold text-slate-600">
                                         {sale.createdAt ? format(sale.createdAt.toDate(), 'dd MMM yyyy') : 'N/A'}
+                                        <div className="mt-1">
+                                            {sale.shippingMethod && (
+                                                <span className="block text-[9px] text-indigo-600 font-bold bg-indigo-50 px-1 rounded">{sale.shippingMethod}</span>
+                                            )}
+                                        </div>
                                     </div>
                                     <BuyerCell buyerId={sale.buyerId} transaction={sale} />
                                     <div className="col-span-2 text-right font-bold text-slate-700 text-sm">

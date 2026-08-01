@@ -22,6 +22,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('MERCADO_PAGO');
   const [deliveryMethod, setDeliveryMethod] = useState<'correo_argentino' | 'en_mano' | 'acordar' | 'domicilio'>('en_mano');
+  const [shippingPaymentMethod, setShippingPaymentMethod] = useState<'pay_now' | 'pay_on_delivery'>('pay_on_delivery');
   const [productDeliveryMethods, setProductDeliveryMethods] = useState<string[] | null>(null);
   const [shippingAvailable, setShippingAvailable] = useState<boolean>(true); // Default true until fetched
   const [notes, setNotes] = useState<string>('');
@@ -107,8 +108,6 @@ export default function Checkout() {
           }
           // Si el método es correo, calculamos
           if (deliveryMethod === 'correo_argentino' && deliveryAddress.zipCode.length >= 4) {
-             // sellerZip = item.location (if it has zipcode) or just fetch seller profile? 
-             // for now we simulate calculation
              setIsCalculatingShipping(true);
              import('../../lib/shipping').then(({ calculateShippingCost }) => {
                 // Mock seller zip if not available in item
@@ -121,6 +120,24 @@ export default function Checkout() {
                     setIsCalculatingShipping(false);
                 });
              });
+          } else if (deliveryMethod === 'domicilio') {
+              if (shippingPaymentMethod === 'pay_now' && deliveryAddress.zipCode.length >= 4) {
+                 setIsCalculatingShipping(true);
+                 import('../../lib/shipping').then(({ calculateTransportCost }) => {
+                     import('../../lib/users').then(({ getUserProfile }) => {
+                         getUserProfile(item.sellerId).then(seller => {
+                             const sZip = seller?.location?.zipCode || '2000';
+                             const cost = calculateTransportCost(sZip, deliveryAddress.zipCode);
+                             setTimeout(() => {
+                                 setShippingCost(cost);
+                                 setIsCalculatingShipping(false);
+                             }, 800);
+                         });
+                     });
+                 });
+              } else {
+                  setShippingCost(0);
+              }
           } else {
             setShippingCost(0);
           }
@@ -137,7 +154,7 @@ export default function Checkout() {
 
       return () => { unsubscribePromise.then(unsub => unsub()); };
     }
-  }, [productId, navigate, notify, isResuming, deliveryMethod, deliveryAddress.zipCode]);
+  }, [productId, navigate, notify, isResuming, deliveryMethod, deliveryAddress.zipCode, shippingPaymentMethod]);
 
   if (!productId && !loading) {
     return (
@@ -263,6 +280,7 @@ export default function Checkout() {
         paymentMethod: selectedMethod,
         deliveryMethod: deliveryMethod,
         ...( (deliveryMethod === 'correo_argentino' || deliveryMethod === 'domicilio') ? { deliveryAddress } : {} ),
+        ...( deliveryMethod === 'domicilio' ? { shippingPaymentMethod } : {} ),
         itemImage: resumedTxData?.itemImage || state.productImage || (isCartMode ? cart[0]?.image : null),
         platformFee: protectionFee,
         gatewayFee: gatewayFee,
@@ -659,6 +677,37 @@ export default function Checkout() {
                                       <span className="text-[10px] text-gray-400 font-bold uppercase">A calcular</span>
                                   )
                               )}
+                          </div>
+                      )}
+
+                      {deliveryMethod === 'domicilio' && (
+                          <div className="mt-4 pt-4 border-t border-outline-variant/30">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-1 mb-3">
+                                  <span className="material-symbols-outlined text-sm">payments</span> ¿Cómo abonas el viaje?
+                              </span>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div
+                                      onClick={() => setShippingPaymentMethod('pay_now')}
+                                      className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-all ${shippingPaymentMethod === 'pay_now' ? 'bg-primary-container/30 border-primary-vibrant ring-1 ring-primary-100' : 'bg-surface-container border-outline-variant/50'}`}
+                                  >
+                                      <span className={`text-[10px] font-black uppercase tracking-widest ${shippingPaymentMethod === 'pay_now' ? 'text-on-surface' : 'text-on-surface-variant'}`}>Pagar Ahora</span>
+                                      <span className="text-[8px] font-bold text-on-surface-variant uppercase mt-1">
+                                          {isCalculatingShipping && shippingPaymentMethod === 'pay_now' 
+                                            ? 'Calculando...' 
+                                            : (shippingPaymentMethod === 'pay_now' && shippingCost > 0) 
+                                                ? `Costo calculado: $${shippingCost.toLocaleString('es-AR')}`
+                                                : 'Costo dinámico'
+                                          }
+                                      </span>
+                                  </div>
+                                  <div
+                                      onClick={() => setShippingPaymentMethod('pay_on_delivery')}
+                                      className={`flex flex-col p-3 rounded-xl border cursor-pointer transition-all ${shippingPaymentMethod === 'pay_on_delivery' ? 'bg-primary-container/30 border-primary-vibrant ring-1 ring-primary-100' : 'bg-surface-container border-outline-variant/50'}`}
+                                  >
+                                      <span className={`text-[10px] font-black uppercase tracking-widest ${shippingPaymentMethod === 'pay_on_delivery' ? 'text-on-surface' : 'text-on-surface-variant'}`}>Pago en Destino</span>
+                                      <span className="text-[8px] font-bold text-on-surface-variant uppercase mt-1">Le abonas al chofer al recibir</span>
+                                  </div>
+                              </div>
                           </div>
                       )}
                   </div>

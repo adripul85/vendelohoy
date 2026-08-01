@@ -108,7 +108,7 @@ export const generateShippingLabel = async (
         console.warn("Generando etiqueta simulada de contingencia.");
         return {
             trackingNumber: `AR${Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')}CA_MOCK`,
-            labelUrl: `https://mock.correoargentino.com.ar/labels/error-fallback.pdf`
+            labelUrl: `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf` // URL válida genérica de PDF de prueba
         };
     }
 };
@@ -128,5 +128,31 @@ const fallbackCalculateShippingCost = (
     const sameProvince = sellerZip.substring(0, 2) === buyerZip.substring(0, 2);
     const distanceMultiplier = sameProvince ? 1 : 1.5;
     let finalCost = (basePrice + weightCost) * distanceMultiplier;
-    return Math.round(finalCost / 100) * 100;
+    return Math.floor(finalCost);
+};
+
+/**
+ * Simulador de cálculo de costo para Transporte On-Demand (Uber/Cabify)
+ * TODO: Reemplazar por API real de ruteo/Google Maps/Uber.
+ */
+export const calculateTransportCost = (sellerZip: string, buyerZip: string): number => {
+    // Si no tenemos código postal del vendedor, asignamos un costo fijo promedio
+    if (!sellerZip || !buyerZip) return 5000;
+
+    // Remover espacios o caracteres raros
+    const sZip = sellerZip.replace(/\D/g, '');
+    const bZip = buyerZip.replace(/\D/g, '');
+
+    // Mismo barrio exacto
+    if (sZip === bZip) return 2500;
+
+    // Misma provincia o región (2 primeros dígitos iguales)
+    if (sZip.substring(0, 2) === bZip.substring(0, 2)) return 4500;
+
+    // Diferente provincia o larga distancia. Calculamos de forma determinista usando el hash de los strings.
+    const diff = Math.abs(Number(sZip) - Number(bZip));
+    // Producirá un valor base de 6000 + una variación entre 0 y 9000
+    const variableCost = (diff % 90) * 100;
+    
+    return 6000 + variableCost;
 };

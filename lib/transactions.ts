@@ -46,6 +46,7 @@ export interface TransactionData {
         province: string;
         zipCode: string;
     };
+    shippingPaymentMethod?: 'pay_now' | 'pay_on_delivery';
     trackingNumber?: string;
     trackingId?: string;
     courier?: string;

@@ -98,7 +98,7 @@ export default function PaymentSuccess() {
                 {/* Actions */}
                 <div className="space-y-4">
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/dashboard?tab=purchases')}
                         className="w-full bg-dark-800 text-white py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-dark-800/10 active:scale-95"
                     >
                         Ir a Mis Compras
