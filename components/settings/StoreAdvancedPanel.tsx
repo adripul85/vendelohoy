@@ -42,6 +42,19 @@ const BuyerCell = ({ buyerId, transaction }: { buyerId: string, transaction: any
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">local_shipping</span> Entrega</h4>
                                 <p className="text-xs font-bold text-slate-700 capitalize">{transaction.deliveryMethod?.replace('_', ' ') || 'No especificado'}</p>
+                                {transaction.deliveryAddress && (
+                                    <div className="mt-2 p-2 bg-slate-100/80 rounded-xl border border-slate-200">
+                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5 flex items-center gap-1"><span className="material-symbols-outlined text-[12px]">location_on</span> Dirección de Envío</p>
+                                        <p className="text-xs font-bold text-slate-800 leading-tight">
+                                            {transaction.deliveryAddress.street} {transaction.deliveryAddress.number}
+                                            {transaction.deliveryAddress.apartment ? ` Dpto: ${transaction.deliveryAddress.apartment}` : ''}
+                                        </p>
+                                        <p className="text-[10px] font-medium text-slate-600 mt-0.5">
+                                            {transaction.deliveryAddress.city}, {transaction.deliveryAddress.province} 
+                                            {transaction.deliveryAddress.zipCode ? ` (CP: ${transaction.deliveryAddress.zipCode})` : ''}
+                                        </p>
+                                    </div>
+                                )}
                                 {transaction.trackingNumber && <p className="text-[10px] text-slate-500 font-medium mt-1">Tracking: {transaction.trackingNumber}</p>}
                             </div>
                             {buyer?.email && (
