@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../lib/auth';
@@ -459,14 +460,16 @@ const ProductDetail = () => {
       />
 
       {/* Floating Chat Modal */}
-      {floatingChatId && (
-        <FloatingChat 
-          chatId={floatingChatId} 
-          onClose={() => setFloatingChatId(null)} 
-          sellerName={product.seller?.displayName || product.seller?.name || product.sellerName || 'Vendedor'}
-          sellerPhoto={product.seller?.avatar || product.seller?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller?.displayName || 'Vendedor')}&background=random`}
-        />
-      )}
+      <AnimatePresence>
+        {floatingChatId && (
+          <FloatingChat 
+            chatId={floatingChatId} 
+            onClose={() => setFloatingChatId(null)} 
+            sellerName={product.seller?.displayName || product.seller?.name || product.sellerName || 'Vendedor'}
+            sellerPhoto={product.seller?.avatar || product.seller?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.seller?.displayName || 'Vendedor')}&background=random`}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8">
         {/* LEFT COLUMN - IMAGE GALLERY */}
