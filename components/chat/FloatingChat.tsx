@@ -4,6 +4,7 @@ import { subscribeToMessages, sendMessage, markChatAsRead, Message } from '../..
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import EmojiPicker from 'emoji-picker-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FloatingChatProps {
     chatId: string;
@@ -52,7 +53,13 @@ export default function FloatingChat({ chatId, onClose, sellerName, sellerPhoto 
     if (!user) return null;
 
     return (
-        <div className={`fixed bottom-4 right-4 w-[340px] sm:w-96 ${isMinimized ? 'h-16' : 'h-[500px] max-h-[80vh]'} bg-white rounded-2xl shadow-2xl flex flex-col z-[100] border border-outline-variant/30 overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300 transition-all`}>
+        <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className={`fixed bottom-4 right-4 w-[340px] sm:w-96 ${isMinimized ? 'h-16' : 'h-[500px] max-h-[80vh]'} bg-white rounded-2xl shadow-2xl flex flex-col z-[100] border border-outline-variant/30 overflow-hidden transition-all`}
+        >
             {/* Header */}
             <div 
                 className="h-16 bg-primary flex items-center justify-between px-4 text-white shrink-0 cursor-pointer select-none"
@@ -151,6 +158,6 @@ export default function FloatingChat({ chatId, onClose, sellerName, sellerPhoto 
                     </form>
                 </>
             )}
-        </div>
+        </motion.div>
     );
 }
