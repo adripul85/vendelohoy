@@ -203,12 +203,12 @@ export default function MySales({
                                                         try {
                                                             setIsGeneratingLabel(true);
                                                             const { requestCourier } = await import('../../api/request-courier');
-                                                            await requestCourier(order.id);
+                                                            const res = await requestCourier(order.id);
                                                             notify({ type: 'success', title: 'Vehículo Solicitado', message: 'El chofer va en camino.', icon: 'local_taxi' });
                                                             // Forzar actualización optimista o refresco
                                                             setTransactions(prev => ({
                                                                 ...prev,
-                                                                ventas: prev.ventas.map(t => t.id === order.id ? { ...t, status: 'SHIPPED', trackingId: 'Pendiente', courier: 'Uber/Cabify' } : t)
+                                                                ventas: prev.ventas.map(t => t.id === order.id ? { ...t, status: 'SHIPPED', trackingId: res.trackingId || 'Pendiente', trackingUrl: res.trackingUrl, courier: 'Uber/Cabify' } : t)
                                                             }));
                                                         } catch (err: any) {
                                                             notify({ type: 'error', title: 'Error', message: err.message, icon: 'error' });
@@ -287,9 +287,17 @@ export default function MySales({
                                     </>
                                 )}
                                 {order.status === 'SHIPPED' && (
-                                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/30 text-center">
-                                        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Tracking</p>
-                                        <p className="text-xs font-black text-on-surface tracking-widest">{order.trackingId}</p>
+                                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/30 text-center flex flex-col gap-2">
+                                        <div>
+                                            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Tracking</p>
+                                            <p className="text-xs font-black text-on-surface tracking-widest">{order.trackingNumber || order.trackingId || 'Pendiente'}</p>
+                                        </div>
+                                        {order.trackingUrl && (
+                                            <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-primary/10 text-primary py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
+                                                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                                Seguir Envío
+                                            </a>
+                                        )}
                                     </div>
                                 )}
                             </div>

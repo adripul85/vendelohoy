@@ -5,10 +5,12 @@ import { TransactionData, getUserTransactions } from '../../lib/transactions';
 import { useNotification } from '../../context/NotificationContext';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import ERPDashboard from '../dashboard/ERPDashboard';
 
 interface StoreAdvancedPanelProps {
     user: UserProfile;
+    customizationSlot?: React.ReactNode;
 }
 
 const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, transaction: any, onStatusChange?: () => void }) => {
@@ -124,7 +126,7 @@ const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, 
     );
 };
 
-const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user }) => {
+const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customizationSlot }) => {
     const { notify } = useNotification();
     const [loading, setLoading] = useState(false);
     const [items, setItems] = useState<(ItemData & { id: string })[]>([]);
@@ -319,11 +321,10 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user }) => {
                 </div>
             </div>
             
-            {/* Nuevo ERP Dashboard */}
+{/* Nuevo ERP Dashboard */}
             <div className="mt-8">
-                <ERPDashboard sales={sales} items={items} storeId={user.uid} />
-            </div>
-            
+                <ERPDashboard sales={sales} items={items} storeId={user.uid} customizationSlot={customizationSlot} overviewSlot={
+                    <>
             {/* Main Stats Card - Core Ledger Style */}
             <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200 overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
@@ -399,303 +400,298 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user }) => {
                 </div>
             </div>
 
-            {/* Rendimiento de Ventas Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200">
-                <div className="flex justify-between items-center mb-8">
-                    <h4 className="text-[18px] font-bold text-slate-900 tracking-tight">Rendimiento de Ventas</h4>
-                    <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 flex items-center gap-1 cursor-pointer">
-                        Últimos 15 días <span className="material-symbols-outlined text-[14px]">expand_more</span>
-                    </div>
+            {/* Rendimiento de Ventas (Bar Chart) */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div className="flex items-center justify-between mb-6">
+                    <h4 className="font-black text-slate-900">Rendimiento de Ventas</h4>
+                    <select className="text-[11px] font-bold text-slate-500 bg-slate-50 border-none rounded-lg px-3 py-1.5 outline-none cursor-pointer">
+                        <option>Últimos 15 días</option>
+                    </select>
                 </div>
-                
-                {/* CSS Bar Chart */}
-                <div className="h-48 flex items-end gap-1 sm:gap-2 border-b border-slate-100 pb-2 relative pt-4">
-                    {(() => {
-                        const last15Days = Array.from({ length: 15 }, (_, i) => {
-                            const d = new Date();
-                            d.setDate(d.getDate() - (14 - i));
-                            d.setHours(0,0,0,0);
-                            return d;
-                        });
-
-                        const chartData = last15Days.map(date => {
-                            const nextDay = new Date(date);
-                            nextDay.setDate(date.getDate() + 1);
+                <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={Array.from({ length: 15 }).map((_, i) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - (14 - i));
                             
+                            // Find sales for this day
                             const daySales = sales.filter(s => {
                                 if (!s.createdAt) return false;
                                 const saleDate = s.createdAt.toDate();
-                                return saleDate >= date && saleDate < nextDay;
+                                return saleDate.getDate() === date.getDate() && saleDate.getMonth() === date.getMonth();
                             });
-
-                            const revenue = daySales.reduce((acc, s) => acc + (s.amountProduct || s.amount), 0);
+                            
                             return {
-                                date,
-                                label: format(date, 'dd Oct'), // We can use generic formatting, but for exact match with design: format(date, 'dd MMM')
-                                realLabel: format(date, 'dd MMM'),
-                                revenue
+                                name: format(date, 'dd MMM'),
+                                amount: daySales.reduce((sum, s) => sum + s.amount, 0)
                             };
-                        });
-
-                        const maxChartRevenue = Math.max(...chartData.map(d => d.revenue), 1);
-
-                        return (
-                            <>
-                                {chartData.map((data, i) => (
-                                    <div key={i} className="flex-1 flex flex-col justify-end items-center group relative h-full">
-                                        {/* Tooltip */}
-                                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-slate-900 text-white text-[10px] font-bold py-1 px-2 rounded whitespace-nowrap pointer-events-none transition-opacity z-10">
-                                            ${data.revenue.toLocaleString()}
-                                        </div>
-                                        {/* Bar */}
-                                        <div 
-                                            className={`w-full rounded-t-sm transition-all duration-500 ease-out ${data.revenue > 0 ? 'bg-indigo-500 hover:bg-indigo-400 cursor-pointer' : 'bg-transparent'}`}
-                                            style={{ height: `${(data.revenue / maxChartRevenue) * 100}%`, minHeight: data.revenue > 0 ? '4px' : '0' }}
-                                        ></div>
-                                    </div>
-                                ))}
-                                
-                                {/* Y-Axis lines (decorative) */}
-                                <div className="absolute left-0 right-0 top-1/2 border-t border-slate-100 -z-10"></div>
-                                <div className="absolute left-0 right-0 top-1/4 border-t border-slate-100 -z-10"></div>
-                                <div className="absolute left-0 right-0 top-3/4 border-t border-slate-100 -z-10"></div>
-                            </>
-                        );
-                    })()}
-                </div>
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
-                    {(() => {
-                        const last15Days = Array.from({ length: 15 }, (_, i) => {
-                            const d = new Date();
-                            d.setDate(d.getDate() - (14 - i));
-                            return d;
-                        });
-                        return (
-                            <>
-                                <span>{format(last15Days[0], 'dd MMM')}</span>
-                                <span>{format(last15Days[7], 'dd MMM')}</span>
-                                <span>{format(last15Days[14], 'dd MMM')}</span>
-                            </>
-                        );
-                    })()}
+                        })}>
+                            <XAxis 
+                                dataKey="name" 
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }}
+                                dy={10}
+                                minTickGap={30}
+                            />
+                            <Bar 
+                                dataKey="amount" 
+                                fill="#6366f1" 
+                                radius={[4, 4, 0, 0]}
+                                barSize={24}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
-            {/* Desglose de Ventas (Control de Stock-like table) */}
-            <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200">
-                <h4 className="text-[18px] font-bold text-slate-900 tracking-tight mb-6">Desglose de Ventas Recientes</h4>
-                
-                <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    <div className="col-span-4">Producto</div>
-                    <div className="col-span-2 text-center">Fecha</div>
-                    <div className="col-span-2 text-center">Comprador</div>
-                    <div className="col-span-2 text-right">Monto Venta</div>
-                    <div className="col-span-2 text-right text-emerald-600">Ganancia Neta</div>
+            {/* Desglose de Ventas Recientes */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="p-6 border-b border-slate-100">
+                    <h4 className="font-black text-slate-900">Desglose de Ventas Recientes</h4>
                 </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50/50">
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Producto</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Fecha</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Comprador</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Monto Venta</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-emerald-500 uppercase tracking-widest border-b border-slate-100 text-right">Ganancia Neta</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {sales.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-sm font-bold text-slate-400">
+                                        No hay ventas registradas aún.
+                                    </td>
+                                </tr>
+                            ) : (
+                                sales.slice(0, 10).map((sale) => {
+                                    const item = items.find(i => i.id === sale.itemId);
+                                    const feeRate = sale.feeApplied || (item?.flashSaleFeeApplied ? item.flashSaleFeeApplied : item?.featuredFeeApplied ? item.featuredFeeApplied : 0);
+                                    const netAmount = sale.amount * (1 - feeRate);
 
-                <div className="overflow-y-auto max-h-[350px] custom-scrollbar">
-                    {sales.length === 0 ? (
-                        <p className="text-center text-slate-400 text-sm py-8 font-medium">Aún no tienes ventas registradas.</p>
-                    ) : (
-                        sales.sort((a,b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)).map(sale => {
-                            const salePrice = sale.amountProduct || sale.amount;
-                            const fee = (sale.amountPlatformFee || sale.platformFee || 0) + (sale.amountGatewayFee || 0);
-                            const profit = (sale as any).netAmount || (salePrice - fee);
-                            
-                            return (
-                                <div key={sale.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-slate-100 items-center hover:bg-slate-50 transition-colors">
-                                    <div className="col-span-4 flex items-center gap-3 min-w-0">
-                                        {sale.itemImage ? (
-                                            <img src={sale.itemImage} alt={sale.itemTitle} className="size-10 rounded-lg object-cover border border-slate-200 shrink-0" />
-                                        ) : (
-                                            <div className="size-10 rounded-lg bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-slate-400">inventory_2</span>
-                                            </div>
-                                        )}
-                                        <div className="min-w-0">
-                                            <h5 className="font-semibold text-slate-800 text-sm truncate">{sale.itemTitle}</h5>
-                                            <p className="text-[10px] text-slate-400 font-mono truncate">ID: #{sale.itemId?.substring(0,8)}</p>
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2 text-center text-xs font-bold text-slate-600">
-                                        {sale.createdAt ? format(sale.createdAt.toDate(), 'dd MMM yyyy') : 'N/A'}
-                                        <div className="mt-1">
-                                            {sale.shippingMethod && (
-                                                <span className="block text-[9px] text-indigo-600 font-bold bg-indigo-50 px-1 rounded">{sale.shippingMethod}</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <BuyerCell buyerId={sale.buyerId} transaction={sale} />
-                                    <div className="col-span-2 text-right font-bold text-slate-700 text-sm">
-                                        ${salePrice.toLocaleString()}
-                                    </div>
-                                    <div className="col-span-2 text-right font-black text-emerald-600 text-sm">
-                                        ${profit.toLocaleString()}
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
+                                    return (
+                                        <tr key={sale.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="size-10 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                                                        {sale.itemImage ? (
+                                                            <img src={sale.itemImage} alt="" className="w-full h-full object-cover" />
+                                                        ) : item?.images?.[0] || item?.image ? (
+                                                            <img src={item.images?.[0] || item.image} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                <span className="material-symbols-outlined text-[20px]">image</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-slate-700 max-w-[200px] truncate">
+                                                            {sale.itemTitle || item?.title || 'Producto Eliminado'}
+                                                        </p>
+                                                        <p className="text-[10px] font-mono text-slate-400 mt-0.5">ID: {sale.id.substring(0,8).toUpperCase()}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="text-xs font-bold text-slate-500">
+                                                    {sale.createdAt ? format(sale.createdAt.toDate(), 'dd MMM yyyy') : 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <BuyerCell buyerId={sale.buyerId} transaction={sale} onStatusChange={() => window.location.reload()} />
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="text-xs font-black text-slate-900">${sale.amount.toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="text-xs font-black text-emerald-600">${netAmount.toLocaleString()}</span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Inventario - 2/3 width */}
-                <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                        <h4 className="text-[18px] font-bold text-slate-900 tracking-tight">Control de Stock</h4>
-                        <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Ver todos</button>
+                
+                {/* Control de Stock */}
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h4 className="font-black text-slate-900">Control de Stock</h4>
+                        <button className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-700">Ver todos</button>
                     </div>
-                    
-                    {/* Header Row */}
-                    <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        <div className="col-span-4">Producto</div>
-                        <div className="col-span-2 text-center">Stock</div>
-                        <div className="col-span-3 text-right">Precio</div>
-                        <div className="col-span-3 text-right pr-6">Estado</div>
-                    </div>
-
-                    <div className="overflow-y-auto max-h-[300px] custom-scrollbar flex-1">
-                        <div className="flex flex-col">
-                            {items.length === 0 ? (
-                                <p className="text-center text-slate-400 text-sm py-8 font-medium">No tienes productos en tu tienda.</p>
-                            ) : (
-                                items.map(item => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-slate-100 items-center hover:bg-slate-50 transition-colors group">
-                                        <div className="col-span-4 flex items-center gap-3 min-w-0">
-                                            <img src={item.images[0]} alt={item.title} className="size-10 rounded-lg object-cover border border-slate-200 shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <h5 className="font-semibold text-slate-800 text-sm truncate">{item.title}</h5>
-                                                <p className="text-[10px] text-slate-400 font-mono truncate">#{item.id?.substring(0,8)}</p>
+                    <div className="flex-1 overflow-y-auto max-h-[300px]">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="sticky top-0 bg-white shadow-sm shadow-slate-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Producto</th>
+                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Stock</th>
+                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Precio</th>
+                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {items.filter(i => i.status === 'AVAILABLE').map(item => (
+                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-8 rounded-md bg-slate-100 overflow-hidden shrink-0">
+                                                    <img src={item.images?.[0] || item.image || ''} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-bold text-slate-700 max-w-[150px] truncate">{item.title}</p>
+                                                    <p className="text-[9px] font-mono text-slate-400">{item.id.substring(0,8).toUpperCase()}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="col-span-2 text-center font-bold text-slate-700 text-sm">
-                                            {item.quantity || 1}
-                                        </div>
-                                        <div className="col-span-3 text-right font-bold text-slate-700 text-sm truncate">
-                                            ${item.price.toLocaleString()}
-                                        </div>
-                                        <div className="col-span-3 flex justify-end items-center gap-1">
-                                            <span className={`px-2 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider ${item.status === 'SOLD' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                                                {item.status === 'SOLD' ? 'Vendido' : 'Activo'}
+                                        </td>
+                                        <td className="px-6 py-3 text-center">
+                                            <span className={`text-[11px] font-black ${item.quantity > 5 ? 'text-emerald-600' : 'text-orange-500'}`}>
+                                                {item.quantity}
                                             </span>
-                                            <button onClick={() => handleDeleteItem(item.id)} className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-600 transition-all p-1" title="Eliminar Producto">
+                                        </td>
+                                        <td className="px-6 py-3 text-right">
+                                            <span className="text-[11px] font-bold text-slate-700">${item.price.toLocaleString()}</span>
+                                        </td>
+                                        <td className="px-6 py-3 flex justify-end gap-2">
+                                            <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md">ACTIVO</span>
+                                            {/* Offline sale button */}
+                                            <button 
+                                                onClick={() => handleMarkAsSoldOffline(item)}
+                                                className="text-[9px] font-black text-slate-500 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md transition-colors"
+                                                title="Marcar como vendido offline (en efectivo/persona)"
+                                            >
+                                                VENDER
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteItem(item.id)}
+                                                className="text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"
+                                                title="Eliminar producto"
+                                            >
+                                                BORRAR
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-6">
+                    {/* Cupones */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col flex-1">
+                        <h4 className="font-black text-slate-900 mb-4">Cupones</h4>
+                        
+                        <div className="flex gap-2 mb-4">
+                            <input 
+                                type="text"
+                                placeholder="CÓDIGO"
+                                value={newCoupon.code}
+                                onChange={e => setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})}
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none uppercase"
+                            />
+                            <div className="relative w-20">
+                                <input 
+                                    type="number"
+                                    value={newCoupon.discountPercentage}
+                                    onChange={e => setNewCoupon({...newCoupon, discountPercentage: Number(e.target.value)})}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none pr-6 text-right"
+                                />
+                                <span className="absolute right-2 top-1.5 text-xs font-bold text-slate-400">%</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                            <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Usos:</span>
+                                <input 
+                                    type="number"
+                                    value={newCoupon.maxUses}
+                                    onChange={e => setNewCoupon({...newCoupon, maxUses: Number(e.target.value)})}
+                                    className="bg-transparent text-xs font-bold text-slate-700 outline-none w-full"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleCreateCoupon}
+                                className="bg-indigo-600 text-white font-bold text-xs px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+                            >
+                                Crear
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 flex-1 overflow-y-auto max-h-[120px]">
+                            {coupons.length === 0 ? (
+                                <p className="text-xs text-center text-slate-400 font-medium py-4">Sin cupones activos.</p>
+                            ) : (
+                                coupons.map(coupon => (
+                                    <div key={coupon.id} className={`flex items-center justify-between p-2 rounded-lg border ${coupon.active ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-50 border-slate-100'}`}>
+                                        <div>
+                                            <p className={`text-xs font-black ${coupon.active ? 'text-indigo-700' : 'text-slate-500'}`}>{coupon.code}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{coupon.discountPercentage}% OFF • {coupon.uses}/{coupon.maxUses} usos</p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button 
+                                                onClick={() => toggleCoupon(coupon.id)}
+                                                className={`size-7 rounded-md flex items-center justify-center transition-colors ${coupon.active ? 'text-emerald-600 bg-emerald-100/50 hover:bg-emerald-100' : 'text-slate-400 bg-slate-100 hover:bg-slate-200'}`}
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">{coupon.active ? 'toggle_on' : 'toggle_off'}</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => deleteCoupon(coupon.id)}
+                                                className="size-7 rounded-md text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors"
+                                            >
                                                 <span className="material-symbols-outlined text-[16px]">delete</span>
                                             </button>
-                                            {item.status !== 'SOLD' && (
-                                                <button onClick={() => handleMarkAsSoldOffline(item)} className="opacity-0 group-hover:opacity-100 text-emerald-500 hover:text-emerald-700 transition-all p-1" title="Marcar como Vendido (Efectivo)">
-                                                    <span className="material-symbols-outlined text-[16px]">point_of_sale</span>
-                                                </button>
-                                            )}
-                                            <Link to={`/product/${item.id}`} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 transition-all p-1" title="Ver Producto">
-                                                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-                                            </Link>
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
                     </div>
-                </div>
 
-                {/* Columna Derecha (Cupones y Mensajes) - 1/3 width */}
-                <div className="flex flex-col gap-6">
-
-                    {/* Cupones */}
-                    <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200">
-                        <h4 className="text-[18px] font-bold text-slate-900 tracking-tight mb-4">Cupones</h4>
-                        
-                        <div className="flex flex-col gap-2 mb-4">
-                            <div className="flex gap-2">
-                                <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value})} placeholder="CÓDIGO" className="flex-1 bg-white border border-slate-200 rounded-lg py-2 px-3 text-xs font-bold text-slate-700 uppercase outline-none focus:border-indigo-500 min-w-0" />
-                                <div className="flex items-center bg-white border border-slate-200 rounded-lg px-2 py-2 w-20 focus-within:border-indigo-500 shrink-0">
-                                    <input type="text" maxLength={2} value={newCoupon.discountPercentage || ''} onChange={e => {
-                                        const val = e.target.value.replace(/\D/g, '');
-                                        setNewCoupon({...newCoupon, discountPercentage: val ? Math.min(99, Number(val)) : 0});
-                                    }} className="w-full text-right pr-1 text-xs font-bold text-slate-700 outline-none bg-transparent min-w-0" />
-                                    <span className="text-slate-400 text-xs font-bold shrink-0">%</span>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <div className="flex items-center gap-2 flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 focus-within:border-indigo-500 min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Usos:</span>
-                                    <input type="text" maxLength={4} value={newCoupon.maxUses || ''} onChange={e => {
-                                        const val = e.target.value.replace(/\D/g, '');
-                                        setNewCoupon({...newCoupon, maxUses: val ? Number(val) : 0});
-                                    }} className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none min-w-0" />
-                                </div>
-                                <button onClick={handleCreateCoupon} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shrink-0">
-                                    Crear
-                                </button>
-                            </div>
+                    {/* Centro de Mensajes Promo */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
+                        <div className="size-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-3">
+                            <span className="material-symbols-outlined">forum</span>
                         </div>
-
-                        <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                            {coupons.map(coupon => (
-                                <div key={coupon.id} className={`flex items-center justify-between p-3 border rounded-lg transition-all ${coupon.active ? 'border-indigo-100 bg-indigo-50/50' : 'border-slate-100 bg-slate-50 grayscale'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 bg-white rounded-md flex items-center justify-center font-black text-indigo-600 shadow-sm text-xs border border-indigo-100">
-                                            {coupon.discountPercentage}%
-                                        </div>
-                                        <div>
-                                            <h5 className="font-bold text-slate-800 text-xs tracking-tight">{coupon.code}</h5>
-                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                                                {coupon.uses}/{coupon.maxUses} USOS
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <button onClick={() => toggleCoupon(coupon.id)} className={`text-[9px] font-bold uppercase tracking-widest ${coupon.active ? 'text-slate-400 hover:text-amber-600' : 'text-emerald-600 hover:text-emerald-700'}`}>
-                                            {coupon.active ? 'Pausar' : 'Activar'}
-                                        </button>
-                                        <button onClick={() => deleteCoupon(coupon.id)} className="text-[9px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-widest">
-                                            Borrar
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                            {coupons.length === 0 && (
-                                <p className="text-center text-slate-400 text-xs py-2 font-medium">Sin cupones activos.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Centro de Mensajes Reducido */}
-                    <div className="bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200 flex flex-col items-center justify-center text-center">
-                        <div className="size-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-3">
-                            <span className="material-symbols-outlined text-2xl">forum</span>
-                        </div>
-                        <h4 className="text-[15px] font-bold text-slate-900">Centro de Mensajes</h4>
-                        <p className="text-xs font-medium text-slate-500 mt-1 mb-4">Gestiona las consultas de tus clientes.</p>
-                        <Link to="/messages" className="w-full py-2.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+                        <h4 className="font-black text-slate-900 text-sm mb-1">Centro de Mensajes</h4>
+                        <p className="text-[10px] text-slate-500 font-medium mb-4">Gestiona las consultas de tus clientes.</p>
+                        <button className="w-full py-2 bg-slate-50 text-indigo-600 hover:bg-indigo-50 text-xs font-bold rounded-lg transition-colors">
                             Ir a Bandeja
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Integrations & Verification */}
-            <div className="mt-6 bg-white rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] border border-slate-200">
-                <h4 className="text-[18px] font-bold text-slate-900 tracking-tight mb-6">Verificaciones e Integraciones</h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* ML Integration */}
-                    <div className="flex flex-col items-center text-center p-6 bg-slate-50 border border-slate-100 rounded-xl">
-                        <div className="size-12 bg-[#FFF159] rounded-xl flex items-center justify-center text-slate-900 mb-4 shadow-sm">
-                            <span className="material-symbols-outlined font-black">handshake</span>
+            {/* Banner Oficial */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h4 className="font-black text-slate-900 mb-4">Verificaciones e Integraciones</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border-2 border-slate-100 rounded-xl p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-yellow-300 transition-colors">
+                        <div className="size-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg className="w-6 h-6 text-yellow-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14.5 4l-9 9 9 9h5l-9-9 9-9z"/>
+                                <path d="M19.5 9l-5 5 5 5v-10z"/>
+                            </svg>
                         </div>
-                        <h5 className="font-bold text-slate-800 text-sm mb-2">Reputación MercadoLibre</h5>
+                        <h5 className="font-bold text-slate-900 text-sm mb-2">Reputación MercadoLibre</h5>
                         <p className="text-xs text-slate-500 mb-4">Vincula tu cuenta para importar tus puntos y nivel de mercado de ML de forma segura.</p>
-                        <button className="w-full py-2.5 bg-[#FFF159] text-slate-900 font-bold text-xs rounded-lg hover:brightness-95 transition-all">
+                        <button className="px-6 py-2 bg-yellow-300 hover:bg-yellow-400 text-yellow-900 text-xs font-bold rounded-lg transition-colors">
                             Vincular Cuenta (Próximamente)
                         </button>
                     </div>
 
-                    {/* Tienda Oficial */}
-                    <div className="flex flex-col items-center text-center p-6 bg-indigo-50/50 border border-indigo-100 rounded-xl relative overflow-hidden">
-                        {(user?.store?.paidOfficialTick) && (
-                            <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-black px-4 py-1 rounded-bl-xl uppercase tracking-widest">
-                                Adquirido
+                    <div className="border-2 border-indigo-50 bg-indigo-50/30 rounded-xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        {user?.store?.paidOfficialTick && (
+                            <div className="absolute top-4 right-4 text-emerald-500 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">
+                                <span className="material-symbols-outlined text-sm">check_circle</span> Activa
                             </div>
                         )}
                         <div className="size-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white mb-4 shadow-sm shadow-indigo-600/30">
@@ -718,6 +714,9 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user }) => {
                         </button>
                     </div>
                 </div>
+            </div>
+                    </>
+                } />
             </div>
         </div>
     );

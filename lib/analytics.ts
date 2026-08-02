@@ -9,14 +9,27 @@ interface EventData {
     [key: string]: any;
 }
 
-const getVisitorId = () => {
+const getVisitorId = async () => {
     if (typeof window === 'undefined') return 'unknown';
-    let vid = localStorage.getItem('visitor_id');
-    if (!vid) {
-        vid = 'v_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        localStorage.setItem('visitor_id', vid);
+    
+    let vid = sessionStorage.getItem('visitor_ip_hash');
+    if (vid) return vid;
+
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        // Generamos un hash simple o usamos la IP con un prefijo
+        vid = 'ip_' + data.ip.replace(/\./g, '_').replace(/:/g, '_'); 
+        sessionStorage.setItem('visitor_ip_hash', vid);
+        return vid;
+    } catch {
+        let fallback = localStorage.getItem('visitor_id');
+        if (!fallback) {
+            fallback = 'v_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+            localStorage.setItem('visitor_id', fallback);
+        }
+        return fallback;
     }
-    return vid;
 };
 
 const getReferrerSource = () => {
@@ -34,7 +47,7 @@ export const trackEvent = async (storeId: string, eventType: AnalyticsEventType,
     try {
         if (!storeId) return;
         
-        const visitorId = getVisitorId();
+        const visitorId = await getVisitorId();
         const source = getReferrerSource();
         
         await addDoc(collection(db, 'store_events'), {

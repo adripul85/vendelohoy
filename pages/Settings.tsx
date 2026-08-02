@@ -857,9 +857,10 @@ export default function Settings() {
                                     </div>
                                 ) : (
                                     <>
-                                        {user && <StoreAdvancedPanel user={userProfile as any} />}
-                                        
-                                        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6 mt-6">
+                                        {user && <StoreAdvancedPanel 
+                                            user={userProfile as any} 
+                                            customizationSlot={
+                                                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="size-12 bg-sky-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-600/20">
                                                     <span className="material-symbols-outlined text-2xl font-black">palette</span>
@@ -1642,8 +1643,10 @@ export default function Settings() {
                                     </button>
                                 </div>
                             </div>
-                        </>
-                    )}
+                        } 
+                    />}
+                    </>
+                )}
                 </motion.div>
             )}
 

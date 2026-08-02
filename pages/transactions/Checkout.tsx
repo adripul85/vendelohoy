@@ -123,15 +123,31 @@ export default function Checkout() {
           } else if (deliveryMethod === 'domicilio') {
               if (shippingPaymentMethod === 'pay_now' && deliveryAddress.zipCode.length >= 4) {
                  setIsCalculatingShipping(true);
-                 import('../../lib/shipping').then(({ calculateTransportCost }) => {
-                     import('../../lib/users').then(({ getUserProfile }) => {
-                         getUserProfile(item.sellerId).then(seller => {
-                             const sZip = seller?.location?.zipCode || '2000';
-                             const cost = calculateTransportCost(sZip, deliveryAddress.zipCode);
-                             setTimeout(() => {
-                                 setShippingCost(cost);
-                                 setIsCalculatingShipping(false);
-                             }, 800);
+                 import('../../lib/users').then(({ getUserProfile }) => {
+                     getUserProfile(item.sellerId).then(seller => {
+                         const pickupAddress = seller?.location || { zipCode: '2000', city: 'Rosario' };
+                         fetch('/api/shipping-quote', {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({
+                                 pickupAddress,
+                                 dropoffAddress: deliveryAddress,
+                                 provider: 'uber' // Por defecto probamos con uber
+                             })
+                         })
+                         .then(res => res.json())
+                         .then(data => {
+                             if (data.success && data.amount) {
+                                 setShippingCost(data.amount);
+                             } else {
+                                 setShippingCost(3000); // fallback
+                             }
+                             setIsCalculatingShipping(false);
+                         })
+                         .catch(err => {
+                             console.error(err);
+                             setShippingCost(3000); // fallback
+                             setIsCalculatingShipping(false);
                          });
                      });
                  });

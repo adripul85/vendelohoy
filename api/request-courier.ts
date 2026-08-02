@@ -29,41 +29,26 @@ export const requestCourier = async (transactionId: string) => {
             throw new Error("Ya se ha solicitado un vehículo para esta orden.");
         }
         
-        // ==== SIMULADOR (SANDBOX) ====
-        // En producción, aquí harías: fetch('https://api.uber.com/v1/deliveries'...)
+        // ==== LLAMADA AL BACKEND (Vercel Function) ====
+        // Obtenemos el token de Auth para seguridad
+        const token = await auth.currentUser.getIdToken();
         
-        // 1. Generar Tracking y Datos de Chofer simulados
-        const mockTrackingId = `UBER-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-        const mockTrackingUrl = `https://vendelohoy.com/track/${mockTrackingId}`; // Mock tracking URL
-
-        // 2. Registrar el pedido en Firestore (Para tener historial del sistema On-Demand)
-        const courierReqRef = doc(collection(db, "courier_requests"));
-        await setDoc(courierReqRef, {
-            transactionId: transactionId,
-            sellerId: txData.sellerId,
-            buyerId: txData.buyerId,
-            provider: 'sandbox_uber_cabify',
-            status: 'driver_assigned',
-            trackingId: mockTrackingId,
-            trackingUrl: mockTrackingUrl,
-            driverDetails: {
-                name: 'Carlos (Conductor de Prueba)',
-                vehicle: 'Toyota Etios Gris',
-                plate: 'AF 123 AB'
+        const response = await fetch('/api/dispatch-courier', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            paymentMethod: txData.shippingPaymentMethod || 'pay_on_delivery',
-            createdAt: serverTimestamp()
+            body: JSON.stringify({ transactionId })
         });
 
-        // 3. Actualizar la Transacción
-        await updateDoc(txRef, {
-            trackingNumber: mockTrackingId,
-            courier: 'Uber / Cabify (Simulado)',
-            status: 'SHIPPED',
-            updatedAt: serverTimestamp()
-        });
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || "Ocurrió un error al despachar el vehículo");
+        }
 
-        return { success: true, trackingId: mockTrackingId, trackingUrl: mockTrackingUrl };
+        return data;
 
     } catch (error: any) {
         console.error("Error requesting courier:", error);

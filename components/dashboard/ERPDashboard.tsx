@@ -12,10 +12,12 @@ interface ERPDashboardProps {
     sales: any[];
     items: (ItemData & { id: string })[];
     storeId?: string;
+    customizationSlot?: React.ReactNode;
+    overviewSlot?: React.ReactNode;
 }
 
-export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProps) {
-    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sales' | 'visits' | 'realtime'>('overview');
+export default function ERPDashboard({ sales, items, storeId, customizationSlot, overviewSlot }: ERPDashboardProps) {
+    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sales' | 'visits' | 'realtime' | 'customization'>('overview');
 
     const totalSales = sales.length;
     const totalRevenue = sales.reduce((acc, sale) => acc + (sale.amountProduct || sale.amount || 0), 0);
@@ -94,7 +96,7 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
                 activeTab === id 
                 ? 'text-primary border-b-4 border-primary bg-primary/5' 
                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-b-4 border-transparent'
-            }`}
+            } whitespace-nowrap`}
         >
             {label}
         </button>
@@ -128,6 +130,7 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
                 <TabButton id="sales" label="Ventas y clientes" />
                 <TabButton id="visits" label="Visitas" />
                 <TabButton id="realtime" label="Tiempo real" />
+                {customizationSlot && <TabButton id="customization" label="Diseño" />}
             </div>
 
             <div className="p-6 md:p-10 bg-slate-50/50 min-h-[600px]">
@@ -139,7 +142,7 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
                             <MetricCard title="Facturación" value={totalRevenue} previousValue={totalRevenue * 0.75} prefix="$" />
                             <MetricCard title="Ticket Promedio" value={avgTicket} previousValue={avgTicket * 0.9} prefix="$" />
                         </div>
-
+                        {overviewSlot}
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                             <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px]">
                                 <h4 className="text-slate-800 font-black tracking-tight mb-8 text-xl">Comportamiento del visitante</h4>
@@ -347,8 +350,14 @@ export default function ERPDashboard({ sales, items, storeId }: ERPDashboardProp
                                             );
                                         })
                                     )}       </div>
+                            </div>
                         </div>
-                        </div>
+                    </div>
+                )}
+                
+                {activeTab === 'customization' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {customizationSlot}
                     </div>
                 )}
             </div>
