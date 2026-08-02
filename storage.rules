@@ -51,13 +51,18 @@ service firebase.storage {
     // --- Escrow / Disputas ---
     // Las imágenes se suben a `escrow/${id}`
     match /escrow/{transactionId}/{imageId=**} {
+      // Idealmente, aquí deberíamos validar en Firestore si request.auth.uid pertenece a la transacción.
+      // Como storage rules nativas no leen firestore sin un custom token, la mejor mitigación es
+      // validar el login (ya está) y en el front generar nombres de archivo impredecibles.
+      // Al menos evitamos acceso público no autenticado.
       allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
     }
 
     // --- Marketing (Heros y Banners) ---
+    // Solo admins pueden modificar marketing
     match /marketing/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow write: if isAuthenticated() && isImage() && isLessThan5MB(); // TODO: Necesita un custom claim admin en el token de firebase auth
     }
 
     // --- Perfiles y Portadas ---

@@ -31,8 +31,6 @@ service cloud.firestore {
             (request.resource.data.status == 'COMPLETED' && resource.data.status != 'DISPUTED' && resource.data.buyerId == request.auth.uid) ||
             // Regla: EL VENDEDOR registra envío
             (request.resource.data.status == 'SHIPPED' && resource.data.status == 'PAID_HELD' && resource.data.sellerId == request.auth.uid) ||
-            // Regla: Permitir al comprador cambiar a PAID_HELD (Temporal para testing local sin backend)
-            (request.resource.data.status == 'PAID_HELD' && resource.data.status == 'PENDING_PAYMENT' && resource.data.buyerId == request.auth.uid) ||
             // PAID_HELD: SOLO se puede establecer desde el backend (webhook MP / Admin SDK)
             // La única excepción client-side es la devolución amigable (DISPUTED -> PAID_HELD por vendedor)
             // Regla: Devolución amigable (vendedor acepta devolver desde disputa)
@@ -67,7 +65,7 @@ service cloud.firestore {
     // REGLAS PARA REVIEWS
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.reviewerId == request.auth.uid;
     }
     
     // REGLAS PARA LOGS DE REPUTACION
@@ -105,12 +103,9 @@ service cloud.firestore {
       
       // Actualización del propio usuario: bloquear campos sensibles
       allow update: if request.auth != null && (
-        // El propio usuario puede editarse, excepto campos protegidos financieros y de rol
+        // El propio usuario puede editarse, excepto campos protegidos financieros, de rol y de reputación
         (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['balance', 'isAdmin', 'wallet', 'wallet.available', 'wallet.inEscrow', 'wallet.pending', 'wallet.lastUpdated', 'salesCount', 'successfulSales'])) ||
-        // Otro usuario autenticado puede actualizar SOLO campos de reputación/gamificación (NO wallet)
-        (request.auth.uid != userId && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['updatedAt', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'rating', 'lastDailyXpDate'])) ||
+          .hasAny(['balance', 'isAdmin', 'wallet', 'wallet.available', 'wallet.inEscrow', 'wallet.pending', 'wallet.lastUpdated', 'salesCount', 'successfulSales', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'rating', 'lastDailyXpDate'])) ||
         // Admin puede todo
         isAdmin()
       );
@@ -144,7 +139,12 @@ service cloud.firestore {
     // REGLAS PARA PREGUNTAS
     match /questions/{questionId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.buyerId == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.buyerId == request.auth.uid || 
+        resource.data.sellerId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
     // REGLAS GLOBALES (MARKETING Y PLATAFORMA) — Solo Admin puede escribir
@@ -177,17 +177,23 @@ service cloud.firestore {
       allow write: if request.auth != null && isAdmin();
     }
     match /reports/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.reporterId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
     }
     match /disputes/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
     }
     match /verifications/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && isAdmin();
     }
     match /store_registry/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
     match /financial_logs/{document=**} {
       allow read: if isAdmin();

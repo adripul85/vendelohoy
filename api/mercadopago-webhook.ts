@@ -50,66 +50,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (transactionId && productId) {
                     const db = adminDb;
                     
-                    // 1. Traer la transaccion
                     const txRef = db.collection('transactions').doc(transactionId);
-                    const txSnap = await txRef.get();
-                    if (!txSnap.exists) {
-                        console.error(`Tx ${transactionId} not found`);
-                        return res.status(404).send('Tx not found');
-                    }
-                    const tx = txSnap.data();
-                    
-                    if (tx?.status !== 'PENDING_PAYMENT') {
-                        console.log(`Tx ${transactionId} already processed (status: ${tx?.status}).`);
-                        return res.status(200).send('Already processed');
-                    }
-                    
-                    // 2. Actualizar estado del producto
-                    try {
-                        const itemRef = db.collection('items').doc(productId);
-                        const itemSnap = await itemRef.get();
-                        if (itemSnap.exists) {
-                            const itemData = itemSnap.data();
-                            const currentQty = itemData?.quantity || 1;
-                            const txQuantity = tx?.quantity || 1;
-                            const newQty = Math.max(0, currentQty - txQuantity);
-                            
-                            await itemRef.update({
-                                quantity: newQty,
-                                status: newQty > 0 ? 'AVAILABLE' : 'SOLD', // Change from PAID_IN_CUSTODY to SOLD when out of stock
-                                paymentId: paymentId,
-                                updatedAt: new Date()
-                            });
+                    await db.runTransaction(async (t) => {
+                        const txSnap = await t.get(txRef);
+                        if (!txSnap.exists) {
+                            throw new Error(`Tx ${transactionId} not found`);
                         }
-                    } catch (e) {
-                        console.warn(`Could not update item ${productId}, it might be a cart order. Continuing...`);
-                    }
+                        const tx = txSnap.data();
+                        
+                        if (tx?.status !== 'PENDING_PAYMENT') {
+                            console.log(`Tx ${transactionId} already processed (status: ${tx?.status}).`);
+                            return; // Ya procesado, no hacemos nada
+                        }
 
-                    // 3. Actualizar transaccion
-                    await txRef.update({
-                        status: 'PAID_HELD',
-                        updatedAt: new Date(),
-                        paymentId: paymentId
-                    });
-                    
-                    // 4. Agregar saldo 'En Custodia' al vendedor (El comprador pago por MP, no deducimos wallet)
-                    const sellerId = tx.sellerId;
-                    const amountProduct = tx.amountProduct || tx.amount;
-                    
-                    await db.collection('users').doc(sellerId).update({
-                        "wallet.inEscrow": adminDb.FieldValue ? adminDb.FieldValue.increment(amountProduct) : amountProduct
-                    });
-                    
-                    // Log del movimiento
-                    await db.collection('wallet_logs').add({
-                        uid: sellerId,
-                        type: 'ESCROW_HOLD',
-                        amount: amountProduct,
-                        referenceId: transactionId,
-                        itemTitle: tx.itemTitle || 'Producto',
-                        description: `Fondos en garantía (MercadoPago): ${tx.itemTitle}`,
-                        createdAt: new Date(),
-                        status: 'COMPLETED'
+                        // 2. Actualizar estado del producto
+                        try {
+                            const itemRef = db.collection('items').doc(productId);
+                            const itemSnap = await t.get(itemRef);
+                            if (itemSnap.exists) {
+                                const itemData = itemSnap.data();
+                                const currentQty = itemData?.quantity || 1;
+                                const txQuantity = tx?.quantity || 1;
+                                const newQty = Math.max(0, currentQty - txQuantity);
+                                
+                                t.update(itemRef, {
+                                    quantity: newQty,
+                                    status: newQty > 0 ? 'AVAILABLE' : 'SOLD',
+                                    paymentId: paymentId,
+                                    updatedAt: new Date()
+                                });
+                            }
+                        } catch (e) {
+                            console.warn(`Could not update item ${productId}, it might be a cart order. Continuing...`);
+                        }
+
+                        // 3. Actualizar transaccion
+                        t.update(txRef, {
+                            status: 'PAID_HELD',
+                            updatedAt: new Date(),
+                            paymentId: paymentId
+                        });
+                        
+                        // 4. Agregar saldo 'En Custodia' al vendedor
+                        const sellerId = tx.sellerId;
+                        const amountProduct = tx.amountProduct || tx.amount;
+                        const sellerRef = db.collection('users').doc(sellerId);
+                        
+                        t.update(sellerRef, {
+                            "wallet.inEscrow": adminDb.FieldValue ? adminDb.FieldValue.increment(amountProduct) : amountProduct
+                        });
+                        
+                        // Log del movimiento
+                        const walletLogRef = db.collection('wallet_logs').doc();
+                        t.set(walletLogRef, {
+                            uid: sellerId,
+                            type: 'ESCROW_HOLD',
+                            amount: amountProduct,
+                            referenceId: transactionId,
+                            itemTitle: tx.itemTitle || 'Producto',
+                            description: `Fondos en garantía (MercadoPago): ${tx.itemTitle}`,
+                            createdAt: new Date(),
+                            status: 'COMPLETED'
+                        });
                     });
 
                     console.log(`✅ Pago MP Escrow aprobado. Transacción ${transactionId} y producto ${productId} actualizados.`);
