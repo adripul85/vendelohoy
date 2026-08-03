@@ -6,7 +6,7 @@ export const BottomNav = () => {
     const location = useLocation();
     const { cart } = useCart();
 
-    const navItems = [
+    const navItems: { path: string; icon: string; label: string; isPrimary?: boolean; badge?: number }[] = [
         { path: '/', icon: 'home', label: 'Inicio' },
         { path: '/search', icon: 'search', label: 'Buscar' },
         { path: '/publish', icon: 'add', label: 'Publicar', isPrimary: true },
