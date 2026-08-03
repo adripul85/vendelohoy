@@ -470,7 +470,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto snap-x scrollbar-hide bg-surface-container-lowest p-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0">
+          <div className="flex overflow-x-auto snap-x scrollbar-hide bg-surface-container-lowest py-2 px-6 md:px-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0">
             {[
               { id: 'publicaciones', label: 'Publicaciones', icon: 'inventory_2' },
               { id: 'compras', label: 'Compras', icon: 'shopping_bag' },
@@ -782,11 +782,11 @@ export default function Dashboard() {
 
             {/* DASHBOARD HEADER SEARCH & ACTIONS */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pl-2">
-              <h2 className="text-2xl font-black text-on-surface tracking-tighter">
+              <h2 className="text-2xl font-black text-on-surface tracking-tighter shrink-0">
                 {activeTab === 'compras' ? 'Compras Recientes' : activeTab === 'ventas' ? 'Ventas Recientes' : activeTab === 'publicaciones' ? 'Mis Productos Activos' : 'Nodos de Seguridad'}
               </h2>
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <button className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 text-[10px] font-black uppercase tracking-widest text-on-surface hover:bg-surface transition-all focus-within:ring-2 focus-within:ring-primary-100">
+              <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto pb-4 sm:pb-0 scrollbar-hide snap-x -mx-6 px-6 sm:mx-0 sm:px-0">
+                <button className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 text-[10px] font-black uppercase tracking-widest text-on-surface hover:bg-surface transition-all focus-within:ring-2 focus-within:ring-primary-100 shrink-0 snap-start">
                   <span className="material-symbols-outlined text-lg">filter_alt</span>
                   <input
                     type="text"
@@ -798,12 +798,12 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => navigate('/publish')}
-                  className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-on-surface text-on-primary text-[10px] font-black uppercase tracking-widest hover:bg-inverse-surface transition-all shadow-xl shadow-dark-800/10 active:scale-95"
+                  className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-on-surface text-on-primary text-[10px] font-black uppercase tracking-widest hover:bg-inverse-surface transition-all shadow-xl shadow-dark-800/10 active:scale-95 shrink-0 snap-start"
                 >
                   <span className="material-symbols-outlined text-lg">add_circle</span>
                   Nueva Publicación
                 </button>
-                <button className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 text-[10px] font-black uppercase tracking-widest text-on-surface hover:bg-surface transition-all">
+                <button className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 text-[10px] font-black uppercase tracking-widest text-on-surface hover:bg-surface transition-all shrink-0 snap-start">
                   <span className="material-symbols-outlined text-lg">file_download</span>
                   Exportar
                 </button>

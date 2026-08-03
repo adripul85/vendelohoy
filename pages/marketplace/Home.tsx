@@ -814,19 +814,12 @@ const Home = () => {
               
               {/* Ofertas Flash */}
               <div className="flex flex-col items-center gap-1.5 snap-start shrink-0 w-[64px]">
-                <button 
-                  onClick={() => {
-                    const section = document.getElementById('flash-deals-section');
-                    if (section) {
-                      section.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                      alert('No hay ofertas flash activas en este momento.');
-                    }
-                  }}
+                <Link 
+                  to="/deals"
                   className="size-[56px] rounded-full flex items-center justify-center transition-all bg-amber-100 text-amber-600 hover:bg-amber-200 border border-amber-200 shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[24px]">bolt</span>
-                </button>
+                </Link>
                 <span className="text-[10px] font-bold text-center leading-tight text-amber-700">Ofertas Flash</span>
               </div>
               
