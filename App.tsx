@@ -1,56 +1,56 @@
 
-import React, { useState, createContext, useContext, useCallback, useEffect, useRef } from 'react';
+import React, { useState, createContext, useContext, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { FaInstagram, FaFacebookF, FaXTwitter, FaTiktok, FaWhatsapp } from 'react-icons/fa6';
-import Home from './pages/marketplace/Home';
-import Dashboard from './pages/Dashboard';
-import Dispute from './pages/transactions/Dispute';
-import Profile from './pages/Profile';
-import Wallet from './pages/Wallet';
-import Verification from './pages/Verification';
-import Login from './pages/Login';
-import RegisterWizard from './pages/RegisterWizard';
-import Publish from './pages/publish/Publish';
-import Messages from './pages/Messages';
-import ProductDetail from './pages/marketplace/ProductDetail';
-import Search from './pages/marketplace/Search';
-import Checkout from './pages/transactions/Checkout';
-import TransactionDetail from './pages/transactions/TransactionDetail';
-import Success from './pages/transactions/Success';
-import PaymentSuccess from './pages/transactions/PaymentSuccess';
-import PaymentFailure from './pages/transactions/PaymentFailure';
-import ESgrow from './pages/transactions/ESgrow';
-import CompleteProfile from './pages/CompleteProfile';
-import AdminDashboard from './pages/AdminDashboard';
-import Settings from './pages/Settings';
-import EscrowInfo from './pages/EscrowInfo';
-import VerifyDelivery from './pages/VerifyDelivery';
-import TermsAndCosts from './pages/legal/TermsAndCosts';
-import PaymentMethods from './pages/legal/PaymentMethods';
-import ProhibitedItems from './pages/legal/ProhibitedItems';
-import ResolutionCenter from './pages/ResolutionCenter';
+const Home = lazy(() => import('./pages/marketplace/Home'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Dispute = lazy(() => import('./pages/transactions/Dispute'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Wallet = lazy(() => import('./pages/Wallet'));
+const Verification = lazy(() => import('./pages/Verification'));
+const Login = lazy(() => import('./pages/Login'));
+const RegisterWizard = lazy(() => import('./pages/RegisterWizard'));
+const Publish = lazy(() => import('./pages/publish/Publish'));
+const Messages = lazy(() => import('./pages/Messages'));
+const ProductDetail = lazy(() => import('./pages/marketplace/ProductDetail'));
+const Search = lazy(() => import('./pages/marketplace/Search'));
+const Checkout = lazy(() => import('./pages/transactions/Checkout'));
+const TransactionDetail = lazy(() => import('./pages/transactions/TransactionDetail'));
+const Success = lazy(() => import('./pages/transactions/Success'));
+const PaymentSuccess = lazy(() => import('./pages/transactions/PaymentSuccess'));
+const PaymentFailure = lazy(() => import('./pages/transactions/PaymentFailure'));
+const ESgrow = lazy(() => import('./pages/transactions/ESgrow'));
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+const EscrowInfo = lazy(() => import('./pages/EscrowInfo'));
+const VerifyDelivery = lazy(() => import('./pages/VerifyDelivery'));
+const TermsAndCosts = lazy(() => import('./pages/legal/TermsAndCosts'));
+const PaymentMethods = lazy(() => import('./pages/legal/PaymentMethods'));
+const ProhibitedItems = lazy(() => import('./pages/legal/ProhibitedItems'));
+const ResolutionCenter = lazy(() => import('./pages/ResolutionCenter'));
 import RequireProfile from './components/RequireProfile';
 import ProtectedRoute from './components/ProtectedRoute';
-import ReportedItems from './pages/admin/ReportedItems';
+const ReportedItems = lazy(() => import('./pages/admin/ReportedItems'));
 import { AuthProvider, useAuth } from './lib/auth';
 import { NotificationProvider } from './context/NotificationContext';
 import { DialogProvider } from './context/DialogContext';
 import { CartProvider } from './context/CartContext';
-import TermsAndConditions from './pages/legal/TermsAndConditions';
-import LegalNotice from './pages/legal/LegalNotice';
-import PrivacyPolicy from './pages/legal/PrivacyPolicy';
-import CookiesPolicy from './pages/legal/CookiesPolicy';
-import ScamPrevention from './pages/legal/ScamPrevention';
+const TermsAndConditions = lazy(() => import('./pages/legal/TermsAndConditions'));
+const LegalNotice = lazy(() => import('./pages/legal/LegalNotice'));
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const CookiesPolicy = lazy(() => import('./pages/legal/CookiesPolicy'));
+const ScamPrevention = lazy(() => import('./pages/legal/ScamPrevention'));
 
 import Header from './components/Header';
 import Logo from './components/Logo';
-import Deals from './pages/Deals';
-import Cart from './pages/Cart';
-import Shop from './pages/marketplace/Shop';
-import About from './pages/About';
-import SecurityInfo from './pages/SecurityInfo';
-import GamificationRules from './pages/GamificationRules';
-import Favorites from './pages/Favorites';
+const Deals = lazy(() => import('./pages/Deals'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Shop = lazy(() => import('./pages/marketplace/Shop'));
+const About = lazy(() => import('./pages/About'));
+const SecurityInfo = lazy(() => import('./pages/SecurityInfo'));
+const GamificationRules = lazy(() => import('./pages/GamificationRules'));
+const Favorites = lazy(() => import('./pages/Favorites'));
 import { motion, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
 
@@ -106,19 +106,19 @@ const Footer = () => (
           </p>
           <div className="flex items-center gap-3">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-pink-600 hover:text-white transition-all shadow-sm">
-              <FaInstagram className="text-lg" />
+              <FaInstagram className={"text-lg" as any} />
             </a>
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-              <FaFacebookF className="text-lg" />
+              <FaFacebookF className={"text-lg" as any} />
             </a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-black hover:text-white transition-all shadow-sm">
-              <FaXTwitter className="text-lg" />
+              <FaXTwitter className={"text-lg" as any} />
             </a>
             <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-slate-900 hover:text-white transition-all shadow-sm">
-              <FaTiktok className="text-lg" />
+              <FaTiktok className={"text-lg" as any} />
             </a>
             <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" className="size-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-              <FaWhatsapp className="text-lg" />
+              <FaWhatsapp className={"text-lg" as any} />
             </a>
           </div>
         </div>
@@ -226,7 +226,8 @@ function App() {
               <Header />
               <main className="flex-grow">
                 <PageTransition>
-                  <Routes>
+                  <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
+                    <Routes>
                     <Route path="/admin/reports" element={
                       <ProtectedRoute requireAdmin={true}>
                         <ReportedItems />
@@ -275,6 +276,7 @@ function App() {
                     <Route path="/reputacion" element={<GamificationRules />} />
                     <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
                   </Routes>
+                  </Suspense>
                 </PageTransition>
               </main>
               <Footer />
