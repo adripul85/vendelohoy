@@ -18,8 +18,8 @@
         "mercadopago": "^2.0.8"
     },
     "devDependencies": {
-        "typescript": "^5.0.0",
-        "firebase-functions-test": "^3.1.0"
+        "firebase-functions-test": "^3.1.0",
+        "typescript": "^5.9.3"
     },
     "private": true
 }
