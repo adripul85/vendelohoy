@@ -138,6 +138,15 @@ export default function MyPurchases({ purchases, formatDate, onConfirmReceipt, o
                                 <div className="flex flex-col gap-3 justify-center min-w-[220px]">
                                     {(order.status === 'SHIPPED' || order.status === 'PAID_HELD' || order.status === 'DELIVERED_PENDING_REVIEW') ? (
                                         <>
+                                            {order.status === 'PAID_HELD' && order.createdAt && (new Date().getTime() - (order.createdAt.toMillis ? order.createdAt.toMillis() : order.createdAt.seconds * 1000)) > 5 * 24 * 60 * 60 * 1000 && (
+                                                <button
+                                                    className="w-full bg-red-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2 mb-2"
+                                                    onClick={() => onCancel && onCancel(order.id)}
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">warning</span>
+                                                    Reclamar Reembolso
+                                                </button>
+                                            )}
                                             {order.status === 'DELIVERED_PENDING_REVIEW' ? (
                                                 <button
                                                     className="w-full bg-primary text-on-primary py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl shadow-primary-500/20 active:scale-95 flex items-center justify-center gap-2"

@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [txToRelease, setTxToRelease] = useState<string | null>(null);
   const [isGeneratingLabel, setIsGeneratingLabel] = useState(false);
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (!user) {
@@ -548,16 +549,24 @@ export default function Dashboard() {
 
             {/* Context-Specific Sidebars */}
             {activeTab === 'publicaciones' && (
-              <div className="bg-surface-container-lowest p-6 rounded-[40px] border border-outline-variant/50 shadow-premium">
-                <h3 className="text-[10px] font-black text-on-surface uppercase tracking-[0.2em] pl-1 mb-6 text-center">
-                  {new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
-                </h3>
+              <div className="bg-surface-container-lowest p-6 rounded-[40px] border border-outline-variant/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.15)] transition-shadow duration-300 transform">
+                <div className="flex items-center justify-between mb-6 px-2">
+                  <button onClick={() => { const d = new Date(calendarDate); d.setMonth(d.getMonth() - 1); setCalendarDate(d); }} className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                  </button>
+                  <h3 className="text-[10px] font-black text-on-surface uppercase tracking-[0.2em] text-center">
+                    {calendarDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+                  </h3>
+                  <button onClick={() => { const d = new Date(calendarDate); d.setMonth(d.getMonth() + 1); setCalendarDate(d); }} className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                  </button>
+                </div>
                 <div className="grid grid-cols-7 gap-y-4 text-center">
                   {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((d, i) => <span key={i} className="text-[9px] font-black text-outline">{d}</span>)}
                   {(() => {
                     const today = new Date();
-                    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
-                    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                    const firstDayOfMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
+                    const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
                     
                     // Get activity days with details
                     const activityDays = new Set<number>();
@@ -565,7 +574,7 @@ export default function Dashboard() {
 
                     [...transactions.compras, ...transactions.ventas].forEach(t => {
                       const date = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(t.createdAt);
-                      if (date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+                      if (date.getMonth() === calendarDate.getMonth() && date.getFullYear() === calendarDate.getFullYear()) {
                         const d = date.getDate();
                         activityDays.add(d);
                         if (!dayActivities.has(d)) dayActivities.set(d, []);
@@ -574,7 +583,7 @@ export default function Dashboard() {
                       
                       if (t.status === 'CANCELLED' && t.updatedAt) {
                         const cancelDate = t.updatedAt?.toDate ? t.updatedAt.toDate() : new Date(t.updatedAt);
-                        if (cancelDate.getMonth() === today.getMonth() && cancelDate.getFullYear() === today.getFullYear()) {
+                        if (cancelDate.getMonth() === calendarDate.getMonth() && cancelDate.getFullYear() === calendarDate.getFullYear()) {
                           const cd = cancelDate.getDate();
                           activityDays.add(cd);
                           if (!dayActivities.has(cd)) dayActivities.set(cd, []);
@@ -584,7 +593,7 @@ export default function Dashboard() {
                     });
                     userItems.forEach(item => {
                       const date = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
-                      if (date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+                      if (date.getMonth() === calendarDate.getMonth() && date.getFullYear() === calendarDate.getFullYear()) {
                         const d = date.getDate();
                         activityDays.add(d);
                         if (!dayActivities.has(d)) dayActivities.set(d, []);
@@ -597,7 +606,7 @@ export default function Dashboard() {
                         {[...Array(firstDayOfMonth)].map((_, i) => <span key={`empty-${i}`} />)}
                         {[...Array(daysInMonth)].map((_, i) => {
                           const day = i + 1;
-                          const isToday = day === today.getDate();
+                          const isToday = day === today.getDate() && calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear();
                           const hasActivity = activityDays.has(day);
                           const activities = dayActivities.get(day) || [];
                           

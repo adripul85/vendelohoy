@@ -13,9 +13,9 @@ export interface PlatformSettings {
 }
 
 const DEFAULT_SETTINGS: PlatformSettings = {
-    escrowFeePercentage: 0.05, // 5%
+    escrowFeePercentage: 0.10, // 10%
     paymentProcessingFeePercentage: 0.06, // 6% (Mercado Pago/Modo)
-    featuredExtraPercentage: 0.05, // 5% Extra for Featured
+    featuredExtraPercentage: 0.05, // 5% Extra for Featured/Flash (Total 15%)
     featuredDurationHours: 48,
     escrowFixedFee: 2500,
     useFixedEscrowFee: false,

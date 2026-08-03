@@ -18,9 +18,21 @@ interface ERPDashboardProps {
 
 export default function ERPDashboard({ sales, items, storeId, customizationSlot, overviewSlot }: ERPDashboardProps) {
     const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sales' | 'visits' | 'realtime' | 'customization'>('overview');
+    const [dateFilter, setDateFilter] = useState<'all' | '30d' | '7d'>('all');
 
-    const totalSales = sales.length;
-    const totalRevenue = sales.reduce((acc, sale) => acc + (sale.amountProduct || sale.amount || 0), 0);
+    const filteredSales = useMemo(() => {
+        if (dateFilter === 'all') return sales;
+        const now = Date.now();
+        const days = dateFilter === '30d' ? 30 : 7;
+        const threshold = now - (days * 24 * 60 * 60 * 1000);
+        return sales.filter(s => {
+            const t = s.createdAt?.toMillis ? s.createdAt.toMillis() : (s.createdAt?.seconds * 1000) || 0;
+            return t > threshold;
+        });
+    }, [sales, dateFilter]);
+
+    const totalSales = filteredSales.length;
+    const totalRevenue = filteredSales.reduce((acc, sale) => acc + (sale.amountProduct || sale.amount || 0), 0);
     const avgTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
     const totalViews = items.reduce((acc, item) => acc + (item.views || 0), 0);
 
@@ -136,6 +148,11 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
             <div className="p-6 md:p-10 bg-slate-50/50 min-h-[600px]">
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex justify-between items-center bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-fit">
+                            <button onClick={() => setDateFilter('7d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '7d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 7 días</button>
+                            <button onClick={() => setDateFilter('30d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '30d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 30 días</button>
+                            <button onClick={() => setDateFilter('all')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === 'all' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Historial Completo</button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                             <MetricCard title="Visitas a Productos" value={totalViews} previousValue={Math.floor(totalViews * 0.8)} />
                             <MetricCard title="Ventas" value={totalSales} previousValue={Math.floor(totalSales * 0.8)} />
@@ -189,23 +206,23 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
                         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                             <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm col-span-2 h-[450px]">
                                 <h4 className="text-slate-800 font-black tracking-tight mb-8 text-xl">Top 5 Productos Vendidos</h4>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={items.slice(0, 5).map(i => ({ name: i.title.substring(0, 15) + '...', ventas: Math.floor(Math.random() * 20) + 1 }))} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                                <ResponsiveContainer width="100%" height={320}>
+                                    <BarChart data={items.slice(0, 5).map(i => ({ name: i.title.length > 15 ? i.title.substring(0, 15) + '...' : i.title, ventas: Math.floor(Math.random() * 20) + 1 }))} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} dy={10} />
-                                        <YAxis />
-                                        <RechartsTooltip contentStyle={{borderRadius: '16px', border: 'none'}} />
-                                        <Bar dataKey="ventas" fill="#10B981" radius={[8, 8, 0, 0]} barSize={60} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} angle={-45} textAnchor="end" dx={-5} dy={10} interval={0} />
+                                        <YAxis tick={{ fontSize: 11 }} />
+                                        <RechartsTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'}} />
+                                        <Bar dataKey="ventas" fill="#10B981" radius={[8, 8, 0, 0]} barSize={32} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
-                            <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px] flex flex-col">
+                            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px] flex flex-col">
                                 <h4 className="text-slate-800 font-black tracking-tight mb-6 text-xl">Stock de Mercadería</h4>
                                 <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
                                     {items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center p-4 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-colors">
-                                            <span className="text-sm font-bold text-slate-700 truncate w-32">{item.title}</span>
-                                            <span className="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg">{item.quantity || 1} u.</span>
+                                        <div key={item.id} className="flex justify-between items-center p-3 sm:p-4 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-colors gap-3">
+                                            <span className="text-sm font-bold text-slate-700 truncate flex-1">{item.title}</span>
+                                            <span className="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg shrink-0 whitespace-nowrap">{item.quantity || 1} u.</span>
                                         </div>
                                     ))}
                                 </div>

@@ -49,7 +49,7 @@ const FlashDealsSection = () => {
   if (loading || featured.length === 0) return null;
 
   return (
-    <section>
+    <section id="flash-deals-section" className="scroll-mt-24">
       {/* Banner de Oportunidades Flash — siempre visible */}
       <div className="w-full bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between mb-8 shadow-2xl shadow-primary/20 relative overflow-hidden">
         {/* Decoraciones de fondo */}
@@ -793,35 +793,58 @@ const Home = () => {
             />
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 snap-x">
-            <button 
-              onClick={() => setActiveCategory(null)}
-              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${!activeCategory ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
-            >
-              <span className="material-symbols-outlined text-sm">grid_view</span>
-              All
-            </button>
-            <button 
-              onClick={() => setActiveCategory('Herramientas')}
-              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Herramientas' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
-            >
-              <span className="material-symbols-outlined text-sm">build</span>
-              Tools
-            </button>
-            <button 
-              onClick={() => setActiveCategory('Tecnología')}
-              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Tecnología' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
-            >
-              <span className="material-symbols-outlined text-sm">devices</span>
-              Tech
-            </button>
-            <button 
-              onClick={() => setActiveCategory('Hogar, Muebles y Jardín')}
-              className={`snap-start shrink-0 px-6 py-2 rounded-xl font-bold text-xs border flex items-center gap-2 transition-colors ${activeCategory === 'Hogar, Muebles y Jardín' ? 'bg-primary text-on-primary shadow-md shadow-primary/20 border-primary' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container-low'}`}
-            >
-              <span className="material-symbols-outlined text-sm">chair</span>
-              Hogar
-            </button>
+          {/* Categories Horizontal Scroll (Mobile) */}
+          <div className="pt-2 pb-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black tracking-tight text-on-surface">Categorías</h2>
+              <button className="text-xs font-bold text-primary">Ver Todas</button>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-4 pb-4 px-2 scrollbar-hide snap-x">
+              {/* Todo (All) */}
+              <div className="flex flex-col items-center gap-1.5 snap-start shrink-0 w-[64px]">
+                <button 
+                  onClick={() => setActiveCategory(null)}
+                  className={`size-[56px] rounded-full flex items-center justify-center transition-all ${!activeCategory ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-surface-container-low text-on-surface hover:bg-surface-container'}`}
+                >
+                  <span className="material-symbols-outlined text-[24px]">grid_view</span>
+                </button>
+                <span className={`text-[10px] font-bold text-center leading-tight ${!activeCategory ? 'text-primary' : 'text-on-surface-variant'}`}>Todo</span>
+              </div>
+              
+              {/* Ofertas Flash */}
+              <div className="flex flex-col items-center gap-1.5 snap-start shrink-0 w-[64px]">
+                <button 
+                  onClick={() => {
+                    const section = document.getElementById('flash-deals-section');
+                    if (section) {
+                      section.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                      alert('No hay ofertas flash activas en este momento.');
+                    }
+                  }}
+                  className="size-[56px] rounded-full flex items-center justify-center transition-all bg-amber-100 text-amber-600 hover:bg-amber-200 border border-amber-200 shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[24px]">bolt</span>
+                </button>
+                <span className="text-[10px] font-bold text-center leading-tight text-amber-700">Ofertas Flash</span>
+              </div>
+              
+              {/* Dynamic Categories */}
+              {CATEGORIES.map((cat) => (
+                <div key={cat.id} className="flex flex-col items-center gap-1.5 snap-start shrink-0 w-[64px]">
+                  <button 
+                    onClick={() => setActiveCategory(cat.name)}
+                    className={`size-[56px] rounded-full flex items-center justify-center transition-all ${activeCategory === cat.name ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-surface-container-low text-on-surface hover:bg-surface-container'}`}
+                  >
+                    <span className="material-symbols-outlined text-[24px]">{cat.icon}</span>
+                  </button>
+                  <span className={`text-[10px] font-medium text-center leading-[1.1] line-clamp-2 ${activeCategory === cat.name ? 'text-primary font-bold' : 'text-on-surface-variant'}`}>
+                    {cat.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         

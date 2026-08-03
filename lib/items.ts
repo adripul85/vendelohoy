@@ -17,6 +17,8 @@ export interface ItemData {
     sellerId: string; // ID del usuario que vende
     sellerName?: string; // Nombre para mostrar del vendedor
     brand?: string;
+    model?: string;
+    warranty?: string;
     color?: string | string[];
     size?: string | string[];
     productDimensions?: { length?: number; width?: number; height?: number; weight?: number }; // medidas del producto en sí
@@ -42,7 +44,8 @@ export interface ItemData {
     tags?: string[];
     seoTitle?: string;
     seoDescription?: string;
-    productUrlSlug?: string;
+    flashSaleFeeApplied?: number;
+    flashSaleExpiresAt?: any;
     createdAt?: any;
     updatedAt?: any;
 }
@@ -196,12 +199,12 @@ export const getFlashSaleItems = async (userLocation?: string) => {
         const querySnapshot = await getDocs(q);
         const allFlash = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as (ItemData & { id: string })))
-            .filter(item => !item.featuredUntil || item.featuredUntil.toDate() > now)
+            .filter(item => !item.flashSaleExpiresAt || item.flashSaleExpiresAt.toDate() > now)
             .filter(item => item.images && item.images.length >= 1)
             .filter(item => item.quantity === undefined || item.quantity > 0);
 
         const scored = allFlash.map(item => {
-            const expiresAt = item.featuredUntil?.toDate?.() || new Date(Date.now() + 86400000);
+            const expiresAt = item.flashSaleExpiresAt?.toDate?.() || new Date(Date.now() + 48 * 3600 * 1000);
             const msLeft = expiresAt.getTime() - now.getTime();
             const urgencyScore = Math.max(0, 1 - (msLeft / (48 * 3600 * 1000)));
             const engagementScore = Math.min(1, (item.views || 0) / 100);

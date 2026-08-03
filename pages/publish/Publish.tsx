@@ -47,6 +47,8 @@ export default function Publish() {
         subcategory: '',
         condition: 'new' as const,
         brand: '',
+        model: '',
+        warranty: '',
         color: [] as string[],
         size: [] as string[],
         videoUrl: '',
@@ -68,7 +70,6 @@ export default function Publish() {
         tags: '',
         seoTitle: '',
         seoDescription: '',
-        productUrlSlug: '',
         shippingAvailable: true,
         deliveryMethods: ['en_mano'] as string[],
         isFeatured: false,
@@ -98,6 +99,8 @@ export default function Publish() {
                         subcategory: item.subcategory || '',
                         condition: item.condition || 'new',
                         brand: item.brand || '',
+                        model: item.model || '',
+                        warranty: item.warranty || '',
                         color: Array.isArray(item.color) ? item.color : (item.color ? [item.color] : []),
                         size: Array.isArray(item.size) ? item.size : (item.size ? [item.size] : []),
                         videoUrl: item.videoUrl || '',
@@ -119,7 +122,6 @@ export default function Publish() {
                         tags: (item.tags || []).join(', '),
                         seoTitle: item.seoTitle || '',
                         seoDescription: item.seoDescription || '',
-                        productUrlSlug: item.productUrlSlug || '',
                         shippingAvailable: item.shippingAvailable !== undefined ? item.shippingAvailable : true,
                         deliveryMethods: item.deliveryMethods || ['en_mano'],
                         isFeatured: item.isFeatured || false,
@@ -261,9 +263,11 @@ export default function Publish() {
                 masterCategory: form.masterCategory,
                 category: form.category,
                 subcategory: form.subcategory,
-                condition: form.condition as any,
+                condition: form.condition,
                 brand: form.brand,
-                color: form.color,
+                model: form.model,
+                warranty: form.warranty,
+                color: form.color.length > 0 ? form.color : undefined,
                 size: form.size,
                 videoUrl: form.videoUrl,
                 hasInfiniteStock: form.hasInfiniteStock,
@@ -276,7 +280,6 @@ export default function Publish() {
                 tags: tagsArray,
                 seoTitle: form.seoTitle,
                 seoDescription: form.seoDescription,
-                productUrlSlug: form.productUrlSlug,
                 ...(prodDims && Object.keys(prodDims).length > 0 && { productDimensions: prodDims }),
                 shippingAvailable: form.deliveryMethods.some(m => ['correo_argentino', 'domicilio'].includes(m)),
                 deliveryMethods: form.deliveryMethods,
@@ -297,6 +300,13 @@ export default function Publish() {
                     expirationDate.setHours(expirationDate.getHours() + settings.featuredDurationHours);
                     featuredUntil = Timestamp.fromDate(expirationDate);
                 }
+                
+                let flashSaleExpiresAt: Timestamp | null = null;
+                if (form.isFlashSale) {
+                    const flashDate = new Date();
+                    flashDate.setHours(flashDate.getHours() + 48);
+                    flashSaleExpiresAt = Timestamp.fromDate(flashDate);
+                }
 
                 result = await publishItem({
                     ...payload,
@@ -306,7 +316,8 @@ export default function Publish() {
                     isFeatured: form.isFeatured,
                     featuredUntil: featuredUntil,
                     featuredFeeApplied: form.isFeatured ? 0.05 : 0,
-                    flashSaleFeeApplied: form.isFlashSale ? 0.10 : 0
+                    flashSaleFeeApplied: form.isFlashSale ? 0.05 : 0,
+                    flashSaleExpiresAt: flashSaleExpiresAt
                 });
             }
 
@@ -671,7 +682,17 @@ export default function Publish() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-600 mb-2">Marca</label>
-                                            <input name="brand" value={form.brand} onChange={handleChange} placeholder="Ejemplo: Nike" className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                            <input name="brand" value={form.brand} onChange={handleChange} placeholder="Ej: Samsung, Nike..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 mb-2">Modelo</label>
+                                            <input name="model" value={form.model} onChange={handleChange} placeholder="Ej: Galaxy S23, Air Max..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 mb-2">Garantía</label>
+                                            <input name="warranty" value={form.warranty} onChange={handleChange} placeholder="Ej: 6 meses, Sin garantía..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-600 mb-2">Tags (separados por coma)</label>
@@ -691,13 +712,6 @@ export default function Publish() {
                                             <label className="block text-xs font-bold text-slate-600 mb-2">Descripción SEO</label>
                                             <textarea name="seoDescription" value={form.seoDescription} onChange={handleChange} placeholder="Breve descripción para buscadores..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 min-h-[80px] font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                                             <span className="text-[10px] text-slate-400 mt-1 block">{form.seoDescription.length}/160 caracteres</span>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">URL del producto (Slug)</label>
-                                            <div className="flex">
-                                                <span className="bg-slate-100 border border-slate-300 border-r-0 rounded-l-xl py-3 px-4 text-slate-500 text-sm flex items-center">tienda.com/productos/</span>
-                                                <input name="productUrlSlug" value={form.productUrlSlug} onChange={handleChange} placeholder="campera-de-cuero" className="flex-1 bg-white border border-slate-300 rounded-r-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                                            </div>
                                         </div>
                                     </div>
                                 </div>

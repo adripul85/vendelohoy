@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNotification } from './NotificationContext';
-import { trackEvent } from '../lib/analytics';
+import { trackEvent } from '../lib/storeEvents';
 
 export interface CartItem {
     id: string;

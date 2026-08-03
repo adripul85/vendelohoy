@@ -13,7 +13,7 @@ initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY || 'TEST-c13f9948-4cb2-4753-9
 // Hooks
 import { useProduct } from '../../hooks/useProduct';
 import { useNotification } from '../../context/NotificationContext';
-import { trackEvent } from '../../lib/analytics';
+import { trackEvent } from '../../lib/storeEvents';
 
 // Components
 import { MobileHeader } from '../../components/ui/MobileHeader';
@@ -711,6 +711,18 @@ const ProductDetail = () => {
                     <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
                       <span className="text-on-surface-variant font-bold">Marca</span>
                       <span className="text-primary font-medium">{product.brand}</span>
+                    </div>
+                  )}
+                  {product.model && (
+                    <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                      <span className="text-on-surface-variant font-bold">Modelo</span>
+                      <span className="text-primary font-medium">{product.model}</span>
+                    </div>
+                  )}
+                  {product.warranty && (
+                    <div className="flex justify-between text-sm py-2 border-b border-outline-variant/20">
+                      <span className="text-on-surface-variant font-bold">Garantía</span>
+                      <span className="text-primary font-medium">{product.warranty}</span>
                     </div>
                   )}
                   {product.productDimensions && (product.productDimensions.length || product.productDimensions.width || product.productDimensions.height) && (

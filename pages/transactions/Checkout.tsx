@@ -7,7 +7,7 @@ import { subscribeToProduct } from '../../lib/items';
 import { httpsCallable } from 'firebase/functions'; // Use Firebase Cloud Functions
 import { db } from '../../lib/firebase';
 import { getUserProfile, updateUserProfile } from '../../lib/users';
-import { trackEvent } from '../../lib/analytics';
+import { trackEvent } from '../../lib/storeEvents';
 import PaymentMethodSelector from '../../components/checkout/PaymentMethodSelector';
 import { useCart } from '../../context/CartContext';
 import { getPlatformSettings, PlatformSettings } from '../../lib/settings';
