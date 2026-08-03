@@ -202,7 +202,7 @@ export default function MySales({
                                                     onClick={async () => {
                                                         try {
                                                             setIsGeneratingLabel(true);
-                                                            const { requestCourier } = await import('../../api/request-courier');
+                                                            const { requestCourier } = await import('../../api-handlers/request-courier');
                                                             const res = await requestCourier(order.id);
                                                             notify({ type: 'success', title: 'Vehículo Solicitado', message: 'El chofer va en camino.', icon: 'local_taxi' });
                                                             // Forzar actualización optimista o refresco

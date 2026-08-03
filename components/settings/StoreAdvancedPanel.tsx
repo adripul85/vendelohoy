@@ -75,7 +75,7 @@ const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, 
                                             e.preventDefault();
                                             setIsRequestingCourier(true);
                                             try {
-                                                const { requestCourier } = await import('../../api/request-courier');
+                                                const { requestCourier } = await import('../../api-handlers/request-courier');
                                                 await requestCourier(transaction.id);
                                                 notify({ type: 'success', title: 'Vehículo Solicitado', message: 'El chofer va en camino.', icon: 'local_taxi' });
                                                 if (onStatusChange) onStatusChange();
