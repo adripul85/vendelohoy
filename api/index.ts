@@ -10,7 +10,6 @@ import mercadopagoWebhook from '../api-handlers/mercadopago-webhook';
 import mpPreference from '../api-handlers/mp-preference';
 import processPayout from '../api-handlers/process-payout';
 import releaseFunds from '../api-handlers/release-funds';
-import requestCourier from '../api-handlers/request-courier';
 import shippingQuote from '../api-handlers/shipping-quote';
 import sitemap from '../api-handlers/sitemap';
 
@@ -28,7 +27,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'mp-preference': return mpPreference(req, res);
         case 'process-payout': return processPayout(req, res);
         case 'release-funds': return releaseFunds(req, res);
-        case 'request-courier': return requestCourier(req, res);
         case 'shipping-quote': return shippingQuote(req, res);
         case 'sitemap': return sitemap(req, res);
         default: return res.status(404).json({ error: 'Endpoint not found: ' + endpoint });
