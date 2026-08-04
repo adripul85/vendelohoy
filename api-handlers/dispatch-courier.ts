@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminDb } from '../lib/firebase-admin.js';
+import { adminDb, adminAuth } from '../lib/firebase-admin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -16,7 +16,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(401).json({ error: 'No autorizado' });
         }
         const token = authHeader.split('Bearer ')[1];
-        // En prod validaríamos el token con Firebase Admin: adminAuth.verifyIdToken(token)
+        let decodedToken;
+        try {
+            decodedToken = await adminAuth.verifyIdToken(token);
+        } catch (e) {
+            return res.status(401).json({ error: 'No autorizado: Token inválido.' });
+        }
 
         const txRef = adminDb.collection('transactions').doc(transactionId);
         const txSnap = await txRef.get();
@@ -26,6 +31,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const txData = txSnap.data() as any;
+
+        // Security check: Only the seller can dispatch the courier
+        if (txData.sellerId !== decodedToken.uid) {
+            return res.status(403).json({ error: 'Prohibido: No tienes permiso para despachar esta orden.' });
+        }
 
         if (txData.deliveryMethod !== "domicilio") {
             return res.status(400).json({ error: 'El método de entrega no es apto para vehículos On-Demand.' });

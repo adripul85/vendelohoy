@@ -20,12 +20,12 @@
 
         // Inicializar Firestore
         const firebaseConfig = {
-            apiKey: "AIzaSyAxlmDDOHY3D27hGVhYZCnwRVupOn9gt3w",
-            authDomain: "deoportunidades.firebaseapp.com",
-            projectId: "deoportunidades",
-            storageBucket: "deoportunidades.firebasestorage.app",
-            messagingSenderId: "194924574195",
-            appId: "1:194924574195:web:4166c84b1fe8f9487ace86"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         const app = firebase.initializeApp(firebaseConfig, 'temp-generator-app');
