@@ -163,7 +163,12 @@ export const releaseFunds = functions.https.onCall(async (request) => {
     const data = doc.data()!;
 
     const isBuyer = data.buyerId === request.auth.uid;
-    const isAdmin = false; // TODO: Implement real admin check via custom claims
+
+    let isAdmin = false;
+    if (request.auth) {
+        const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+        isAdmin = callerDoc.exists && (callerDoc.data()?.isAdmin === true || callerDoc.data()?.role === 'admin');
+    }
 
     // Validar token si es intercambio en persona
     if (data.deliveryMethod === 'en_mano' && data.qrCode !== qrToken) {
@@ -242,7 +247,11 @@ export const refundFunds = functions.https.onCall(async (request) => {
     if (!doc.exists) throw new functions.https.HttpsError('not-found', 'Transacción no encontrada.');
     const data = doc.data()!;
 
-    const isAdmin = false; // TODO: Real admin check
+    let isAdmin = false;
+    if (request.auth) {
+        const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+        isAdmin = callerDoc.exists && (callerDoc.data()?.isAdmin === true || callerDoc.data()?.role === 'admin');
+    }
 
     if (!isAdmin) {
         throw new functions.https.HttpsError('permission-denied', 'Solo un administrador puede ejecutar un reembolso forzado.');
