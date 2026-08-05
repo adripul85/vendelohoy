@@ -135,6 +135,7 @@ exports.updateTracking = functions.https.onCall(async (request) => {
  * 5. LIBERAR FONDOS (ESCROW RELEASE)
  */
 exports.releaseFunds = functions.https.onCall(async (request) => {
+    var _a, _b;
     const { transactionId, qrToken } = request.data;
     if (!request.auth)
         throw new functions.https.HttpsError('unauthenticated', 'Acceso denegado.');
@@ -144,7 +145,11 @@ exports.releaseFunds = functions.https.onCall(async (request) => {
         throw new functions.https.HttpsError('not-found', 'Transacción no encontrada.');
     const data = doc.data();
     const isBuyer = data.buyerId === request.auth.uid;
-    const isAdmin = false; // TODO: Implement real admin check via custom claims
+    let isAdmin = false;
+    if (request.auth) {
+        const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+        isAdmin = callerDoc.exists && (((_a = callerDoc.data()) === null || _a === void 0 ? void 0 : _a.isAdmin) === true || ((_b = callerDoc.data()) === null || _b === void 0 ? void 0 : _b.role) === 'admin');
+    }
     // Validar token si es intercambio en persona
     if (data.deliveryMethod === 'en_mano' && data.qrCode !== qrToken) {
         throw new functions.https.HttpsError('invalid-argument', 'Token de seguridad inválido.');
@@ -203,6 +208,7 @@ exports.releaseFunds = functions.https.onCall(async (request) => {
  * 6. REEMBOLSAR FONDOS (REFUND - ADMIN ONLY OR COMPREHENSIVE RULES)
  */
 exports.refundFunds = functions.https.onCall(async (request) => {
+    var _a, _b;
     const { transactionId } = request.data;
     if (!request.auth)
         throw new functions.https.HttpsError('unauthenticated', 'Acceso denegado.');
@@ -211,7 +217,11 @@ exports.refundFunds = functions.https.onCall(async (request) => {
     if (!doc.exists)
         throw new functions.https.HttpsError('not-found', 'Transacción no encontrada.');
     const data = doc.data();
-    const isAdmin = false; // TODO: Real admin check
+    let isAdmin = false;
+    if (request.auth) {
+        const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+        isAdmin = callerDoc.exists && (((_a = callerDoc.data()) === null || _a === void 0 ? void 0 : _a.isAdmin) === true || ((_b = callerDoc.data()) === null || _b === void 0 ? void 0 : _b.role) === 'admin');
+    }
     if (!isAdmin) {
         throw new functions.https.HttpsError('permission-denied', 'Solo un administrador puede ejecutar un reembolso forzado.');
     }
