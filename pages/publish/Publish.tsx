@@ -319,8 +319,8 @@ export default function Publish() {
                     views: 0,
                     isFeatured: form.isFeatured,
                     featuredUntil: featuredUntil,
-                    featuredFeeApplied: form.isFeatured ? 0.05 : 0,
-                    flashSaleFeeApplied: form.isFlashSale ? 0.05 : 0,
+                    featuredFeeApplied: form.isFeatured ? (settings?.featuredExtraPercentage || 0.05) : 0,
+                    flashSaleFeeApplied: form.isFlashSale ? (settings?.featuredExtraPercentage || 0.05) : 0,
                     flashSaleExpiresAt: flashSaleExpiresAt
                 });
             }
@@ -1023,7 +1023,7 @@ Reglas de formato y contenido:
                             <Card title="Destacar producto">
                                 <p className="text-xs text-slate-500 mb-4">
                                     Elegí en qué secciones de tu tienda querés destacar este producto para darle mayor visibilidad.
-                                    Al destacar un producto, se cobrará una comisión adicional del 5% sobre el precio de venta al momento de concretarse.
+                                    Al destacar un producto, se cobrará una comisión adicional del {settings ? Math.round(settings.featuredExtraPercentage * 100) : 5}% sobre el precio de venta.
                                 </p>
                                 <label className="flex items-center gap-3 cursor-pointer select-none">
                                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${form.isFeatured ? 'bg-indigo-600' : 'bg-slate-200'}`}>
@@ -1042,7 +1042,8 @@ Reglas de formato y contenido:
 
                             <Card title="Oferta Relámpago">
                                 <p className="text-xs text-slate-500 mb-4">
-                                    Activá esta opción para que el producto aparezca en la sección de "Oportunidades Flash" con mayor urgencia de compra.
+                                    Activá esta opción para que el producto aparezca en la sección de "Oportunidades Relámpago" con mayor urgencia de compra.
+                                    Al participar, se cobrará una comisión adicional del {settings ? Math.round(settings.featuredExtraPercentage * 100) : 5}% sobre el precio de venta.
                                 </p>
                                 <label className="flex items-center gap-3 cursor-pointer select-none">
                                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${form.isFlashSale ? 'bg-indigo-600' : 'bg-slate-200'}`}>

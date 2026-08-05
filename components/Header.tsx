@@ -240,7 +240,7 @@ const Header = () => {
                         }
                     }}>Inicio</Link>
                     <Link to="/search" className="text-on-surface-variant hover:text-primary transition-colors">Explorar Market</Link>
-                    <Link to="/deals" className="text-on-surface-variant hover:text-primary transition-colors">Ofertas Flash</Link>
+                    <Link to="/deals" className="text-on-surface-variant hover:text-primary transition-colors">Ofertas Relámpago</Link>
                 </nav>
 
                 {/* BUSCADOR */}
@@ -534,9 +534,9 @@ const Header = () => {
                                             initial="initial"
                                             animate="animate"
                                             exit="exit"
-                                            className="absolute top-4 md:p-12 right-0 w-64 bg-white border border-slate-100 rounded-2xl shadow-premium p-2 z-[100] origin-top-right"
+                                            className="absolute top-14 right-0 w-64 bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-premium p-2 z-[100] origin-top-right"
                                         >
-                                            <div className="p-3 bg-slate-50 rounded-xl mb-1 flex items-center gap-3">
+                                            <div className="p-3 bg-slate-50/50 rounded-xl mb-1 flex items-center gap-3">
                                             <div className="min-w-0">
                                                 <p className="font-bold text-slate-900 text-sm truncate">{userProfile?.displayName || user.displayName}</p>
                                                 <p className="text-[10px] font-medium text-slate-500 truncate">{user.email}</p>
@@ -559,23 +559,23 @@ const Header = () => {
                                                     key={item.to}
                                                     to={item.to}
                                                     onClick={() => setIsUserMenuOpen(false)}
-                                                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-all group"
+                                                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-900/5 text-slate-700 hover:text-primary transition-all group"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                                                        <span className="material-symbols-outlined text-xl text-slate-400 group-hover:text-primary transition-colors">{item.icon}</span>
                                                         <span className="text-sm font-medium">{item.label}</span>
                                                     </div>
                                                     {item.count ? (
-                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                                                             {item.count}
                                                         </span>
                                                     ) : null}
                                                 </Link>
                                             ))}
-                                            <div className="h-px bg-slate-100 my-1"></div>
+                                            <div className="h-px bg-slate-200/50 my-1"></div>
                                             <button
                                                 onClick={() => { logout(); setIsUserMenuOpen(false); navigate('/'); }}
-                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 text-red-500 transition-all text-left"
+                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50/80 text-red-500 transition-all text-left"
                                             >
                                                 <span className="material-symbols-outlined text-xl">logout</span>
                                                 <span className="text-sm font-medium">Cerrar Sesión</span>

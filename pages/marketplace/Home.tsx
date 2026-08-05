@@ -61,7 +61,7 @@ const FlashDealsSection = () => {
             <span className="material-symbols-outlined text-4xl text-white">timer</span>
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight font-headline mb-1">Oportunidades Flash 48Hs</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight font-headline mb-1">Oportunidades Relámpago 48Hs</h2>
             <p className="text-white/80 font-bold tracking-widest text-xs uppercase">Activos premium con descuentos exclusivos y tiempo limitado</p>
           </div>
         </div>
@@ -287,7 +287,7 @@ const NewsletterSection = () => {
       </div>
       <h2 className="text-2xl md:text-3xl font-black text-primary font-headline tracking-tighter mb-3">No te pierdas de nada</h2>
       <p className="text-on-surface-variant mb-6 max-w-md mx-auto text-sm">
-        Suscribite a nuestro boletín semanal y recibí las mejores oportunidades flash y tendencias antes que nadie.
+        Suscribite a nuestro boletín semanal y recibí las mejores oportunidades relámpago y tendencias antes que nadie.
       </p>
       
       <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3 relative z-10" onSubmit={(e) => e.preventDefault()}>
@@ -812,7 +812,7 @@ const Home = () => {
                 <span className={`text-[10px] font-bold text-center leading-tight ${!activeCategory ? 'text-primary' : 'text-on-surface-variant'}`}>Todo</span>
               </div>
               
-              {/* Ofertas Flash */}
+              {/* Ofertas Relámpago */}
               <div className="flex flex-col items-center gap-1.5 snap-start shrink-0 w-[64px]">
                 <Link 
                   to="/deals"
@@ -820,7 +820,7 @@ const Home = () => {
                 >
                   <span className="material-symbols-outlined text-[24px]">bolt</span>
                 </Link>
-                <span className="text-[10px] font-bold text-center leading-tight text-amber-700">Ofertas Flash</span>
+                <span className="text-[10px] font-bold text-center leading-tight text-amber-700">Ofertas Relámpago</span>
               </div>
               
               {/* Dynamic Categories */}

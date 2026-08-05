@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../lib/auth';
 import { startChat } from '../../lib/chat';
@@ -671,12 +672,25 @@ const ProductDetail = () => {
         
         {/* LEFT COLUMN - DETAILS */}
         <div className="lg:col-span-7 xl:col-span-7 order-1 flex flex-col gap-6">
-          {/* Description */}
           <div className="bg-surface-container-lowest rounded-3xl p-5 lg:p-6 border border-outline-variant/20 shadow-sm h-fit">
             <h3 className="text-2xl font-black text-primary font-headline tracking-tighter mb-6">Descripción del Producto</h3>
-            <div className="prose prose-slate max-w-none text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
-              {product.description}
-            </div>
+            <div 
+              className="prose prose-slate max-w-none text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap [&>p]:mb-4 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>h3]:mt-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h2]:mt-5"
+              dangerouslySetInnerHTML={{ 
+                __html: DOMPurify.sanitize(
+                  (product.description || '')
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                    .replace(/_([^_]+)_/g, '<em>$1</em>')
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>'), 
+                  {
+                    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'br', 'span', 'div', 'blockquote'],
+                    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style']
+                  }
+                )
+              }}
+            />
           </div>
 
           {/* Minimalist Tabs for Specs & Shipping */}

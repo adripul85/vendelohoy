@@ -10,6 +10,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import ERPDashboard from '../dashboard/ERPDashboard';
 import StockAdjustmentModal from './StockAdjustmentModal';
 import StockHistoryModal from './StockHistoryModal';
+import PriceAdjustmentModal from './PriceAdjustmentModal';
 
 interface StoreAdvancedPanelProps {
     user: UserProfile;
@@ -139,6 +140,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
     
     // Inventory Modals State
     const [selectedAdjustItem, setSelectedAdjustItem] = useState<(ItemData & { id: string }) | null>(null);
+    const [selectedPriceItem, setSelectedPriceItem] = useState<(ItemData & { id: string }) | null>(null);
     const [selectedHistoryItem, setSelectedHistoryItem] = useState<(ItemData & { id: string }) | null>(null);
     const [recentChats, setRecentChats] = useState<Chat[]>([]);
 
@@ -157,17 +159,34 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
 
     const handleSaveStock = async (newStock: number, isInfinite: boolean, reason: string, type: 'add' | 'subtract' | 'replace', adjustment: number) => {
         if (!selectedAdjustItem) return;
-        const res = await adjustItemStock(selectedAdjustItem.id, newStock, isInfinite, {
-            type, adjustment, newStock, previousStock: selectedAdjustItem.hasInfiniteStock ? 'infinite' : (selectedAdjustItem.quantity || 0), reason
-        });
-        if (res.success) {
-            notify('Stock actualizado', 'success');
-            setItems(items.map(item => item.id === selectedAdjustItem.id ? { ...item, quantity: newStock, hasInfiniteStock: isInfinite } : item));
-        } else {
-            notify('Error al actualizar stock', 'error');
+        try {
+            const res = await adjustItemStock(selectedAdjustItem.id, newStock, isInfinite, {
+                type, adjustment, newStock, previousStock: selectedAdjustItem.hasInfiniteStock ? 'infinite' : (selectedAdjustItem.quantity || 0), reason
+            });
+            if (res.success) {
+                notify('Stock actualizado', 'success');
+                setItems(items.map(item => item.id === selectedAdjustItem.id ? { ...item, quantity: newStock, hasInfiniteStock: isInfinite } : item));
+            } else {
+                notify('Error al actualizar stock', 'error');
+            }
+        } catch (error) {
+            console.error("Error adjusting stock:", error);
+            notify("Error al actualizar el stock", "error");
         }
     };
     
+    const handlePriceUpdate = async (newPrice: number) => {
+        if (!selectedPriceItem) return;
+        try {
+            await updateItem(selectedPriceItem.id, { price: newPrice });
+            setItems(items.map(item => item.id === selectedPriceItem.id ? { ...item, price: newPrice } : item));
+            notify("Precio actualizado correctamente", "success");
+        } catch (error) {
+            console.error("Error updating price:", error);
+            notify("Error al actualizar el precio", "error");
+        }
+    };
+
     // Date filter state (Defaults to last 30 days)
     const [reportStartDate, setReportStartDate] = useState(format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd'));
     const [reportEndDate, setReportEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -590,9 +609,19 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                                         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${item.status === 'AVAILABLE' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-slate-500 border-slate-200 bg-slate-100'}`}>
                                                             {item.status === 'AVAILABLE' ? 'Activo' : 'Oculto'}
                                                         </span>
-                                                        <span className="text-[10px] font-medium text-slate-400">
-                                                            ${item.price.toLocaleString()}
-                                                        </span>
+                                                        <div className="flex items-center gap-1 mt-0.5">
+                                                            <span className="text-[10px] font-medium text-slate-400">
+                                                                ${item.price.toLocaleString()}
+                                                            </span>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => setSelectedPriceItem(item)}
+                                                                className="size-5 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
+                                                                title="Modificar precio"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[12px]">edit</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -790,6 +819,15 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                     isOpen={!!selectedAdjustItem}
                     onClose={() => setSelectedAdjustItem(null)}
                     onSave={handleSaveStock}
+                />
+            )}
+
+            {selectedPriceItem && (
+                <PriceAdjustmentModal
+                    item={selectedPriceItem}
+                    isOpen={!!selectedPriceItem}
+                    onClose={() => setSelectedPriceItem(null)}
+                    onSave={handlePriceUpdate}
                 />
             )}
 

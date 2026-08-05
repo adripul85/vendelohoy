@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getFeaturedItems } from '../lib/items';
+import { getFlashSaleItems } from '../lib/items';
 import { getPlatformSettings } from '../lib/settings';
 import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -13,7 +13,7 @@ const Deals = () => {
     useEffect(() => {
         const fetchData = async () => {
             const [featuredItems, settings] = await Promise.all([
-                getFeaturedItems(),
+                getFlashSaleItems(),
                 getPlatformSettings()
             ]);
 

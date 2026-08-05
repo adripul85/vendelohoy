@@ -189,12 +189,13 @@ export const getFeaturedItems = async (userLocation?: string) => {
         const now = new Date();
         const q = query(
             collection(db, "items"),
-            where("isFeatured", "==", true),
-            where("status", "==", "AVAILABLE")
+            where("isFeatured", "==", true)
         );
         const querySnapshot = await getDocs(q);
         const allFeatured = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as (ItemData & { id: string })))
+            // Filtrar estado disponible
+            .filter(item => item.status === "AVAILABLE")
             // Filtrar expirados
             .filter(item => !item.featuredUntil || item.featuredUntil.toDate() > now)
             // Filtro de Calidad: al menos 1 imagen
@@ -237,12 +238,12 @@ export const getFlashSaleItems = async (userLocation?: string) => {
         const now = new Date();
         const q = query(
             collection(db, "items"),
-            where("isFlashSale", "==", true),
-            where("status", "==", "AVAILABLE")
+            where("isFlashSale", "==", true)
         );
         const querySnapshot = await getDocs(q);
         const allFlash = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as (ItemData & { id: string })))
+            .filter(item => item.status === "AVAILABLE")
             .filter(item => !item.flashSaleExpiresAt || item.flashSaleExpiresAt.toDate() > now)
             .filter(item => item.images && item.images.length >= 1)
             .filter(item => item.quantity === undefined || item.quantity > 0);
