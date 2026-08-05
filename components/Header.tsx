@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useNotification } from '../context/NotificationContext';
 import { useDialog } from '../context/DialogContext';
@@ -14,6 +14,7 @@ import { getUserFavorites, FavoriteItem } from '../lib/interactions';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { sendEmailVerification } from 'firebase/auth';
+import { MobileHeader } from './ui/MobileHeader';
 
 const dropdownMotion = {
     initial: { opacity: 0, y: -15, scale: 0.88, filter: 'blur(8px)' },
@@ -139,8 +140,9 @@ const Header = () => {
 
     const { user, userProfile, logout } = useAuth();
     const { notifications, unreadCount, markAsRead, clearAllNotifications } = useFirestoreNotifications();
-    const { notify } = useNotification();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { notify } = useNotification();
     const { cart } = useCart();
     const prevUnreadCountRef = useRef(0);
 
@@ -206,7 +208,9 @@ const Header = () => {
     };
 
     return (
-        <header className="hidden md:block sticky top-0 z-50 w-full glass font-sans">
+        <>
+            <MobileHeader variant={location.pathname.startsWith('/product/') ? 'product' : 'home'} />
+            <header className="hidden md:block sticky top-0 z-50 w-full glass font-sans">
             {user && !user.emailVerified && (
                 <div className="bg-amber-100 text-amber-900 px-4 py-2 text-center text-xs font-bold border-b border-amber-200 flex items-center justify-center gap-4 flex-wrap">
                     <span className="material-symbols-outlined text-sm">mark_email_unread</span>
@@ -607,7 +611,8 @@ const Header = () => {
                 onClose={() => setIsVoiceSearchOpen(false)}
                 onResult={(text) => handleSearch(undefined, text)}
             />
-        </header>
+            </header>
+        </>
     );
 };
 

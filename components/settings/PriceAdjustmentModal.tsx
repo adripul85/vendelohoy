@@ -48,7 +48,7 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                     </button>
                 </div>
 
-                <form onSubmit={handleSave} className="p-6">
+                <div className="p-6">
                     <div className="mb-6">
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nuevo Precio</label>
                         <div className="relative">
@@ -57,6 +57,14 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                                 type="number"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        if (!isSaving && price && !isNaN(Number(price))) {
+                                            handleSave(e as unknown as React.FormEvent);
+                                        }
+                                    }
+                                }}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-4 font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-lg"
                                 placeholder="0"
                                 required
@@ -75,7 +83,8 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                             Cancelar
                         </button>
                         <button 
-                            type="submit"
+                            type="button"
+                            onClick={handleSave}
                             disabled={isSaving || !price || isNaN(Number(price))}
                             className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center gap-2"
                         >
@@ -89,7 +98,7 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                             )}
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );

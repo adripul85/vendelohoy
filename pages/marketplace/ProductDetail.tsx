@@ -444,8 +444,6 @@ const ProductDetail = () => {
         </script>
       </Helmet>
 
-      <MobileHeader variant="product" />
-
       <SizeGuideModal isOpen={isSizeGuideOpen} onClose={() => setIsSizeGuideOpen(false)} />
 
       <ShareModal

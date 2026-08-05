@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../lib/auth';
 
 interface MobileHeaderProps {
     variant: 'home' | 'product';
@@ -8,6 +9,7 @@ interface MobileHeaderProps {
 export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const { user, userProfile } = useAuth();
 
     // Listen for custom event if triggered from elsewhere
     React.useEffect(() => {
@@ -106,21 +108,42 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
 
                         <div className="px-8 my-6 h-px bg-outline-variant/30" />
 
-                        <nav className="px-4 space-y-1">
-                            <p className="px-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Mi Cuenta</p>
-                            <button onClick={() => { setIsMenuOpen(false); navigate('/dashboard'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
-                                <span className="material-symbols-outlined text-on-surface-variant">dashboard</span>
-                                Mi Panel
-                            </button>
-                            <button onClick={() => { setIsMenuOpen(false); navigate('/messages'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
-                                <span className="material-symbols-outlined text-on-surface-variant">mail</span>
-                                Mensajes
-                            </button>
-                            <button onClick={() => { setIsMenuOpen(false); navigate('/wallet'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
-                                <span className="material-symbols-outlined text-on-surface-variant">account_balance_wallet</span>
-                                Billetera
-                            </button>
-                        </nav>
+                        {user ? (
+                            <nav className="px-4 space-y-1">
+                                <p className="px-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Mi Cuenta</p>
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/dashboard'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">dashboard</span>
+                                    Mi Panel
+                                </button>
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/settings?tab=shop'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">storefront</span>
+                                    Gestionar Mi Tienda
+                                </button>
+                                <button onClick={() => { setIsMenuOpen(false); navigate(`/shop/${userProfile?.store?.slug || user.uid}`); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">visibility</span>
+                                    Ver Mi Tienda Pública
+                                </button>
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/messages'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">mail</span>
+                                    Mensajes
+                                </button>
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/wallet'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">account_balance_wallet</span>
+                                    Billetera
+                                </button>
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/settings'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">settings</span>
+                                    Configuración
+                                </button>
+                            </nav>
+                        ) : (
+                            <nav className="px-4 space-y-1">
+                                <button onClick={() => { setIsMenuOpen(false); navigate('/login'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                                    <span className="material-symbols-outlined text-on-surface-variant">login</span>
+                                    Iniciar Sesión
+                                </button>
+                            </nav>
+                        )}
                         
                         <div className="px-8 my-6 h-px bg-outline-variant/30" />
                         

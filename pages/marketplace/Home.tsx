@@ -774,12 +774,9 @@ const Home = () => {
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT --- */}
       <main className="flex-1 pt-0 md:pt-16 pb-16 overflow-x-hidden px-0 md:px-4 lg:px-8 w-full bg-background/50">
         
         {/* MOBILE SPECIFIC UI */}
-        <MobileHeader variant="home" />
-        
         <div className="md:hidden px-4 pt-4 pb-2 space-y-4">
           <div className="relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
