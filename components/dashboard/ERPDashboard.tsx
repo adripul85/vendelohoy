@@ -7,6 +7,7 @@ import { TransactionData } from '../../lib/transactions';
 import { ItemData } from '../../lib/items';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { motion } from 'framer-motion';
 
 interface ERPDashboardProps {
     sales: any[];
@@ -104,13 +105,20 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
     const TabButton = ({ id, label }: { id: typeof activeTab, label: string }) => (
         <button
             onClick={() => setActiveTab(id)}
-            className={`px-6 py-4 font-black text-sm uppercase tracking-widest transition-all ${
+            className={`relative px-6 py-4 font-black text-sm uppercase tracking-widest transition-colors duration-200 ${
                 activeTab === id 
-                ? 'text-primary border-b-4 border-primary bg-primary/5' 
-                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border-b-4 border-transparent'
+                ? 'text-primary bg-primary/5' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
             } whitespace-nowrap`}
         >
             {label}
+            {activeTab === id && (
+                <motion.div
+                    layoutId="erpDashboardActiveTab"
+                    className="absolute bottom-0 left-0 right-0 h-1 bg-primary"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+            )}
         </button>
     );
 

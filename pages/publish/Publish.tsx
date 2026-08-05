@@ -7,23 +7,8 @@ import { useAuth } from '../../lib/auth';
 import { getPlatformSettings, PlatformSettings } from '../../lib/settings';
 import { Timestamp } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
-import ReactQuill, { Quill } from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
-import MarkdownShortcuts from 'quill-markdown-shortcuts';
-
-Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
-
-const quillModules = {
-    toolbar: [
-        [{ 'header': [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'align': [] }],
-        ['link', 'image'],
-        ['clean']
-    ],
-    markdownShortcuts: {}
-};
+import { Editor } from '@tinymce/tinymce-react';
+import { GoogleGenAI } from '@google/genai';
 
 const StepContainer = ({ children }: { children: React.ReactNode }) => (
     <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
@@ -410,18 +395,58 @@ export default function Publish() {
     const c = parsePrice(form.cost) || 0;
     const profitMargin = (p > 0 && c > 0) ? (((p - c) / c) * 100).toFixed(2) : '--';
 
-    const handleGenerateDescriptionAI = () => {
+    const handleGenerateDescriptionAI = async () => {
         if (!form.title) {
             notify({ type: 'warning', title: 'Falta información', message: 'Escribí al menos un título para que la IA sepa de qué trata el producto.', icon: 'info' });
             return;
         }
+
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+            notify({ type: 'warning', title: 'Requiere Configuración', message: 'Falta la API Key gratuita. Revisá la consola (F12) para las instrucciones.', icon: 'key' });
+            console.info("%c✨ Generador de IA Gratuito", "font-size:16px; font-weight:bold; color:#4f46e5;");
+            console.info("Para habilitar esto gratis, conseguí tu API Key en: https://aistudio.google.com/app/apikey");
+            console.info("Luego, pegala en tu archivo .env así: VITE_GEMINI_API_KEY=tu_clave_aqui");
+            return;
+        }
+
         setIsGeneratingAI(true);
-        setTimeout(() => {
-            const aiDescription = `<h3>Características de ${form.title}</h3><ul><li><strong>Condición:</strong> ${form.condition === 'new' ? 'Nuevo' : 'Usado'}</li><li><strong>Categoría:</strong> ${form.category}</li></ul><p>Este es un excelente producto que combina calidad y buen precio. ¡Aprovechalo antes de que se venda!</p>`;
-            setForm(prev => ({ ...prev, description: aiDescription }));
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const prompt = `Actúa como un experto en redacción publicitaria (copywriter) para comercio electrónico (ecommerce).
+Tu tarea es escribir una excelente, persuasiva y robusta descripción de producto en formato HTML.
+
+Información del producto:
+- Nombre: "${form.title}"
+- Categoría: ${form.category}
+- Condición: ${form.condition === 'new' ? 'Nuevo' : 'Usado'}
+
+Reglas de formato y contenido:
+1. Usa lenguaje vendedor, entusiasta y muy profesional que incite a la compra.
+2. La descripción debe tener al menos 3 o 4 párrafos bien nutridos.
+3. Incluye una sección de "Beneficios principales" (usando viñetas).
+4. Incluye una sección de "¿Por qué elegir este producto?".
+5. Usa etiquetas HTML básicas y limpias: <h3>, <p>, <ul>, <li>, <strong>, <br>. 
+6. NO uses etiquetas <html>, <head>, <body> ni bloques de código markdown (como \`\`\`html). Devuelve SOLO el HTML puro.
+7. Haz que la descripción sea amplia, detallada y genere confianza en el comprador.`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-flash-latest',
+                contents: prompt,
+            });
+
+            if (response.text) {
+                let cleanText = response.text;
+                // Remove formatting blocks if the model wrapped it in markdown
+                cleanText = cleanText.replace(/^```html/i, '').replace(/^```/, '').replace(/```$/i, '').trim();
+                setForm(prev => ({ ...prev, description: cleanText }));
+                notify({ type: 'success', title: 'Descripción Generada', message: 'La IA ha escrito una excelente descripción base. ¡Revisala!', icon: 'auto_awesome' });
+            }
+        } catch (error: any) {
+            notify({ type: 'error', title: 'Error de IA', message: 'Hubo un problema al generar: ' + error.message, icon: 'error' });
+        } finally {
             setIsGeneratingAI(false);
-            notify({ type: 'success', title: 'Descripción Generada', message: 'La IA ha escrito una descripción base. ¡Revisala!', icon: 'auto_awesome' });
-        }, 2000);
+        }
     };
 
     return (
@@ -507,17 +532,46 @@ export default function Publish() {
                                                 name="description" 
                                                 value={form.description} 
                                                 onChange={handleChange}
-                                                placeholder="Detalla las características de tu producto usando HTML o Markdown..."
+                                                placeholder="Detalla las características de tu producto usando HTML..."
                                                 className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 min-h-[250px] font-mono text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y placeholder:text-slate-400"
                                             />
                                         ) : (
-                                            <div className="border border-slate-300 rounded-xl overflow-hidden [&>.quill]:bg-white [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-slate-200 [&_.ql-toolbar]:bg-slate-50 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:text-slate-900 [&_.ql-editor]:text-sm">
-                                                <ReactQuill
-                                                    theme="snow"
+                                            <div className="border border-slate-300 rounded-xl overflow-hidden">
+                                                <Editor
+                                                    tinymceScriptSrc="https://cdn.jsdelivr.net/npm/tinymce@7.2.1/tinymce.min.js"
+                                                    licenseKey='gpl'
                                                     value={form.description}
-                                                    onChange={(val) => setForm(prev => ({ ...prev, description: val }))}
-                                                    modules={quillModules}
-                                                    placeholder="Detalla las características de tu producto... (Podés usar Markdown)"
+                                                    onEditorChange={(content) => setForm(prev => ({ ...prev, description: content }))}
+                                                    init={{
+                                                        height: 300,
+                                                        menubar: false,
+                                                        language: 'es',
+                                                        language_url: 'https://cdn.jsdelivr.net/npm/tinymce-i18n@26.8.2/langs7/es.js',
+                                                        plugins: [
+                                                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                                            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                                                        ],
+                                                        toolbar: 'blocks | ' +
+                                                            'bold italic underline strikethrough | ' +
+                                                            'numlist bullist | align | ' +
+                                                            'link image table | removeformat',
+                                                        toolbar_mode: 'sliding',
+                                                        content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:14px; color: #0f172a; }',
+                                                        image_advtab: true,
+                                                        image_title: true,
+                                                        automatic_uploads: true,
+                                                        file_picker_types: 'image',
+                                                        images_upload_handler: async (blobInfo) => {
+                                                            return new Promise((resolve) => {
+                                                                const reader = new FileReader();
+                                                                reader.readAsDataURL(blobInfo.blob());
+                                                                reader.onloadend = () => {
+                                                                    resolve(reader.result as string);
+                                                                };
+                                                            });
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         )}

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, updateUserProfile } from '../../lib/users';
-import { ItemData, getItemsBySeller, deleteItem, updateItem } from '../../lib/items';
+import { ItemData, getItemsBySeller, deleteItem, updateItem, adjustItemStock } from '../../lib/items';
 import { TransactionData, getUserTransactions } from '../../lib/transactions';
 import { useNotification } from '../../context/NotificationContext';
 import { Link } from 'react-router-dom';
+import { subscribeToChats, Chat } from '../../lib/chat';
 import { format } from 'date-fns';
 import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import ERPDashboard from '../dashboard/ERPDashboard';
+import StockAdjustmentModal from './StockAdjustmentModal';
+import StockHistoryModal from './StockHistoryModal';
 
 interface StoreAdvancedPanelProps {
     user: UserProfile;
@@ -133,6 +136,37 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
     const [sales, setSales] = useState<TransactionData[]>([]);
     const [coupons, setCoupons] = useState(user.store?.coupons || []);
     const [newCoupon, setNewCoupon] = useState({ code: '', discountPercentage: 10, maxUses: 10 });
+    
+    // Inventory Modals State
+    const [selectedAdjustItem, setSelectedAdjustItem] = useState<(ItemData & { id: string }) | null>(null);
+    const [selectedHistoryItem, setSelectedHistoryItem] = useState<(ItemData & { id: string }) | null>(null);
+    const [recentChats, setRecentChats] = useState<Chat[]>([]);
+
+    useEffect(() => {
+        if (!user) return;
+        const unsubscribe = subscribeToChats(user.uid, (fetchedChats) => {
+            const sorted = fetchedChats.sort((a, b) => {
+                const timeA = a.lastMessageTimestamp?.toMillis?.() || 0;
+                const timeB = b.lastMessageTimestamp?.toMillis?.() || 0;
+                return timeB - timeA;
+            }).slice(0, 3);
+            setRecentChats(sorted);
+        });
+        return () => unsubscribe();
+    }, [user]);
+
+    const handleSaveStock = async (newStock: number, isInfinite: boolean, reason: string, type: 'add' | 'subtract' | 'replace', adjustment: number) => {
+        if (!selectedAdjustItem) return;
+        const res = await adjustItemStock(selectedAdjustItem.id, newStock, isInfinite, {
+            type, adjustment, newStock, previousStock: selectedAdjustItem.hasInfiniteStock ? 'infinite' : (selectedAdjustItem.quantity || 0), reason
+        });
+        if (res.success) {
+            notify('Stock actualizado', 'success');
+            setItems(items.map(item => item.id === selectedAdjustItem.id ? { ...item, quantity: newStock, hasInfiniteStock: isInfinite } : item));
+        } else {
+            notify('Error al actualizar stock', 'error');
+        }
+    };
     
     // Date filter state (Defaults to last 30 days)
     const [reportStartDate, setReportStartDate] = useState(format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'yyyy-MM-dd'));
@@ -520,62 +554,99 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-6">
                 
-                {/* Control de Stock */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                {/* Inventario Maestro */}
+                <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h4 className="font-black text-slate-900">Control de Stock</h4>
-                        <button className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-700">Ver todos</button>
+                        <h4 className="font-black text-slate-900 text-xl">Inventario</h4>
                     </div>
-                    <div className="flex-1 overflow-y-auto max-h-[300px]">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="sticky top-0 bg-white shadow-sm shadow-slate-100">
+                    <div className="flex-1 overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Producto</th>
-                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Stock</th>
-                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Precio</th>
-                                    <th className="px-6 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Estado</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[40%]">Producto</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[15%]">Stock</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[20%] text-center">SKU</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[10%] text-center">Historial</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[15%] text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {items.filter(i => i.status === 'AVAILABLE').map(item => (
+                            <tbody className="divide-y divide-slate-100">
+                                {items.map(item => (
                                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-md bg-slate-100 overflow-hidden shrink-0">
-                                                    <img src={item.images?.[0] || item.image || ''} alt="" className="w-full h-full object-cover" />
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="size-14 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
+                                                    {item.images?.[0] || item.image ? (
+                                                        <img src={item.images?.[0] || item.image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="material-symbols-outlined text-slate-300">photo_camera</span>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <p className="text-[11px] font-bold text-slate-700 max-w-[150px] truncate">{item.title}</p>
-                                                    <p className="text-[9px] font-mono text-slate-400">{item.id.substring(0,8).toUpperCase()}</p>
+                                                <div className="flex flex-col">
+                                                    <p className="text-sm font-bold text-indigo-600 hover:text-indigo-800 line-clamp-2 leading-snug">{item.title}</p>
+                                                    <div className="mt-1.5 flex items-center gap-2">
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${item.status === 'AVAILABLE' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-slate-500 border-slate-200 bg-slate-100'}`}>
+                                                            {item.status === 'AVAILABLE' ? 'Activo' : 'Oculto'}
+                                                        </span>
+                                                        <span className="text-[10px] font-medium text-slate-400">
+                                                            ${item.price.toLocaleString()}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-3 text-center">
-                                            <span className={`text-[11px] font-black ${item.quantity > 5 ? 'text-emerald-600' : 'text-orange-500'}`}>
-                                                {item.quantity}
-                                            </span>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative">
+                                                    <input 
+                                                        type="text"
+                                                        readOnly
+                                                        value={item.hasInfiniteStock ? '∞' : (item.quantity || 0)}
+                                                        className={`w-20 bg-orange-50 border border-orange-200 rounded-md px-3 py-1.5 text-sm font-black outline-none ${item.hasInfiniteStock ? 'text-indigo-600 text-lg' : 'text-slate-700'}`}
+                                                    />
+                                                </div>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setSelectedAdjustItem(item)}
+                                                    className="size-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center transition-colors border border-slate-200"
+                                                    title="Editar stock"
+                                                >
+                                                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                                                </button>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-3 text-right">
-                                            <span className="text-[11px] font-bold text-slate-700">${item.price.toLocaleString()}</span>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="text-[11px] font-mono font-bold text-slate-500">{item.sku || 'Sin SKU'}</span>
                                         </td>
-                                        <td className="px-6 py-3 flex justify-end gap-2">
-                                            <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md">ACTIVO</span>
+                                        <td className="px-6 py-4 text-center">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setSelectedHistoryItem(item)}
+                                                className="size-8 rounded-full bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-400 hover:text-indigo-600 mx-auto flex items-center justify-center transition-colors"
+                                                title="Ver historial de stock"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">history</span>
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4 flex justify-end gap-2 items-center h-full">
                                             {/* Offline sale button */}
                                             <button 
+                                                type="button"
                                                 onClick={() => handleMarkAsSoldOffline(item)}
-                                                className="text-[9px] font-black text-slate-500 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md transition-colors"
+                                                className="text-[9px] font-black text-slate-500 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md transition-colors border border-slate-200"
                                                 title="Marcar como vendido offline (en efectivo/persona)"
                                             >
-                                                VENDER
+                                                VENDER OFFLINE
                                             </button>
                                             <button 
+                                                type="button"
                                                 onClick={() => handleDeleteItem(item.id)}
-                                                className="text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"
+                                                className="size-7 rounded-md text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors border border-red-100"
                                                 title="Eliminar producto"
                                             >
-                                                BORRAR
+                                                <span className="material-symbols-outlined text-[16px]">delete</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -585,7 +656,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Cupones */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col flex-1">
                         <h4 className="font-black text-slate-900 mb-4">Cupones</h4>
@@ -619,8 +690,9 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                 />
                             </div>
                             <button 
+                                type="button"
                                 onClick={handleCreateCoupon}
-                                className="bg-indigo-600 text-white font-bold text-xs px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+                                className="bg-emerald-500 text-white font-bold text-xs px-4 rounded-lg hover:bg-emerald-600 transition-colors"
                             >
                                 Crear
                             </button>
@@ -638,12 +710,14 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                         </div>
                                         <div className="flex gap-1">
                                             <button 
+                                                type="button"
                                                 onClick={() => toggleCoupon(coupon.id)}
                                                 className={`size-7 rounded-md flex items-center justify-center transition-colors ${coupon.active ? 'text-emerald-600 bg-emerald-100/50 hover:bg-emerald-100' : 'text-slate-400 bg-slate-100 hover:bg-slate-200'}`}
                                             >
                                                 <span className="material-symbols-outlined text-[16px]">{coupon.active ? 'toggle_on' : 'toggle_off'}</span>
                                             </button>
                                             <button 
+                                                type="button"
                                                 onClick={() => deleteCoupon(coupon.id)}
                                                 className="size-7 rounded-md text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors"
                                             >
@@ -657,18 +731,76 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                     </div>
 
                     {/* Centro de Mensajes Promo */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
-                        <div className="size-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-3">
-                            <span className="material-symbols-outlined">forum</span>
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col h-full">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="size-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+                                <span className="material-symbols-outlined">forum</span>
+                            </div>
+                            <div>
+                                <h4 className="font-black text-slate-900 text-sm">Centro de Mensajes</h4>
+                                <p className="text-[10px] text-slate-500 font-medium">Últimas consultas</p>
+                            </div>
                         </div>
-                        <h4 className="font-black text-slate-900 text-sm mb-1">Centro de Mensajes</h4>
-                        <p className="text-[10px] text-slate-500 font-medium mb-4">Gestiona las consultas de tus clientes.</p>
-                        <button className="w-full py-2 bg-slate-50 text-indigo-600 hover:bg-indigo-50 text-xs font-bold rounded-lg transition-colors">
+                        
+                        <div className="flex-1 space-y-3 mb-4">
+                            {recentChats.length === 0 ? (
+                                <div className="text-center py-6">
+                                    <span className="material-symbols-outlined text-slate-300 text-3xl mb-2">mark_chat_read</span>
+                                    <p className="text-xs font-bold text-slate-400">No hay mensajes recientes</p>
+                                </div>
+                            ) : (
+                                recentChats.map(chat => {
+                                    const otherUser = chat.participantsData?.[chat.participants.find(p => p !== user.uid) || ''] || { displayName: 'Usuario' };
+                                    const unreadCount = chat.unreadCount?.[user.uid] || 0;
+                                    return (
+                                        <div key={chat.id} className="flex gap-3 items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                            <div className="size-8 rounded-full bg-slate-100 overflow-hidden shrink-0">
+                                                {otherUser.photoURL ? (
+                                                    <img src={otherUser.photoURL} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="material-symbols-outlined text-slate-400 text-sm mt-1.5 ml-1.5">person</span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-slate-900 truncate">{otherUser.displayName}</p>
+                                                <p className={`text-[10px] truncate ${unreadCount > 0 ? 'font-black text-slate-800' : 'text-slate-500'}`}>{chat.lastMessage}</p>
+                                            </div>
+                                            {unreadCount > 0 && (
+                                                <div className="size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
+                                                    {unreadCount}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
+                        
+                        <Link to="/messages" className="w-full py-2 bg-slate-50 text-emerald-600 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                             Ir a Bandeja
-                        </button>
+                            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </Link>
                     </div>
                 </div>
             </div>
+
+            {selectedAdjustItem && (
+                <StockAdjustmentModal 
+                    item={selectedAdjustItem}
+                    isOpen={!!selectedAdjustItem}
+                    onClose={() => setSelectedAdjustItem(null)}
+                    onSave={handleSaveStock}
+                />
+            )}
+
+            {selectedHistoryItem && (
+                <StockHistoryModal 
+                    itemId={selectedHistoryItem.id}
+                    itemTitle={selectedHistoryItem.title}
+                    isOpen={!!selectedHistoryItem}
+                    onClose={() => setSelectedHistoryItem(null)}
+                />
+            )}
 
             {/* Banner Oficial */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">

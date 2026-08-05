@@ -52,7 +52,51 @@ export interface ItemData {
 
 export type ItemCondition = 'new' | 'like_new' | 'good' | 'used' | 'repair' | 'digital' | 'service';
 
+export interface StockHistoryEntry {
+    date: any;
+    type: 'add' | 'subtract' | 'replace' | 'sale' | 'cancel';
+    previousStock: number | 'infinite';
+    newStock: number | 'infinite';
+    adjustment: number;
+    reason?: string;
+    userId: string;
+}
+
 import { CATEGORIES as CONST_CATEGORIES } from "./constants";
+import { updateDoc } from "firebase/firestore";
+
+export const adjustItemStock = async (
+    itemId: string,
+    newQuantity: number,
+    hasInfiniteStock: boolean,
+    historyEntry: Omit<StockHistoryEntry, 'date' | 'userId'>
+) => {
+    try {
+        if (!auth.currentUser) throw new Error("UNAUTHORIZED");
+        
+        const itemRef = doc(db, 'items', itemId);
+        
+        // Update item quantity
+        await updateDoc(itemRef, {
+            quantity: newQuantity,
+            hasInfiniteStock,
+            updatedAt: serverTimestamp()
+        });
+
+        // Add history entry in subcollection
+        const historyRef = collection(itemRef, 'stock_history');
+        await addDoc(historyRef, {
+            ...historyEntry,
+            date: serverTimestamp(),
+            userId: auth.currentUser.uid
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error adjusting stock:", error);
+        return { success: false, error };
+    }
+};
 
 const cleanUndefined = (obj: Record<string, any>): Record<string, any> => {
     return Object.entries(obj).reduce((acc, [key, value]) => {
