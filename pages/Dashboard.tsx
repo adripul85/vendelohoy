@@ -542,7 +542,7 @@ export default function Dashboard() {
         )}
 
         {/* MAIN DASHBOARD CONTENT */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-10">
 
           {/* --- SIDEBAR PANEL --- */}
           <div className="lg:col-span-3 space-y-8">
@@ -877,7 +877,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="text-3xl font-black text-on-surface mb-4 uppercase tracking-tighter">No tienes publicaciones</h3>
                     <p className="text-sm font-bold text-on-surface-variant mb-10 max-w-sm mx-auto uppercase">Comienza a vender tus activos en nuestra red segura hoy mismo.</p>
-                    <Link to="/publish" className="inline-block bg-red-600 text-on-primary px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Publicar un Producto</Link>
+                    <Link to="/publish" className="inline-block bg-red-600 text-on-primary px-4 md:px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Publicar un Producto</Link>
                   </div>
                 )
               ) : list.length > 0 ? (
@@ -922,7 +922,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-3xl font-black text-on-surface mb-4 uppercase tracking-tighter">No se encontró actividad</h3>
                   <p className="text-sm font-bold text-on-surface-variant mb-10 max-w-sm mx-auto uppercase">Explora nuestro mercado global para comenzar tu red de confianza.</p>
-                  <Link to="/" className="inline-block bg-primary text-on-primary px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Explorar Productos</Link>
+                  <Link to="/" className="inline-block bg-primary text-on-primary px-4 md:px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Explorar Productos</Link>
                 </div>
               )}
 
@@ -980,7 +980,7 @@ export default function Dashboard() {
                     <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest pt-1">Visita nuestro Centro de Resolución para asistencia con envíos o calidad del ítem.</p>
                   </div>
                 </div>
-                <Link to="/resolution-center" className="w-full md:w-auto bg-surface border border-outline-variant/30 px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-on-surface hover:bg-surface-container-lowest transition-all text-center">Abrir Caso</Link>
+                <Link to="/resolution-center" className="w-full md:w-auto bg-surface border border-outline-variant/30 px-4 md:px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-on-surface hover:bg-surface-container-lowest transition-all text-center">Abrir Caso</Link>
               </div>
             </div>
           </div>

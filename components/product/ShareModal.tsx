@@ -34,7 +34,7 @@ const ShareModal: React.FC<Props> = ({ isOpen, onClose, title }) => {
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-dark-900/60 backdrop-blur-md animate-in fade-in duration-500" onClick={onClose}>
-            <div className="bg-white p-12 max-w-md w-full rounded-[40px] shadow-premium border border-light-200/50 relative animate-in zoom-in duration-500" onClick={e => e.stopPropagation()}>
+            <div className="bg-white p-4 md:p-12 max-w-md w-full rounded-[40px] shadow-premium border border-light-200/50 relative animate-in zoom-in duration-500" onClick={e => e.stopPropagation()}>
                 <button
                     onClick={onClose}
                     className="absolute top-8 right-8 size-10 bg-light-100 hover:bg-light-200 text-dark-800 rounded-xl flex items-center justify-center transition-all group"

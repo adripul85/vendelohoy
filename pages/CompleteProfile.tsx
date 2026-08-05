@@ -75,7 +75,7 @@ export default function CompleteProfile() {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[40px] shadow-premium border border-light-200 space-y-6">
+                <form onSubmit={handleSubmit} className="bg-white p-4 md:p-10 rounded-[40px] shadow-premium border border-light-200 space-y-6">
 
                     {/* Display Name */}
                     <div>

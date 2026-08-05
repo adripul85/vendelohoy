@@ -58,9 +58,9 @@ const PaymentMethods = () => {
                 </div>
 
                 {/* ESCROW INFO */}
-                <div className="bg-dark-800 rounded-[40px] p-12 text-white relative overflow-hidden">
+                <div className="bg-dark-800 rounded-[40px] p-4 md:p-12 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 size-96 bg-red-600/20 blur-[100px] rounded-full -mr-20 -mt-20"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-12">
                         <div className="flex-1">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="size-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">

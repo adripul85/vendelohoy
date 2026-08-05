@@ -83,7 +83,7 @@ export const MarketingBannerManager: React.FC<Props> = ({ banners, onUpdate }) =
                 </div>
                 <button
                     onClick={() => setEditingBanner({ active: true })}
-                    className="bg-primary-vibrant text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
+                    className="bg-primary-vibrant text-white px-4 md:px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
                 >
                     <span className="material-symbols-outlined text-sm">add</span>
                     Implementar Banner
@@ -125,12 +125,12 @@ export const MarketingBannerManager: React.FC<Props> = ({ banners, onUpdate }) =
             {editingBanner && (
                 <div className="fixed inset-0 z-[250] bg-dark-800/60 backdrop-blur-md flex items-center justify-center p-6">
                     <div className="bg-white w-full max-w-2xl rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-                         <div className="p-10 border-b border-light-100 flex items-center justify-between">
+                         <div className="p-4 md:p-10 border-b border-light-100 flex items-center justify-between">
                             <h3 className="text-xl font-black text-dark-800 uppercase tracking-tight">Configurar Banner de Seccion</h3>
                             <button onClick={() => setEditingBanner(null)} className="material-symbols-outlined text-gray-400">close</button>
                         </div>
                         
-                        <div className="p-10 space-y-6">
+                        <div className="p-4 md:p-10 space-y-6">
                              <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Categoría Destino</label>
                                 <select 
@@ -177,12 +177,12 @@ export const MarketingBannerManager: React.FC<Props> = ({ banners, onUpdate }) =
                             </div>
                         </div>
 
-                        <div className="p-10 bg-light-50 flex justify-end gap-4">
+                        <div className="p-4 md:p-10 bg-light-50 flex justify-end gap-4">
                             <button onClick={() => setEditingBanner(null)} className="text-[10px] font-black uppercase text-gray-400 px-6">Cancelar</button>
                             <button 
                                 onClick={handleSave} 
                                 disabled={isSaving}
-                                className="bg-dark-800 text-white px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                                className="bg-dark-800 text-white px-4 md:px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSaving ? 'Guardando...' : 'Confirmar Banner'}
                             </button>

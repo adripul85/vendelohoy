@@ -136,7 +136,7 @@ const Success = () => {
 
           {/* Transfer Instructions */}
           {isTransfer && (
-            <div className="p-10 bg-amber-50/50 border-b border-amber-100">
+            <div className="p-4 md:p-10 bg-amber-50/50 border-b border-amber-100">
               <h3 className="text-[10px] font-black text-amber-600 mb-8 uppercase tracking-[0.3em]">Trato Directo con el Vendedor</h3>
               <div className="bg-white p-8 rounded-[32px] border border-amber-200 shadow-sm flex flex-col items-center text-center">
                 <span className="material-symbols-outlined text-5xl text-amber-400 mb-4">handshake</span>
@@ -147,7 +147,7 @@ const Success = () => {
           )}
 
           {/* Ticket Header */}
-          <div className="p-10 border-b border-light-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="p-4 md:p-10 border-b border-light-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-300 mb-2">Código de Transacción</p>
               <h3 className="text-2xl font-black text-dark-800 font-mono tracking-tighter">{transactionId}</h3>
@@ -160,7 +160,7 @@ const Success = () => {
             )}
           </div>
 
-          <div className="p-10 md:p-14">
+          <div className="p-4 md:p-10 md:p-14">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2 leading-none">Producto</h4>
             <h4 className="text-xl font-black text-dark-800 tracking-tight mb-10">{displayTitle}</h4>
 
@@ -218,7 +218,7 @@ const Success = () => {
         <div className="flex flex-col sm:flex-row gap-6 w-full justify-center px-4">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex-1 px-12 py-6 bg-dark-800 text-white font-black rounded-3xl hover:opacity-90 transition-all shadow-2xl shadow-dark-800/20 flex items-center justify-center gap-4 active:scale-95 group"
+            className="flex-1 px-4 md:px-12 py-6 bg-dark-800 text-white font-black rounded-3xl hover:opacity-90 transition-all shadow-2xl shadow-dark-800/20 flex items-center justify-center gap-4 active:scale-95 group"
           >
             <span className="material-symbols-outlined group-hover:rotate-[360deg] transition-transform duration-700">dashboard_customize</span>
             <span className="uppercase tracking-[0.2em] text-[10px]">Ver mis compras</span>
@@ -226,7 +226,7 @@ const Success = () => {
 
           <button
             onClick={() => navigate('/')}
-            className="flex-1 px-12 py-6 bg-white border-2 border-light-200 text-dark-800 font-black rounded-3xl hover:bg-light-50 transition-all flex items-center justify-center gap-4 active:scale-95"
+            className="flex-1 px-4 md:px-12 py-6 bg-white border-2 border-light-200 text-dark-800 font-black rounded-3xl hover:bg-light-50 transition-all flex items-center justify-center gap-4 active:scale-95"
           >
             <span className="material-symbols-outlined">storefront</span>
             <span className="uppercase tracking-[0.2em] text-[10px]">Seguir Comprando</span>

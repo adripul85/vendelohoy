@@ -406,7 +406,7 @@ export default function Checkout() {
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-10 items-start">
+          <div className="flex flex-col lg:flex-row gap-4 md:gap-10 items-start">
 
             {/* Columna Izquierda: Producto y Costos */}
             <div className="w-full lg:w-[45%] space-y-6">
@@ -565,7 +565,7 @@ export default function Checkout() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-center gap-2 opacity-20 grayscale px-10">
+              <div className="flex items-center justify-center gap-2 opacity-20 grayscale px-4 md:px-10">
                 <span className="material-symbols-outlined text-xs">enhanced_encryption</span>
                 <p className="text-[8px] font-black uppercase tracking-[0.3em]">Hardware Encrypted Transaction Layer</p>
               </div>

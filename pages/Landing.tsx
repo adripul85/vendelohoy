@@ -37,11 +37,11 @@ const Landing = () => {
                     </motion.p>
 
                     <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link to="/login?tab=register" className="w-full sm:w-auto px-10 py-5 bg-primary-600 hover:bg-primary-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary-600/30 transition-all hover:-translate-y-1 hover:shadow-primary-600/50 flex items-center justify-center gap-3">
+                        <Link to="/login?tab=register" className="w-full sm:w-auto px-4 md:px-10 py-5 bg-primary-600 hover:bg-primary-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary-600/30 transition-all hover:-translate-y-1 hover:shadow-primary-600/50 flex items-center justify-center gap-3">
                             Abrir Mi Cuenta
                             <span className="material-symbols-outlined">arrow_forward</span>
                         </Link>
-                        <Link to="/login" className="w-full sm:w-auto px-10 py-5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-2xl font-black uppercase tracking-[0.2em] backdrop-blur-md transition-all">
+                        <Link to="/login" className="w-full sm:w-auto px-4 md:px-10 py-5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-2xl font-black uppercase tracking-[0.2em] backdrop-blur-md transition-all">
                             Ya tengo cuenta
                         </Link>
                     </motion.div>
@@ -59,9 +59,9 @@ const Landing = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 lg:gap-8">
                     {/* STEP 1 */}
-                    <motion.div custom={1} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
+                    <motion.div custom={1} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-4 md:p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
                         <div className="absolute -top-8 left-10 text-[120px] font-black leading-none text-slate-200/50 group-hover:text-primary-100/50 transition-colors pointer-events-none select-none -z-0">
                             1
                         </div>
@@ -75,7 +75,7 @@ const Landing = () => {
                     </motion.div>
 
                     {/* STEP 2 */}
-                    <motion.div custom={2} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
+                    <motion.div custom={2} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-4 md:p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
                         <div className="absolute -top-8 left-10 text-[120px] font-black leading-none text-slate-200/50 group-hover:text-primary-100/50 transition-colors pointer-events-none select-none -z-0">
                             2
                         </div>
@@ -89,7 +89,7 @@ const Landing = () => {
                     </motion.div>
 
                     {/* STEP 3 */}
-                    <motion.div custom={3} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
+                    <motion.div custom={3} variants={stepVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} className="relative bg-slate-50 p-4 md:p-10 rounded-[40px] border border-slate-100 hover:border-primary-100 transition-colors group">
                         <div className="absolute -top-8 left-10 text-[120px] font-black leading-none text-slate-200/50 group-hover:text-primary-100/50 transition-colors pointer-events-none select-none -z-0">
                             3
                         </div>
@@ -106,7 +106,7 @@ const Landing = () => {
 
             {/* TRUST BANNER */}
             <section className="bg-slate-50 py-24 px-6 border-y border-slate-100">
-                <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+                <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12">
                     <div className="md:w-1/2">
                         <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 mb-6 font-display">
                             Protegemos lo que es tuyo.

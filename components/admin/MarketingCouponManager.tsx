@@ -65,7 +65,7 @@ export const MarketingCouponManager: React.FC<Props> = ({ coupons, onUpdate }) =
                 </div>
                 <button
                     onClick={() => setEditingCoupon({ type: 'percentage', active: true, value: 0, minAmount: 0, limit: 0 })}
-                    className="bg-primary-vibrant text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all"
+                    className="bg-primary-vibrant text-white px-4 md:px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all"
                 >
                     <span className="material-symbols-outlined text-sm">confirmation_number</span>
                     Generar Cupón
@@ -108,12 +108,12 @@ export const MarketingCouponManager: React.FC<Props> = ({ coupons, onUpdate }) =
             {editingCoupon && (
                 <div className="fixed inset-0 z-[250] bg-dark-800/60 backdrop-blur-md flex items-center justify-center p-6">
                     <div className="bg-white w-full max-w-2xl rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-                        <div className="p-10 border-b border-light-100 flex items-center justify-between">
+                        <div className="p-4 md:p-10 border-b border-light-100 flex items-center justify-between">
                             <h3 className="text-xl font-black text-dark-800 uppercase tracking-tight">Configuración de Cupón</h3>
                             <button onClick={() => setEditingCoupon(null)} className="material-symbols-outlined text-gray-400">close</button>
                         </div>
                         
-                        <div className="p-10 space-y-6">
+                        <div className="p-4 md:p-10 space-y-6">
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Código del Cupón</label>
@@ -151,14 +151,14 @@ export const MarketingCouponManager: React.FC<Props> = ({ coupons, onUpdate }) =
                             </div>
                         </div>
 
-                        <div className="p-10 bg-light-50 flex justify-between items-center">
+                        <div className="p-4 md:p-10 bg-light-50 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <input type="checkbox" id="coupon_active" checked={editingCoupon.active} onChange={e => setEditingCoupon({...editingCoupon, active: e.target.checked})} className="size-5 rounded-lg text-indigo-600" />
                                 <label htmlFor="coupon_active" className="text-[10px] font-black uppercase text-dark-800 cursor-pointer">Activar Cupón</label>
                             </div>
                             <div className="flex gap-4">
                                 <button onClick={() => setEditingCoupon(null)} className="text-[10px] font-black uppercase text-gray-400">Cancelar</button>
-                                <button onClick={handleSave} disabled={isSaving} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/20 active:scale-95 transition-all">
+                                <button onClick={handleSave} disabled={isSaving} className="bg-indigo-600 text-white px-4 md:px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/20 active:scale-95 transition-all">
                                     {isSaving ? 'Guardando...' : 'Guardar Cupón'}
                                 </button>
                             </div>

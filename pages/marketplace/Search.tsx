@@ -201,7 +201,7 @@ const Search = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-10">
         {/* Filters Sidebar */}
         <aside className={`${showFilters ? 'block' : 'hidden'} lg:block lg:col-span-3 space-y-10 animate-in fade-in duration-500`}>
           <div className="bg-surface p-8 rounded-3xl border border-outline-variant/30 shadow-sm">
@@ -312,7 +312,7 @@ const Search = () => {
           {activeBanner && (
             <div className="w-full h-48 md:h-64 rounded-[2.5rem] overflow-hidden relative shadow-premium animate-in zoom-in-95 duration-500 mb-8">
               <img src={activeBanner.image} className="size-full object-cover" alt={activeBanner.title} />
-              <div className="absolute inset-0 bg-gradient-to-t from-dark-800/80 via-dark-800/20 to-transparent flex flex-col justify-end p-10">
+              <div className="absolute inset-0 bg-gradient-to-t from-dark-800/80 via-dark-800/20 to-transparent flex flex-col justify-end p-4 md:p-10">
                 <span className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white w-fit mb-4 border border-white/10">
                   Sección Destacada
                 </span>

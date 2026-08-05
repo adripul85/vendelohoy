@@ -315,7 +315,7 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
 
                 {activeTab === 'realtime' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-gradient-to-r from-primary to-primary-vibrant p-10 rounded-[32px] text-white shadow-2xl shadow-primary/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="bg-gradient-to-r from-primary to-primary-vibrant p-4 md:p-10 rounded-[32px] text-white shadow-2xl shadow-primary/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                             <div>
                                 <h3 className="text-sm font-black tracking-widest uppercase opacity-80 mb-3">Usuarios Activos (Últimos 5 min)</h3>
                                 <div className="flex items-baseline gap-4">

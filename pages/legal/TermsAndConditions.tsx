@@ -6,9 +6,9 @@ const TermsAndConditions = () => {
     }, []);
 
     return (
-        <div className="bg-white font-sans text-dark-charcoal max-w-[800px] mx-auto min-h-screen py-24 px-6">
+        <div className="bg-white font-sans text-dark-charcoal max-w-[800px] mx-auto min-h-screen py-12 sm:py-24 px-4 sm:px-6">
             <h1 className="text-4xl font-black mb-2 text-dark-900 font-display">TÉRMINOS Y CONDICIONES DE USO</h1>
-            <p className="text-sm text-gray-500 mb-12 font-bold tracking-widest uppercase">Última actualización: 2026</p>
+            <p className="text-xs sm:text-sm text-gray-500 mb-8 sm:mb-12 font-bold tracking-widest uppercase">Última actualización: 2026</p>
 
             <div className="prose prose-slate max-w-none space-y-8">
                 <p className="text-lg text-gray-600 font-medium">
@@ -16,7 +16,7 @@ const TermsAndConditions = () => {
                 </p>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">1</span>
                         Descripción del servicio
                     </h2>
@@ -27,7 +27,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">2</span>
                         Publicación de anuncios
                     </h2>
@@ -45,7 +45,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">3</span>
                         Responsabilidad de las transacciones
                     </h2>
@@ -62,7 +62,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">4</span>
                         Contenido publicado por los usuarios
                     </h2>
@@ -73,7 +73,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">5</span>
                         Eliminación o suspensión de cuentas
                     </h2>
@@ -88,7 +88,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">6</span>
                         Modificaciones del servicio
                     </h2>
@@ -98,7 +98,7 @@ const TermsAndConditions = () => {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-dark-800 mb-3 sm:mb-4 flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm">7</span>
                         Aceptación de los términos
                     </h2>

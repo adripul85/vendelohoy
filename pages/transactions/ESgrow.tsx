@@ -102,7 +102,7 @@ const ESgrow = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-16 min-h-screen bg-light-50">
       {/* HEADER: Protocolo de Transacción */}
-      <div className="flex flex-col xl:flex-row items-center justify-between gap-8 mb-16 bg-white p-10 rounded-[40px] border border-light-200 shadow-premium">
+      <div className="flex flex-col xl:flex-row items-center justify-between gap-8 mb-16 bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium">
         <div className="flex items-center gap-8">
           <button onClick={() => navigate(-1)} className="size-14 bg-light-50 rounded-2xl border border-light-200 hover:bg-white hover:shadow-sm transition-all flex items-center justify-center group">
             <span className="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
@@ -139,7 +139,7 @@ const ESgrow = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-10">
         <div className="lg:col-span-4 space-y-10">
           <EscrowStatusDisplay
             status={status}

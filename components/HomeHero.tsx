@@ -106,7 +106,7 @@ export default function HomeHero({ featuredItems }: HomeHeroProps) {
                     </div>
 
                     <div className="px-6 sm:px-10 py-12 md:py-16">
-                        <div className="grid lg:grid-cols-2 gap-10 items-center">
+                        <div className="grid lg:grid-cols-2 gap-4 md:gap-10 items-center">
 
                             {/* TEXT CONTENT */}
                             <div className="relative z-20 space-y-6">

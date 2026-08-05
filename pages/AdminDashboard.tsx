@@ -882,7 +882,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="p-12">
+                    <div className="p-4 md:p-12">
                         {marketingSubTab === 'hero' && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                 <MarketingHeroManager 
@@ -921,7 +921,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             ) : activeTab === 'config' ? (
-                <div className="bg-white rounded-[40px] border border-light-200 shadow-premium overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-700 p-12">
+                <div className="bg-white rounded-[40px] border border-light-200 shadow-premium overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-700 p-4 md:p-12">
                     <div className="flex items-center gap-4 mb-10">
                         <div className="size-16 bg-dark-800 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-dark-800/20">
                             <span className="material-symbols-outlined text-3xl font-black animate-spin-slow">settings</span>
@@ -933,7 +933,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="max-w-2xl">
-                        <div className="bg-light-50 p-10 rounded-[40px] border border-light-200 shadow-inner">
+                        <div className="bg-light-50 p-4 md:p-10 rounded-[40px] border border-light-200 shadow-inner">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h4 className="text-lg font-black text-dark-800 uppercase tracking-tight mb-2">Comisión de Escrow (Base)</h4>
@@ -1124,7 +1124,7 @@ export default function AdminDashboard() {
                         </div>
                     ))}
 
-                    <div className="lg:col-span-4 bg-gradient-to-br from-dark-900 via-primary-950 to-dark-950 p-10 md:p-12 rounded-3xl text-white shadow-xl relative overflow-hidden group border border-outline-variant/20">
+                    <div className="lg:col-span-4 bg-gradient-to-br from-dark-900 via-primary-950 to-dark-950 p-4 md:p-10 md:p-12 rounded-3xl text-white shadow-xl relative overflow-hidden group border border-outline-variant/20">
                         <div className="absolute top-0 right-0 size-80 bg-primary/30 blur-[120px] -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-1000 pointer-events-none"></div>
                         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                             <div>

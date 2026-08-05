@@ -116,9 +116,9 @@ const Verification = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12 items-start">
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-white p-10 rounded-4xl border border-light-200 shadow-premium">
+          <div className="bg-white p-4 md:p-10 rounded-4xl border border-light-200 shadow-premium">
             <h2 className="text-2xl font-black text-dark-800 mb-6">
               {step === 1 ? 'Escaneo de Documento' : step === 2 ? 'Prueba de Vida' : 'Confirmación'}
             </h2>
@@ -136,7 +136,7 @@ const Verification = () => {
         </div>
 
         <div className="lg:col-span-8">
-          <div className="bg-white p-10 rounded-[40px] shadow-premium border border-light-200 animate-in fade-in slide-in-from-bottom-5 duration-700">
+          <div className="bg-white p-4 md:p-10 rounded-[40px] shadow-premium border border-light-200 animate-in fade-in slide-in-from-bottom-5 duration-700">
             {step === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {['dniFront', 'dniBack'].map(key => (
@@ -183,7 +183,7 @@ const Verification = () => {
 
             {step === 3 && (
               <div className="space-y-10 py-10">
-                <div className="p-12 bg-emerald-50 rounded-[40px] border-2 border-emerald-100/50 text-center">
+                <div className="p-4 md:p-12 bg-emerald-50 rounded-[40px] border-2 border-emerald-100/50 text-center">
                   <div className="size-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
                     <span className="material-symbols-outlined text-emerald-500 text-5xl font-black animate-in zoom-in duration-500">verified</span>
                   </div>
@@ -197,14 +197,14 @@ const Verification = () => {
 
             <div className="flex justify-between items-center mt-12 pt-8 border-t border-light-100">
               {step > 1 ? (
-                <button onClick={() => setStep(prev => prev - 1)} className="px-10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-dark-800 transition-all flex items-center gap-2">
+                <button onClick={() => setStep(prev => prev - 1)} className="px-4 md:px-10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-dark-800 transition-all flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">arrow_back</span>
                   Anterior
                 </button>
               ) : <div></div>}
 
               {step < 3 ? (
-                <button onClick={handleNext} className="btn-primary !rounded-full !py-5 !px-12 text-xs">
+                <button onClick={handleNext} className="btn-primary !rounded-full !py-5 !px-4 md:px-12 text-xs">
                   CONTINUAR
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
@@ -212,7 +212,7 @@ const Verification = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="px-12 py-5 rounded-full bg-dark-800 text-white text-xs font-black uppercase tracking-widest shadow-2xl hover:bg-dark-700 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-50"
+                  className="px-4 md:px-12 py-5 rounded-full bg-dark-800 text-white text-xs font-black uppercase tracking-widest shadow-2xl hover:bg-dark-700 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-50"
                 >
                   {loading ? (
                     <>

@@ -66,7 +66,7 @@ const TransactionDetail = () => {
         setIsGeneratingLabel(false);
     };
 
-    if (loading) return <div className="p-20 text-center"><div className="size-12 border-4 border-primary-vibrant border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Sincronizando Libro Contable...</p></div>;
+    if (loading) return <div className="p-6 md:p-20 text-center"><div className="size-12 border-4 border-primary-vibrant border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Sincronizando Libro Contable...</p></div>;
     if (!transaction || !user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-light-50">
@@ -87,7 +87,7 @@ const TransactionDetail = () => {
             <div className="bg-white rounded-[40px] border border-light-200 shadow-premium overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-700">
 
                 {/* Header */}
-                <div className={`p-10 md:p-14 text-white text-center relative overflow-hidden transition-colors duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-dark-800'}`}>
+                <div className={`p-4 md:p-10 md:p-14 text-white text-center relative overflow-hidden transition-colors duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-dark-800'}`}>
                     <div className="absolute top-0 right-0 size-48 bg-white/10 blur-3xl -mr-10 -mt-10"></div>
                     <h1 className="text-3xl font-black uppercase tracking-tight mb-3 relative z-10">
                         {isCompleted ? 'Trato Finalizado' : 'Protocolo de Entrega'}
@@ -99,7 +99,7 @@ const TransactionDetail = () => {
                     </p>
                 </div>
 
-                <div className="p-10 md:p-16 flex flex-col items-center gap-12">
+                <div className="p-4 md:p-10 md:p-16 flex flex-col items-center gap-6 md:gap-12">
 
                     {isBuyer && !isCompleted && (
                         <div className="flex flex-col items-center gap-8 animate-in zoom-in duration-700">
@@ -199,7 +199,7 @@ const TransactionDetail = () => {
                                 <h3 className="text-3xl font-black text-dark-800 uppercase tracking-tight mb-3">Protocolo Exitoso</h3>
                                 <p className="text-sm font-bold text-gray-400">El intercambio seguro de activos ha sido finalizado.</p>
                             </div>
-                            <button onClick={() => navigate('/')} className="px-12 py-4 border-2 border-light-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-dark-800 hover:bg-light-50 transition-all active:scale-95">
+                            <button onClick={() => navigate('/')} className="px-4 md:px-12 py-4 border-2 border-light-200 rounded-2xl font-black text-[10px] uppercase tracking-widest text-dark-800 hover:bg-light-50 transition-all active:scale-95">
                                 Volver al Centro Central
                             </button>
                         </div>

@@ -133,7 +133,7 @@ export default function QuestionsSection({ itemId, sellerId, itemTitle }: Questi
     };
 
     return (
-        <section className="bg-white rounded-[40px] border border-light-200/50 p-12 shadow-premium relative overflow-hidden">
+        <section className="bg-white rounded-[40px] border border-light-200/50 p-4 md:p-12 shadow-premium relative overflow-hidden">
             {/* HUD Decoration */}
             <div className="absolute top-0 right-0 p-8 opacity-5">
                 <span className="material-symbols-outlined text-[120px] font-black">forum</span>

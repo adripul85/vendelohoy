@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { getCookieConsent } from '../components/CookieConsentBanner';
 
 export type AnalyticsEventType = 'page_view' | 'add_to_cart' | 'checkout_start' | 'purchase';
 
@@ -36,7 +37,7 @@ const getReferrerSource = () => {
     if (typeof window === 'undefined') return 'Directo';
     const ref = document.referrer.toLowerCase();
     if (!ref) return 'Directo';
-    if (ref.includes('google.com') || ref.includes('google.com.ar')) return 'Google (Orgánico)';
+    if (ref.includes('google.com') || ref.includes('google.com.ar')) return 'Google (Orgǭnico)';
     if (ref.includes('instagram.com')) return 'Instagram';
     if (ref.includes('facebook.com')) return 'Facebook';
     if (ref.includes('tiktok.com')) return 'TikTok';
@@ -46,6 +47,11 @@ const getReferrerSource = () => {
 export const trackEvent = async (storeId: string, eventType: AnalyticsEventType, eventData?: EventData) => {
     try {
         if (!storeId) return;
+
+        // Respect the user's choice in the cookie banner:
+        // if they chose "only essentials", do not track analytics events.
+        if (getCookieConsent() !== 'all') return;
+        
         
         const visitorId = await getVisitorId();
         const source = getReferrerSource();

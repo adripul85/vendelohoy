@@ -59,7 +59,7 @@ export default function SecurityInfo() {
 
                 {/* Sección Pago Protegido */}
                 <div className="mt-20 lg:mt-32 bg-dark-900 rounded-[40px] p-8 lg:p-20 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-12 opacity-10">
+                    <div className="absolute top-0 right-0 p-4 md:p-12 opacity-10">
                         <span className="material-symbols-outlined text-[160px] font-black">lock_clock</span>
                     </div>
 

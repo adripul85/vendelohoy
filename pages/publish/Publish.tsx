@@ -7,6 +7,23 @@ import { useAuth } from '../../lib/auth';
 import { getPlatformSettings, PlatformSettings } from '../../lib/settings';
 import { Timestamp } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
+import ReactQuill, { Quill } from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import MarkdownShortcuts from 'quill-markdown-shortcuts';
+
+Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+
+const quillModules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'align': [] }],
+        ['link', 'image'],
+        ['clean']
+    ],
+    markdownShortcuts: {}
+};
 
 const StepContainer = ({ children }: { children: React.ReactNode }) => (
     <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
@@ -34,6 +51,8 @@ export default function Publish() {
     const [previews, setPreviews] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>([]);
     const [imageUrlInput, setImageUrlInput] = useState('');
+    const [isHtmlMode, setIsHtmlMode] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     const [form, setForm] = useState({
         title: '',
@@ -391,6 +410,20 @@ export default function Publish() {
     const c = parsePrice(form.cost) || 0;
     const profitMargin = (p > 0 && c > 0) ? (((p - c) / c) * 100).toFixed(2) : '--';
 
+    const handleGenerateDescriptionAI = () => {
+        if (!form.title) {
+            notify({ type: 'warning', title: 'Falta información', message: 'Escribí al menos un título para que la IA sepa de qué trata el producto.', icon: 'info' });
+            return;
+        }
+        setIsGeneratingAI(true);
+        setTimeout(() => {
+            const aiDescription = `<h3>Características de ${form.title}</h3><ul><li><strong>Condición:</strong> ${form.condition === 'new' ? 'Nuevo' : 'Usado'}</li><li><strong>Categoría:</strong> ${form.category}</li></ul><p>Este es un excelente producto que combina calidad y buen precio. ¡Aprovechalo antes de que se venda!</p>`;
+            setForm(prev => ({ ...prev, description: aiDescription }));
+            setIsGeneratingAI(false);
+            notify({ type: 'success', title: 'Descripción Generada', message: 'La IA ha escrito una descripción base. ¡Revisala!', icon: 'auto_awesome' });
+        }, 2000);
+    };
+
     return (
         <div className="bg-slate-50 min-h-screen font-body pb-20">
             {/* Cabecera superior fija o pegajosa estilo dashboard */}
@@ -447,14 +480,47 @@ export default function Publish() {
                                         />
                                     </div>
                                     <div>
-                                        <div className="flex justify-between items-end mb-2">
-                                            <label className="block text-xs font-bold text-slate-600">Descripción</label>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-4">
+                                                <label className="block text-xs font-bold text-slate-600">Descripción</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerateDescriptionAI}
+                                                    disabled={isGeneratingAI || !form.title}
+                                                    className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors disabled:opacity-50"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                                                    {isGeneratingAI ? 'Generando...' : 'Generar con IA'}
+                                                </button>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsHtmlMode(!isHtmlMode)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold rounded-lg transition-colors w-fit"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">code</span>
+                                                {isHtmlMode ? 'Ocultar HTML' : 'Fuente HTML'}
+                                            </button>
                                         </div>
-                                        <textarea
-                                            name="description" value={form.description} onChange={handleChange}
-                                            placeholder="Detalla las características de tu producto..."
-                                            className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 min-h-[160px] font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y placeholder:text-slate-400"
-                                        />
+                                        {isHtmlMode ? (
+                                            <textarea
+                                                name="description" 
+                                                value={form.description} 
+                                                onChange={handleChange}
+                                                placeholder="Detalla las características de tu producto usando HTML o Markdown..."
+                                                className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 min-h-[250px] font-mono text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y placeholder:text-slate-400"
+                                            />
+                                        ) : (
+                                            <div className="border border-slate-300 rounded-xl overflow-hidden [&>.quill]:bg-white [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-slate-200 [&_.ql-toolbar]:bg-slate-50 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:text-slate-900 [&_.ql-editor]:text-sm">
+                                                <ReactQuill
+                                                    theme="snow"
+                                                    value={form.description}
+                                                    onChange={(val) => setForm(prev => ({ ...prev, description: val }))}
+                                                    modules={quillModules}
+                                                    placeholder="Detalla las características de tu producto... (Podés usar Markdown)"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Card>
@@ -723,7 +789,7 @@ export default function Publish() {
                         <StepContainer>
                             <Card title="Fotos y video">
                                 <div className="space-y-6">
-                                    <label className="w-full bg-slate-50 border-2 border-dashed border-indigo-300 hover:border-indigo-500 hover:bg-indigo-50/50 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                                    <label className="w-full bg-slate-50 border-2 border-dashed border-indigo-300 hover:border-indigo-500 hover:bg-indigo-50/50 rounded-2xl p-4 md:p-12 flex flex-col items-center justify-center cursor-pointer transition-colors">
                                         <div className="size-12 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-indigo-600">
                                             <span className="material-symbols-outlined text-2xl font-black">add</span>
                                         </div>

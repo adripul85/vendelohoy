@@ -84,7 +84,7 @@ export default function MySales({
             <div className="grid gap-6">
                 {sales.map((order) => (
                     <div key={order.id} className="bg-surface-container-lowest border border-outline-variant/50 rounded-[32px] overflow-hidden shadow-premium hover:shadow-premium-lg transition-all group">
-                        <div className="p-8 flex flex-col md:flex-row gap-10">
+                        <div className="p-8 flex flex-col md:flex-row gap-4 md:gap-10">
 
                             {/* Imagen y Info Base */}
                             <div className="flex gap-6 flex-[1.5]">

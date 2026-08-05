@@ -14,7 +14,7 @@ const PagoProtegidoInfo = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 relative">
                 {/* Connecting Line (Desktop) */}
-                <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-1 bg-gradient-to-r from-primary-100 via-primary-200 to-primary-100 -z-10"></div>
+                <div className="hidden md:block absolute top-4 md:p-12 left-[16%] right-[16%] h-1 bg-gradient-to-r from-primary-100 via-primary-200 to-primary-100 -z-10"></div>
 
                 {[
                     {
@@ -47,9 +47,9 @@ const PagoProtegidoInfo = () => {
                 ))}
             </div>
 
-            <div className="bg-dark-800 rounded-[48px] p-10 md:p-16 text-white relative overflow-hidden shadow-2xl">
+            <div className="bg-dark-800 rounded-[48px] p-4 md:p-10 md:p-16 text-white relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 right-0 size-[500px] bg-primary-vibrant/20 blur-[150px] -mr-32 -mt-32 rounded-full"></div>
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-12">
                     <div className="flex-1 text-center md:text-left">
                         <h2 className="text-3xl font-black mb-6 uppercase tracking-tight">Garantía de Satisfacción</h2>
                         <p className="text-gray-300 font-bold mb-8 leading-relaxed">

@@ -90,7 +90,7 @@ export default function ReviewModal({
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-dark-900/40 backdrop-blur-md" onClick={handleClose}>
-            <div className="bg-white rounded-[40px] shadow-premium max-w-lg w-full p-12 animate-in zoom-in duration-500 border border-light-200/50" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-[40px] shadow-premium max-w-lg w-full p-4 md:p-12 animate-in zoom-in duration-500 border border-light-200/50" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
                 <div className="flex items-start justify-between mb-10">

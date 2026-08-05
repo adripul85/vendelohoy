@@ -275,7 +275,7 @@ const ProhibitedItems = () => {
                 </div>
 
                 {/* Report Section */}
-                <div className="mt-12 bg-white p-10 rounded-[40px] border border-light-200 text-center">
+                <div className="mt-12 bg-white p-4 md:p-10 rounded-[40px] border border-light-200 text-center">
                     <h3 className="text-lg font-black text-dark-800 uppercase tracking-tight mb-2">¿Viste algo sospechoso?</h3>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-8">Ayudanos a mantener la comunidad segura reportando publicaciones prohibidas.</p>
                     <button

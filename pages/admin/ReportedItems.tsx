@@ -47,7 +47,7 @@ export default function ReportedItems() {
         }
     };
 
-    if (loading) return <div className="p-10 text-center">Cargando reportes...</div>;
+    if (loading) return <div className="p-4 md:p-10 text-center">Cargando reportes...</div>;
 
     return (
         <div className="min-h-screen bg-light-50 p-6 md:p-12">
@@ -67,7 +67,7 @@ export default function ReportedItems() {
 
                 <div className="bg-white rounded-[40px] shadow-premium border border-light-200 overflow-hidden">
                     {reports.length === 0 ? (
-                        <div className="p-20 text-center opacity-50">
+                        <div className="p-6 md:p-20 text-center opacity-50">
                             <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">verified_user</span>
                             <h3 className="text-xl font-black text-dark-800 uppercase tracking-widest">Sin Reportes Pendientes</h3>
                             <p className="text-sm font-bold text-gray-400 mt-2">Todo parece estar en orden en la red.</p>

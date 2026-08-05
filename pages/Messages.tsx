@@ -206,7 +206,7 @@ export default function Messages() {
         return chat.participantsData?.[otherId]?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
     };
 
-    if (!user) return <div className="p-10 text-center">Debes iniciar sesión.</div>;
+    if (!user) return <div className="p-4 md:p-10 text-center">Debes iniciar sesión.</div>;
 
     return (
         <div className="bg-light-50 h-[calc(100vh-80px)] overflow-hidden">

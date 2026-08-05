@@ -16,10 +16,10 @@ const TermsAndCosts = () => {
                 <h1 className="text-4xl font-black text-dark-800 tracking-tighter mb-4">Costos y Tarifas</h1>
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-12">Transparencia total en operación de mercado seguro</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-20">
 
                     {/* SELLING FEES */}
-                    <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-premium group hover:shadow-premium-lg transition-all">
+                    <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium group hover:shadow-premium-lg transition-all">
                         <div className="mb-8 size-20 rounded-[32px] bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
                             <span className="material-symbols-outlined text-4xl">percent</span>
                         </div>
@@ -44,7 +44,7 @@ const TermsAndCosts = () => {
                     </div>
 
                     {/* CANCELLATION PENALTY */}
-                    <div className="bg-dark-800 p-10 rounded-[40px] border border-dark-900 shadow-premium relative overflow-hidden group">
+                    <div className="bg-dark-800 p-4 md:p-10 rounded-[40px] border border-dark-900 shadow-premium relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none"></div>
 
                         <div className="relative z-10">
@@ -77,7 +77,7 @@ const TermsAndCosts = () => {
                             <span className="material-symbols-outlined text-red-600">policy</span>
                             Política de Privacidad
                         </h2>
-                        <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-sm space-y-6 text-sm text-gray-600 leading-relaxed font-medium">
+                        <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-sm space-y-6 text-sm text-gray-600 leading-relaxed font-medium">
                             <p>
                                 En <strong>Vendelo Hoy!</strong>, su privacidad es un pilar fundamental de nuestra arquitectura. Utilizamos encriptación de extremo a extremo para todos los datos sensibles.
                             </p>
@@ -94,7 +94,7 @@ const TermsAndCosts = () => {
                             <span className="material-symbols-outlined text-red-600">gavel</span>
                             Términos y Condiciones
                         </h2>
-                        <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-sm space-y-6 text-sm text-gray-600 leading-relaxed font-medium">
+                        <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-sm space-y-6 text-sm text-gray-600 leading-relaxed font-medium">
                             <p>
                                 Al operar en la plataforma, usted acepta someterse a nuestro <strong>Protocolo de Comercio Seguro</strong>.
                             </p>
@@ -108,7 +108,7 @@ const TermsAndCosts = () => {
                 </div>
 
 
-                <div className="mt-12 bg-white p-10 rounded-[40px] border border-light-200 text-center">
+                <div className="mt-12 bg-white p-4 md:p-10 rounded-[40px] border border-light-200 text-center">
                     <h3 className="text-lg font-black text-dark-800 uppercase tracking-tight mb-2">¿Dudas sobre un cobro?</h3>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-8">Nuestro equipo de finanzas está disponible para auditar tu caso.</p>
                     <button className="bg-light-100 text-dark-800 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-light-200 transition-colors">Contactar Soporte</button>

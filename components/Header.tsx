@@ -94,7 +94,7 @@ const VoiceSearchModal = ({ isOpen, onClose, onResult }: { isOpen: boolean, onCl
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-primary/20 backdrop-blur-md p-6 animate-in fade-in duration-300">
-            <div className="bg-surface p-12 max-w-lg w-full text-center rounded-[40px] shadow-premium relative animate-in zoom-in-95 duration-500">
+            <div className="bg-surface p-4 md:p-12 max-w-lg w-full text-center rounded-[40px] shadow-premium relative animate-in zoom-in-95 duration-500">
                 <button onClick={onClose} className="absolute top-8 right-8 text-slate-400 hover:text-slate-900 transition-colors">
                     <span className="material-symbols-outlined font-black">close</span>
                 </button>
@@ -420,7 +420,7 @@ const Header = () => {
                                     initial="initial"
                                     animate="animate"
                                     exit="exit"
-                                    className="fixed md:absolute top-20 md:top-14 left-2 right-2 md:left-auto md:right-0 w-auto md:w-[320px] bg-white border border-light-200 rounded-[28px] md:rounded-[32px] shadow-premium p-4 z-[100] max-h-[70vh] md:max-h-[400px] overflow-y-auto origin-top md:origin-top-right"
+                                    className="fixed md:absolute top-6 md:p-20 md:top-14 left-2 right-2 md:left-auto md:right-0 w-auto md:w-[320px] bg-white border border-light-200 rounded-[28px] md:rounded-[32px] shadow-premium p-4 z-[100] max-h-[70vh] md:max-h-[400px] overflow-y-auto origin-top md:origin-top-right"
                                 >
                                     <div className="flex items-center justify-between mb-4 px-2">
                                     <div className="flex items-center gap-2">
@@ -534,7 +534,7 @@ const Header = () => {
                                             initial="initial"
                                             animate="animate"
                                             exit="exit"
-                                            className="absolute top-12 right-0 w-64 bg-white border border-slate-100 rounded-2xl shadow-premium p-2 z-[100] origin-top-right"
+                                            className="absolute top-4 md:p-12 right-0 w-64 bg-white border border-slate-100 rounded-2xl shadow-premium p-2 z-[100] origin-top-right"
                                         >
                                             <div className="p-3 bg-slate-50 rounded-xl mb-1 flex items-center gap-3">
                                             <div className="min-w-0">

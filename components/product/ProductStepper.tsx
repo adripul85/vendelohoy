@@ -45,7 +45,7 @@ const ProductStepper: React.FC<Props> = ({ currentStepIdx = 0 }) => {
                             </div>
 
                             {/* Tooltip */}
-                            <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-all pointer-events-none bg-dark-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-2xl whitespace-nowrap z-30 shadow-2xl block">
+                            <div className="absolute -top-6 md:p-16 opacity-0 group-hover:opacity-100 transition-all pointer-events-none bg-dark-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-2xl whitespace-nowrap z-30 shadow-2xl block">
                                 {step.desc}
                                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 rotate-45"></div>
                             </div>

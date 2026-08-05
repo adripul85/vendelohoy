@@ -56,7 +56,7 @@ export const MarketingNotificationManager: React.FC<Props> = ({ notifications, o
                 </div>
                 <button
                     onClick={() => setEditingNotif({ type: 'promo', active: true, icon: 'campaign' })}
-                    className="bg-primary-vibrant text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
+                    className="bg-primary-vibrant text-white px-4 md:px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
                 >
                     <span className="material-symbols-outlined text-sm">add_alert</span>
                     Nueva Notificación
@@ -97,12 +97,12 @@ export const MarketingNotificationManager: React.FC<Props> = ({ notifications, o
             {editingNotif && (
                 <div className="fixed inset-0 z-[250] bg-dark-800/60 backdrop-blur-md flex items-center justify-center p-6">
                     <div className="bg-white w-full max-w-2xl rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-                         <div className="p-10 border-b border-light-100 flex items-center justify-between">
+                         <div className="p-4 md:p-10 border-b border-light-100 flex items-center justify-between">
                             <h3 className="text-xl font-black text-dark-800 uppercase tracking-tight">Configurar Notificación</h3>
                             <button onClick={() => setEditingNotif(null)} className="material-symbols-outlined text-gray-400">close</button>
                         </div>
                         
-                        <div className="p-10 space-y-6">
+                        <div className="p-4 md:p-10 space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block text-left">Tipo</label>
@@ -145,12 +145,12 @@ export const MarketingNotificationManager: React.FC<Props> = ({ notifications, o
                             </div>
                         </div>
 
-                        <div className="p-10 bg-light-50 flex justify-end gap-4">
+                        <div className="p-4 md:p-10 bg-light-50 flex justify-end gap-4">
                             <button onClick={() => setEditingNotif(null)} className="text-[10px] font-black uppercase text-gray-400 px-6">Cancelar</button>
                             <button 
                                 onClick={handleSave} 
                                 disabled={isSaving}
-                                className="bg-primary-vibrant text-white px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                                className="bg-primary-vibrant text-white px-4 md:px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSaving ? 'Enviando...' : 'Lanzar Notificación'}
                             </button>

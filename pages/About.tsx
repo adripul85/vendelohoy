@@ -41,7 +41,7 @@ export default function About() {
 
             {/* Content Section */}
             <div className="max-w-4xl mx-auto px-6 py-20 lg:py-32">
-                <div className="grid grid-cols-1 gap-16 lg:gap-32">
+                <div className="grid grid-cols-1 gap-8 md:gap-16 lg:gap-32">
 
                     {/* El Problema */}
                     <section className="space-y-6">
@@ -80,7 +80,7 @@ export default function About() {
                     </section>
 
                     {/* La Misión */}
-                    <section className="relative p-12 lg:p-20 bg-light-50 rounded-[40px] border border-light-200 overflow-hidden">
+                    <section className="relative p-4 md:p-12 lg:p-20 bg-light-50 rounded-[40px] border border-light-200 overflow-hidden">
                         <div className="absolute top-0 right-0 p-8 opacity-10">
                             <span className="material-symbols-outlined text-[120px] font-black text-primary-vibrant">handshake</span>
                         </div>
@@ -107,7 +107,7 @@ export default function About() {
             <div className="py-20 lg:py-32 bg-primary-vibrant text-white text-center">
                 <div className="max-w-2xl mx-auto px-6">
                     <h2 className="text-3xl lg:text-5xl font-black uppercase tracking-tighter mb-8">¿Te sumas a la revolución del comercio justo?</h2>
-                    <a href="/publish" className="inline-block bg-white text-primary-vibrant px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 transition-transform shadow-2xl">
+                    <a href="/publish" className="inline-block bg-white text-primary-vibrant px-4 md:px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 transition-transform shadow-2xl">
                         Empezar a Vender Ahora
                     </a>
                 </div>

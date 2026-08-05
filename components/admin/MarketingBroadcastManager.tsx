@@ -42,13 +42,13 @@ export const MarketingBroadcastManager: React.FC<Props> = ({ broadcast, onUpdate
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 leading-relaxed">Este mensaje se inyectará en el Nodo Superior de todas las páginas activas.</p>
             </div>
 
-            <div className="bg-white p-10 rounded-[48px] border-2 border-slate-200/60 shadow-premium space-y-10 relative overflow-hidden group">
+            <div className="bg-white p-4 md:p-10 rounded-[48px] border-2 border-slate-200/60 shadow-premium space-y-10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary-vibrant/5 rounded-full blur-3xl -z-10 group-hover:bg-primary-vibrant/10 transition-colors"></div>
                 
                 {/* Preview */}
                 <div className="space-y-4">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Simulación de Interfaz (Desktop/Mobile)</p>
-                    <div className={`w-full py-5 px-10 rounded-2xl flex items-center justify-between transition-all shadow-lg ${
+                    <div className={`w-full py-5 px-4 md:px-10 rounded-2xl flex items-center justify-between transition-all shadow-lg ${
                         type === 'info' ? 'bg-slate-900 text-white' : 
                         type === 'promo' ? 'bg-primary-vibrant text-white shadow-primary-500/20' : 
                         'bg-rose-600 text-white shadow-rose-600/20'
@@ -65,7 +65,7 @@ export const MarketingBroadcastManager: React.FC<Props> = ({ broadcast, onUpdate
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-10">
                     <div className="md:col-span-8 space-y-8">
                          <div>
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">Mensaje Dinámico</label>

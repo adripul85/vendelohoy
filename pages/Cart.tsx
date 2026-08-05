@@ -93,7 +93,7 @@ const Cart = () => {
                 </div>
                 <h1 className="text-4xl font-black text-on-surface uppercase tracking-tight mb-4">Tu carrito está vacío</h1>
                 <p className="text-on-surface-variant mb-10 max-w-md mx-auto font-medium">¿Viste algo que te gustó? ¡Agrégalo al carrito para no perderlo de vista!</p>
-                <Link to="/" className="btn-primary px-12 py-5 inline-block">
+                <Link to="/" className="btn-primary px-4 md:px-12 py-5 inline-block">
                     Explorar Oportunidades
                 </Link>
             </div>
@@ -110,7 +110,7 @@ const Cart = () => {
                     <p className="text-sm text-on-surface-variant font-medium">Revisa tu selección cuidadosamente antes de continuar.</p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 md:gap-16">
                     {/* LEFT COLUMN: Groups */}
                     <div className="lg:col-span-8 space-y-8">
                         {sellerGroups.map(group => {
@@ -187,7 +187,7 @@ const Cart = () => {
 
                     {/* RIGHT COLUMN: Summary */}
                     <div className="lg:col-span-4">
-                        <div className="bg-surface rounded-2xl shadow-lg border-t-4 border-t-[#00b4d8] border-x border-b border-outline-variant/20 sticky top-24 overflow-hidden">
+                        <div className="bg-surface rounded-2xl shadow-lg border-t-4 border-t-[#00b4d8] border-x border-b border-outline-variant/20 sticky top-6 lg:p-24 overflow-hidden">
                             <div className="p-6 lg:p-8">
                                 <h3 className="text-lg font-black text-primary mb-6 uppercase tracking-wider font-headline">Resumen de Compra</h3>
 

@@ -430,7 +430,7 @@ const ProductDetail = () => {
   };
 
   return (
-    <main className="max-w-[1280px] mx-auto px-0 md:px-3 lg:px-6 py-0 md:py-3 lg:py-6 bg-background min-h-screen font-body relative pb-24 md:pb-0">
+    <main className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8 bg-background min-h-screen font-body relative pb-24 md:pb-6">
       <Helmet>
         <title>{`${product.seoTitle || product.title} | Vendelo Hoy!`}</title>
         <meta name="description" content={product.seoDescription || product.description.substring(0, 150) + '...'} />
@@ -490,7 +490,7 @@ const ProductDetail = () => {
 
         {/* RIGHT COLUMN - PURCHASING HUB */}
         <div className="lg:col-span-5 xl:col-span-5 lg:row-span-2 order-2 h-full">
-          <div className="lg:sticky lg:top-24 flex flex-col h-full">
+          <div className="lg:sticky lg:top-6 lg:p-24 flex flex-col h-full">
             
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-4">

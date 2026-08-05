@@ -73,7 +73,7 @@ export default function DeleteAccountModal({ isOpen, onClose }: DeleteAccountMod
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-dark-900/80 backdrop-blur-md animate-in fade-in duration-500">
             <div className="bg-white max-w-md w-full rounded-[40px] shadow-premium overflow-hidden animate-in zoom-in duration-500 border border-light-200/50">
-                <div className="p-12">
+                <div className="p-4 md:p-12">
                     {/* Header with Warning Icon */}
                     <div className="flex flex-col items-center mb-10">
                         <div className="size-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6 shadow-sm border border-red-100/50">

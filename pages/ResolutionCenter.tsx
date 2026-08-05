@@ -87,7 +87,7 @@ export default function ResolutionCenter() {
                 </div>
             </div>
 
-            <div className="max-w-[1440px] mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="max-w-[1440px] mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-12">
 
                 {/* LEFT COLUMN: ACTIONS */}
                 <div className="lg:col-span-2 space-y-12">
@@ -143,7 +143,7 @@ export default function ResolutionCenter() {
                                 </div>
                             ))
                         ) : (
-                            <div className="bg-white p-12 rounded-[40px] border border-light-200 shadow-premium text-center">
+                            <div className="bg-white p-4 md:p-12 rounded-[40px] border border-light-200 shadow-premium text-center">
                                 <div className="size-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <span className="material-symbols-outlined text-4xl text-emerald-500">check_circle</span>
                                 </div>

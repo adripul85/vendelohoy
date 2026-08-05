@@ -836,7 +836,7 @@ export default function Settings() {
                                 className="space-y-8"
                             >
                                 {!formData.storeInfo.isActive ? (
-                                    <div className="bg-white rounded-[32px] p-10 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center space-y-6">
+                                    <div className="bg-white rounded-[32px] p-4 md:p-10 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center space-y-6">
                                         <div className="size-20 bg-sky-50 rounded-3xl flex items-center justify-center text-sky-700 mb-2">
                                             <span className="material-symbols-outlined text-4xl font-black">store</span>
                                         </div>
@@ -1660,7 +1660,7 @@ export default function Settings() {
                                 className="space-y-6"
                             >
                                 {/* XP Card */}
-                                <div className="bg-slate-900 rounded-[32px] p-8 shadow-xl shadow-slate-200 border border-slate-800 flex flex-col md:flex-row items-center gap-10 relative overflow-hidden text-white">
+                                <div className="bg-slate-900 rounded-[32px] p-8 shadow-xl shadow-slate-200 border border-slate-800 flex flex-col md:flex-row items-center gap-4 md:gap-10 relative overflow-hidden text-white">
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary-vibrant/20 rounded-full blur-[80px] pointer-events-none -mt-20 -mr-20"></div>
                                     
                                     {(() => {

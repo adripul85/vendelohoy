@@ -18,7 +18,7 @@ interface Props {
 
 const EscrowEvidence: React.FC<Props> = ({ evidence, isVerifyingAI, onUpload }) => {
     return (
-        <section className="bg-white p-10 rounded-[40px] border border-light-200 shadow-premium">
+        <section className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium">
             <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-8">
                 <div className="text-center sm:text-left">
                     <h3 className="text-2xl font-black text-dark-800 flex items-center justify-center sm:justify-start gap-4">

@@ -117,13 +117,13 @@ const Profile = () => {
   if (!targetProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-light-50">
-        <div className="text-center p-12 bg-white rounded-[40px] shadow-premium max-w-md">
+        <div className="text-center p-4 md:p-12 bg-white rounded-[40px] shadow-premium max-w-md">
           <div className="size-24 bg-light-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
             <span className="material-symbols-outlined text-5xl text-gray-300">person_off</span>
           </div>
           <h1 className="text-3xl font-black text-dark-800 mb-4 uppercase tracking-tighter">Identidad No Encontrada</h1>
           <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest leading-relaxed">La identidad de protocolo solicitada no está registrada en nuestra red de comercio seguro.</p>
-          <button onClick={() => navigate('/')} className="mt-10 bg-dark-800 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-dark-900 transition-all active:scale-95 shadow-xl shadow-dark-800/10">Volver al Grid</button>
+          <button onClick={() => navigate('/')} className="mt-10 bg-dark-800 text-white px-4 md:px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-dark-900 transition-all active:scale-95 shadow-xl shadow-dark-800/10">Volver al Grid</button>
         </div>
       </div>
     );
@@ -227,7 +227,7 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12">
           {/* --- SIDEBAR REPUTATION --- */}
           <div className="lg:col-span-4 space-y-8">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-light-200/50">
@@ -314,7 +314,7 @@ const Profile = () => {
           {/* --- MAIN CONTENT AREA --- */}
           <div className="lg:col-span-8 space-y-12">
             {/* Tabs Interface */}
-            <div className="flex border-b border-light-200 gap-10">
+            <div className="flex border-b border-light-200 gap-4 md:gap-10">
               {[
                 { id: 'selling', label: `En Venta (${products.length})` },
                 { id: 'reviews_seller', label: `Reseñas (${targetProfile.reputation?.totalReviews || 0})` }

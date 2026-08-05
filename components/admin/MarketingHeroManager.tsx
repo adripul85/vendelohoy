@@ -98,7 +98,7 @@ export const MarketingHeroManager: React.FC<Props> = ({ slides, onUpdate, isHero
                 </div>
                 <button
                     onClick={onToggleHero}
-                    className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 ${isHeroEnabled ? 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100' : 'bg-primary-vibrant text-white border-primary-vibrant shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95'}`}
+                    className={`px-4 md:px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 ${isHeroEnabled ? 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100' : 'bg-primary-vibrant text-white border-primary-vibrant shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95'}`}
                 >
                     {isHeroEnabled ? 'Desactivar Módulo' : 'Activar Módulo'}
                 </button>
@@ -152,12 +152,12 @@ export const MarketingHeroManager: React.FC<Props> = ({ slides, onUpdate, isHero
             {editingSlide && (
                 <div className="fixed inset-0 z-[250] bg-dark-800/60 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-4xl rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-                        <div className="p-10 border-b border-light-100 flex items-center justify-between">
+                        <div className="p-4 md:p-10 border-b border-light-100 flex items-center justify-between">
                             <h3 className="text-xl font-black text-dark-800 uppercase tracking-tight">Configuración de Slide</h3>
                             <button onClick={() => setEditingSlide(null)} className="material-symbols-outlined text-gray-400">close</button>
                         </div>
                         
-                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto">
+                        <div className="p-4 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto">
                             <div className="space-y-6">
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block text-left">Badge (Tag)</label>
@@ -236,7 +236,7 @@ export const MarketingHeroManager: React.FC<Props> = ({ slides, onUpdate, isHero
                             </div>
                         </div>
 
-                        <div className="p-10 bg-light-50 border-t border-light-100 flex justify-between items-center">
+                        <div className="p-4 md:p-10 bg-light-50 border-t border-light-100 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <input 
                                     type="checkbox" 
@@ -252,7 +252,7 @@ export const MarketingHeroManager: React.FC<Props> = ({ slides, onUpdate, isHero
                                 <button 
                                     onClick={handleSave} 
                                     disabled={isSaving}
-                                    className="px-12 py-4 bg-primary-vibrant text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                    className="px-4 md:px-12 py-4 bg-primary-vibrant text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {isSaving ? 'Guardando...' : 'Confirmar Cambios'}
                                 </button>

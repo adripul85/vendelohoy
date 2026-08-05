@@ -33,7 +33,7 @@ export default function PaymentFailure() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-light-50 p-6">
-            <div className="max-w-md w-full bg-white rounded-[48px] shadow-premium border border-light-200 p-12 text-center relative overflow-hidden animate-in slide-in-from-top-4 duration-500">
+            <div className="max-w-md w-full bg-white rounded-[48px] shadow-premium border border-light-200 p-4 md:p-12 text-center relative overflow-hidden animate-in slide-in-from-top-4 duration-500">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-orange-400"></div>
 
                 {/* Error Icon */}

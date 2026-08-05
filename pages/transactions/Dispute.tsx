@@ -402,10 +402,10 @@ const Dispute = () => {
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-16 bg-light-50 min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12">
         {/* Header Section */}
         <div className="lg:col-span-12">
-          <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-4 md:gap-10">
             <div className="flex items-center gap-8">
               <div className="size-24 rounded-[32px] bg-light-100 overflow-hidden border border-light-200 shadow-inner group">
                 <img src={counterparty?.avatar || `https://ui-avatars.com/api/?name=${counterparty?.displayName || 'User'}&background=random`} alt="Counterparty" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -453,7 +453,7 @@ const Dispute = () => {
             />
           </div>
 
-          <div className="bg-dark-800 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden group">
+          <div className="bg-dark-800 p-4 md:p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 size-32 bg-red-600/20 blur-[60px] -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-1000"></div>
             <div className="flex items-center gap-4 mb-8">
               <span className="material-symbols-outlined text-red-600 font-black">shield_with_heart</span>
@@ -467,7 +467,7 @@ const Dispute = () => {
 
         <div className="lg:col-span-8 space-y-12">
           {/* Evidence Grid */}
-          <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-premium">
+          <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium">
             <div className="flex items-center justify-between mb-10">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300">Bóveda de Evidencia</h3>
               <button onClick={handleUploadEvidence} className="text-[10px] font-black text-red-600 flex items-center gap-2 uppercase tracking-widest hover:underline group">
@@ -496,7 +496,7 @@ const Dispute = () => {
           </div>
 
           {/* Action Center */}
-          <div className="bg-dark-800 p-12 rounded-[50px] shadow-premium text-center flex flex-col items-center relative overflow-hidden">
+          <div className="bg-dark-800 p-4 md:p-12 rounded-[50px] shadow-premium text-center flex flex-col items-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent"></div>
             <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tight relative z-10">Terminal de Resolución</h3>
             <p className="text-[9px] font-black text-red-600 uppercase tracking-[0.4em] mb-12 relative z-10">Estado: {transaction.status}</p>
@@ -618,7 +618,7 @@ const Dispute = () => {
 
       {showCancelModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-dark-800/80 backdrop-blur-xl animate-in fade-in duration-500">
-          <div className="bg-white p-12 rounded-[60px] max-w-md w-full text-center border border-light-200 shadow-2xl scale-in-center">
+          <div className="bg-white p-4 md:p-12 rounded-[60px] max-w-md w-full text-center border border-light-200 shadow-2xl scale-in-center">
             <div className="size-20 bg-red-50 text-red-500 rounded-[32px] mx-auto mb-8 flex items-center justify-center border border-red-100/50 shadow-sm animate-pulse">
               <span className="material-symbols-outlined text-4xl font-black">emergency_home</span>
             </div>

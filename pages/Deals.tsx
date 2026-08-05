@@ -63,7 +63,7 @@ const Deals = () => {
 
             <div className="max-w-[1440px] mx-auto px-6 py-20">
                 {deals.length === 0 ? (
-                    <div className="bg-white p-20 rounded-[40px] border border-light-200 text-center shadow-sm">
+                    <div className="bg-white p-6 md:p-20 rounded-[40px] border border-light-200 text-center shadow-sm">
                         <div className="size-24 bg-light-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <span className="material-symbols-outlined text-4xl text-gray-300">inventory_2</span>
                         </div>
@@ -71,7 +71,7 @@ const Deals = () => {
                         <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Vuelve en unas horas para ver nuevas oportunidades.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-10">
                         {deals.map((product, index) => (
                             <div key={product.id} className="animate-in fade-in slide-in-from-bottom-6 duration-1000" style={{ animationDelay: `${index * 150}ms` }}>
                                 <ProductCard product={product} />

@@ -302,7 +302,7 @@ const Shop = () => {
             )}
 
             {/* PRODUCT GRID SECTION */}
-            <main className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-12 relative z-10">
+            <main className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-6 md:gap-12 relative z-10">
                 {/* Left Column (Main) */}
                 <div className="flex-1">
                     <div className="flex items-end justify-between mb-8 border-b border-outline-variant/30 pb-8">
@@ -362,7 +362,7 @@ const Shop = () => {
                     {/* PUBLIC COUPONS PROMOTIONAL STRIP */}
                     {showPublicCoupons && (
                         <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 rounded-[32px] shadow-xl text-white mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
-                            <div className="absolute -right-10 -top-10 size-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                            <div className="absolute -right-10 -top-4 md:p-10 size-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                             <div className="flex items-center gap-4 relative z-10">
                                 <div className="size-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shadow-inner shrink-0">
                                     <span className="material-symbols-outlined text-2xl font-black">local_offer</span>
@@ -807,7 +807,7 @@ const Shop = () => {
 
                             {/* Digital Card Preview */}
                             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden flex flex-col items-center text-center border border-white/10">
-                                <div className="absolute -right-12 -top-12 size-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                                <div className="absolute -right-12 -top-4 md:p-12 size-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
                                 <div className="absolute -left-12 -bottom-12 size-36 bg-pink-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
                                 {/* Avatar / Logo */}

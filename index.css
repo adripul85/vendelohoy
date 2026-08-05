@@ -4,11 +4,11 @@
 @layer base {
   :root {
     /* PREMIUM MARKETPLACE — BLUE-GREEN + LIME PALETTE */
-    --surface: #ffffff; 
-    --surface-bright: #ffffff;
-    --surface-dim: #F1F5F9;
-    --surface-container-lowest: #ffffff;
-    --surface-container-low: #F8FAFC;
+    --surface: #F0EADC; 
+    --surface-bright: #F0EADC;
+    --surface-dim: #E8E0D0; /* Slightly darker shade for dim */
+    --surface-container-lowest: #F0EADC;
+    --surface-container-low: #F8F4EB; /* Slightly lighter shade for low */
     --surface-container: #F1F5F9;
     --surface-container-high: #E2E8F0;
     --surface-container-highest: #CBD5E1;

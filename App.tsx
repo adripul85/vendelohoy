@@ -41,6 +41,7 @@ import LegalNotice from './pages/legal/LegalNotice';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import CookiesPolicy from './pages/legal/CookiesPolicy';
 import ScamPrevention from './pages/legal/ScamPrevention';
+import CookieConsentBanner from './components/CookieConsentBanner';
 
 import Header from './components/Header';
 import Logo from './components/Logo';
@@ -279,6 +280,7 @@ function App() {
               </main>
               <Footer />
               <BottomNav />
+              <CookieConsentBanner />
             </div>
           </BrowserRouter>
         </CartProvider>

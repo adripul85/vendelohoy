@@ -180,7 +180,7 @@ const Wallet = () => {
         <p className="text-sm font-bold text-gray-400">Administra tus ganancias, fondos en garantía y retiros</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-10">
         <div className="lg:col-span-12 xl:col-span-8 space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 p-8 text-white rounded-[40px] shadow-2xl flex flex-col relative overflow-hidden group">
@@ -209,7 +209,7 @@ const Wallet = () => {
             </div>
           </div>
 
-          <div className="bg-white p-10 rounded-4xl border border-light-200 shadow-premium">
+          <div className="bg-white p-4 md:p-10 rounded-4xl border border-light-200 shadow-premium">
             <div className="flex items-center justify-between mb-12">
               <div>
                 <h3 className="text-xl font-black text-dark-800 mb-1">Volumen de Actividad</h3>
@@ -226,7 +226,7 @@ const Wallet = () => {
                   className="w-full bg-dark-800/10 rounded-xl hover:bg-gradient-to-t hover:from-primary-600 hover:to-indigo-600 transition-all cursor-pointer group relative hover:shadow-lg hover:shadow-primary-500/30"
                   style={{ height: Math.max(d.height, 5) + '%' }}
                 >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-dark-800 text-white text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  <div className="absolute -top-4 md:p-10 left-1/2 -translate-x-1/2 bg-dark-800 text-white text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                     ${d.value.toLocaleString()}
                   </div>
                 </div>
@@ -235,19 +235,19 @@ const Wallet = () => {
           </div>
 
           <div className="bg-white rounded-4xl border border-light-200 shadow-premium overflow-hidden">
-            <div className="px-10 py-8 border-b border-light-100 flex items-center justify-between">
+            <div className="px-4 md:px-10 py-8 border-b border-light-100 flex items-center justify-between">
               <h3 className="text-lg font-black text-dark-800">Historial de Transacciones</h3>
               <button className="text-[10px] font-black text-primary-vibrant uppercase tracking-widest hover:underline transition-all">Descargar CSV</button>
             </div>
 
             <div className="p-0">
               {loadingMovements ? (
-                <div className="p-20 text-center">
+                <div className="p-6 md:p-20 text-center">
                   <span className="material-symbols-outlined animate-spin text-4xl text-primary-vibrant mb-4">progress_activity</span>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cargando movimientos...</p>
                 </div>
               ) : movements.length === 0 ? (
-                <div className="p-20 text-center">
+                <div className="p-6 md:p-20 text-center">
                   <div className="size-16 bg-light-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <span className="material-symbols-outlined text-gray-400">history</span>
                   </div>
@@ -321,8 +321,8 @@ const Wallet = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-24 h-fit">
-          <div className="bg-white p-10 rounded-4xl border-2 border-dark-800 shadow-2xl relative overflow-hidden">
+        <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-6 lg:p-24 h-fit">
+          <div className="bg-white p-4 md:p-10 rounded-4xl border-2 border-dark-800 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 size-20 bg-dark-800/5 -mr-5 -mt-5 rounded-full"></div>
             <h3 className="text-2xl font-black text-dark-800 mb-2">Cobros Automáticos</h3>
             <p className="text-[10px] text-gray-400 font-bold mb-10 leading-relaxed">
@@ -356,7 +356,7 @@ const Wallet = () => {
       {/* Bank Details Modal */}
       {showBankModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark-800/80 backdrop-blur-sm p-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[40px] shadow-2xl max-w-md w-full p-10 animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-[40px] shadow-2xl max-w-md w-full p-4 md:p-10 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-2xl font-black text-dark-800">Datos Bancarios</h3>
               <button onClick={() => setShowBankModal(false)} className="size-10 rounded-full bg-light-50 flex items-center justify-center hover:bg-light-100 transition-colors">

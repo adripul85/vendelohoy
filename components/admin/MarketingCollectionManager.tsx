@@ -309,7 +309,7 @@ export const MarketingCollectionManager: React.FC<Props> = ({ collections, onUpd
                                     type="button"
                                     onClick={handleSave}
                                     disabled={isSaving || isUploading}
-                                    className="bg-primary-vibrant text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
+                                    className="bg-primary-vibrant text-white px-4 md:px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-500/20"
                                 >
                                     {isSaving ? 'Guardando...' : 'Guardar Colección'}
                                 </button>

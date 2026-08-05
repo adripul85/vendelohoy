@@ -39,7 +39,7 @@ const EscrowStatusDisplay: React.FC<Props> = ({ status, deadline }) => {
     }, [deadline, status]);
 
     return (
-        <div className="bg-white p-10 rounded-[40px] border border-light-200 shadow-premium flex flex-col items-center">
+        <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium flex flex-col items-center">
 
             <div className="w-full flex justify-between items-center mb-12">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300">Estado del Trato</h3>

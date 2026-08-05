@@ -53,7 +53,7 @@ const FlashDealsSection = () => {
       {/* Banner de Oportunidades Flash — siempre visible */}
       <div className="w-full bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between mb-8 shadow-2xl shadow-primary/20 relative overflow-hidden">
         {/* Decoraciones de fondo */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-6 lg:p-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-black/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center gap-6 z-10 mb-8 md:mb-0">
@@ -1008,7 +1008,7 @@ const Home = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-8">
                 {/* Step 01 */}
                 <div className="relative group">
-                  <div className="hidden md:block absolute top-16 -right-6 lg:-right-8 w-12 lg:w-16 border-t-2 border-dashed border-outline-variant/50 z-10"></div>
+                  <div className="hidden md:block absolute top-6 md:p-16 -right-6 lg:-right-8 w-12 lg:w-16 border-t-2 border-dashed border-outline-variant/50 z-10"></div>
                   <div className="bg-background rounded-3xl p-8 border border-outline-variant/30 hover:border-secondary/40 hover:shadow-xl hover:shadow-secondary/5 transition-all h-full flex flex-col items-center text-center">
                     <span className="text-4xl font-black text-primary/10 font-headline mb-1">01</span>
                     <div className="bg-primary/20 p-5 rounded-2xl mb-6">
@@ -1020,7 +1020,7 @@ const Home = () => {
                 </div>
                 {/* Step 02 */}
                 <div className="relative group">
-                  <div className="hidden md:block absolute top-16 -right-6 lg:-right-8 w-12 lg:w-16 border-t-2 border-dashed border-outline-variant/50 z-10"></div>
+                  <div className="hidden md:block absolute top-6 md:p-16 -right-6 lg:-right-8 w-12 lg:w-16 border-t-2 border-dashed border-outline-variant/50 z-10"></div>
                   <div className="bg-background rounded-3xl p-8 border border-outline-variant/30 hover:border-secondary/40 hover:shadow-xl hover:shadow-secondary/5 transition-all h-full flex flex-col items-center text-center">
                     <span className="text-4xl font-black text-primary/10 font-headline mb-1">02</span>
                     <div className="bg-secondary-container/20 p-5 rounded-2xl mb-6">
