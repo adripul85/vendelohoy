@@ -8,6 +8,9 @@ import { ItemData } from '../../lib/items';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import OrderList from './OrderList';
+import AdvancedSalesStats from './AdvancedSalesStats';
+import AdvancedProductsStats from './AdvancedProductsStats';
 
 interface ERPDashboardProps {
     sales: any[];
@@ -18,7 +21,7 @@ interface ERPDashboardProps {
 }
 
 export default function ERPDashboard({ sales, items, storeId, customizationSlot, overviewSlot }: ERPDashboardProps) {
-    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sales' | 'visits' | 'realtime' | 'customization'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sales' | 'orders' | 'visits' | 'realtime' | 'customization'>('overview');
     const [dateFilter, setDateFilter] = useState<'all' | '30d' | '7d'>('all');
 
     const filteredSales = useMemo(() => {
@@ -102,10 +105,11 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
 
     const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-    const TabButton = ({ id, label }: { id: typeof activeTab, label: string }) => (
+    const renderTabButton = (id: typeof activeTab, label: string) => (
         <button
+            key={id}
             onClick={() => setActiveTab(id)}
-            className={`relative px-6 py-4 font-black text-sm uppercase tracking-widest transition-colors duration-200 ${
+            className={`relative px-3 md:px-5 py-3.5 font-bold text-[11px] md:text-xs uppercase tracking-wide transition-colors duration-200 shrink-0 ${
                 activeTab === id 
                 ? 'text-primary bg-primary/5' 
                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
@@ -144,13 +148,18 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
 
     return (
         <div className="flex flex-col bg-white rounded-[32px] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-slate-100 overflow-hidden mb-8">
-            <div className="flex flex-wrap border-b border-slate-200 bg-white">
-                <TabButton id="overview" label="Visión general" />
-                <TabButton id="products" label="Productos" />
-                <TabButton id="sales" label="Ventas y clientes" />
-                <TabButton id="visits" label="Visitas" />
-                <TabButton id="realtime" label="Tiempo real" />
-                {customizationSlot && <TabButton id="customization" label="Diseño" />}
+            <style>{`
+                .hide-scrollbar-force::-webkit-scrollbar { display: none !important; }
+                .hide-scrollbar-force { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+            `}</style>
+            <div className="flex flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-hide hide-scrollbar hide-scrollbar-force border-b border-slate-200 bg-white gap-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {renderTabButton("overview", "Visión general")}
+                {renderTabButton("products", "Productos")}
+                {renderTabButton("orders", "Ventas")}
+                {renderTabButton("sales", "Ventas y clientes")}
+                {renderTabButton("visits", "Visitas")}
+                {renderTabButton("realtime", "Tiempo real")}
+                {customizationSlot && renderTabButton("customization", "Diseño")}
             </div>
 
             <div className="p-6 md:p-10 bg-slate-50/50 min-h-[600px]">
@@ -210,73 +219,16 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
                 )}
 
                 {activeTab === 'products' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                            <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm col-span-2 h-[450px]">
-                                <h4 className="text-slate-800 font-black tracking-tight mb-8 text-xl">Top 5 Productos Vendidos</h4>
-                                <ResponsiveContainer width="100%" height={320}>
-                                    <BarChart data={items.slice(0, 5).map(i => ({ name: i.title.length > 15 ? i.title.substring(0, 15) + '...' : i.title, ventas: Math.floor(Math.random() * 20) + 1 }))} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} angle={-45} textAnchor="end" dx={-5} dy={10} interval={0} />
-                                        <YAxis tick={{ fontSize: 11 }} />
-                                        <RechartsTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'}} />
-                                        <Bar dataKey="ventas" fill="#10B981" radius={[8, 8, 0, 0]} barSize={32} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px] flex flex-col">
-                                <h4 className="text-slate-800 font-black tracking-tight mb-6 text-xl">Stock de Mercadería</h4>
-                                <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
-                                    {items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center p-3 sm:p-4 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-colors gap-3">
-                                            <span className="text-sm font-bold text-slate-700 truncate flex-1">{item.title}</span>
-                                            <span className="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg shrink-0 whitespace-nowrap">{item.quantity || 1} u.</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <AdvancedProductsStats items={items} sales={sales} />
+                )}
+
+                {activeTab === 'orders' && (
+                    <OrderList sales={sales} items={items} />
                 )}
 
                 {activeTab === 'sales' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                             <MetricCard title="Pedidos Creados" value={totalSales + 12} />
-                             <MetricCard title="Pedidos Pagos" value={totalSales} />
-                             <MetricCard title="Facturación Total" value={totalRevenue} prefix="$" />
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px]">
-                                <h4 className="text-slate-800 font-black tracking-tight mb-8 text-xl">Ingresos por Método de Pago</h4>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={[
-                                            { name: 'Mercado Pago', value: totalRevenue * 0.6 || 60 },
-                                            { name: 'Tarjeta de Crédito', value: totalRevenue * 0.3 || 30 },
-                                            { name: 'Transferencia', value: totalRevenue * 0.1 || 10 }
-                                        ]} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
-                                            {COLORS.map((color, index) => (
-                                                <Cell key={`cell-${index}`} fill={color} />
-                                            ))}
-                                        </Pie>
-                                        <RechartsTooltip contentStyle={{borderRadius: '16px', border: 'none'}} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="bg-white p-8 rounded-[24px] border border-slate-200 shadow-sm h-[450px]">
-                                <h4 className="text-slate-800 font-black tracking-tight mb-8 text-xl">Evolución de Facturación</h4>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={visitsData} margin={{bottom: 20}}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 'bold' }} dy={10} />
-                                        <YAxis />
-                                        <RechartsTooltip contentStyle={{borderRadius: '16px', border: 'none'}} />
-                                        <Bar dataKey="ventas" fill="#F59E0B" radius={[8, 8, 0, 0]} barSize={40} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <AdvancedSalesStats sales={sales} />
                     </div>
                 )}
 

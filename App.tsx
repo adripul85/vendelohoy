@@ -11,6 +11,7 @@ import Verification from './pages/Verification';
 import Login from './pages/Login';
 import RegisterWizard from './pages/RegisterWizard';
 import Publish from './pages/publish/Publish';
+import ImportExportProducts from './pages/publish/ImportExportProducts';
 import Messages from './pages/Messages';
 import ProductDetail from './pages/marketplace/ProductDetail';
 import Search from './pages/marketplace/Search';
@@ -239,11 +240,11 @@ function App() {
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/shop/:slug" element={<Shop />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/dashboard" element={<RequireProfile><Dashboard /></RequireProfile>} />
                     <Route path="/publish" element={<RequireProfile><Publish /></RequireProfile>} />
+                    <Route path="/publish/bulk" element={<RequireProfile><ImportExportProducts /></RequireProfile>} />
                     <Route path="/transaction/:id" element={<RequireProfile><ESgrow /></RequireProfile>} />
                     <Route path="/escrow/:id" element={<Navigate to="/dashboard" replace />} />
-
-                    <Route path="/dashboard" element={<RequireProfile><Dashboard /></RequireProfile>} />
                     <Route path="/messages" element={<RequireProfile><Messages /></RequireProfile>} />
                     <Route path="/messages/:chatId" element={<RequireProfile><Messages /></RequireProfile>} />
                     <Route path="/wallet" element={<RequireProfile><Wallet /></RequireProfile>} />

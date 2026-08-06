@@ -149,11 +149,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
                         
                         <nav className="px-4 space-y-1">
                             <p className="px-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Soporte</p>
-                            <button className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                            <button onClick={() => { setIsMenuOpen(false); navigate('/resolution-center'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
                                 <span className="material-symbols-outlined text-on-surface-variant">help</span>
                                 Ayuda
                             </button>
-                            <button className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
+                            <button onClick={() => { setIsMenuOpen(false); navigate('/legal/privacy'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
                                 <span className="material-symbols-outlined text-on-surface-variant">policy</span>
                                 Políticas y Privacidad
                             </button>

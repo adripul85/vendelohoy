@@ -474,6 +474,20 @@ Reglas de formato y contenido:
             </div>
 
             <div className="max-w-4xl mx-auto px-6 py-10">
+                {!editId && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-8 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => navigate('/publish/bulk')}>
+                        <div className="flex items-center gap-4">
+                            <div className="bg-blue-600 text-white p-3 rounded-xl flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[24px]">library_add</span>
+                            </div>
+                            <div>
+                                <h3 className="font-black text-blue-900 text-lg">Carga Masiva de Productos</h3>
+                                <p className="text-sm text-blue-800 font-medium mt-0.5">Importá y exportá productos masivamente usando Excel (.csv)</p>
+                            </div>
+                        </div>
+                        <span className="material-symbols-outlined text-blue-600">chevron_right</span>
+                    </div>
+                )}
                 {/* Wizard Stepper Moderno */}
                 <div className="flex justify-between items-center mb-10 relative">
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 rounded-full z-0"></div>
@@ -631,6 +645,13 @@ Reglas de formato y contenido:
                                             <option value="used">Usado (Marcas visibles)</option>
                                             <option value="repair">Para reparar / Repuestos</option>
                                         </select>
+                                    </div>
+                                    <div className="lg:col-span-3">
+                                        <label className="block text-xs font-bold text-slate-600 mb-2">SKU (Opcional)</label>
+                                        <input 
+                                            name="sku" type="text" value={form.sku} onChange={handleChange} placeholder="Ej: ABC-123"
+                                            className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                        />
                                     </div>
                                 </div>
                             </Card>
@@ -797,41 +818,89 @@ Reglas de formato y contenido:
                                 </div>
                             </Card>
 
-                            <Card title="Tags, Marca y SEO">
+                            <Card title="SEO y búsqueda en la tienda">
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Marca</label>
-                                            <input name="brand" value={form.brand} onChange={handleChange} placeholder="Ej: Samsung, Nike..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2">
+                                                Tags <span className="material-symbols-outlined text-[14px] text-indigo-400">auto_awesome</span>
+                                            </label>
+                                            <p className="text-[11px] text-slate-500 mb-2 font-medium">Agregá palabras clave para ayudar a tus clientes a encontrar este producto. Separadas por comas.</p>
+                                            <input 
+                                                name="tags" type="text" value={form.tags} onChange={handleChange} placeholder="Ejemplo: remera, verano, algodon"
+                                                className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                            />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Modelo</label>
-                                            <input name="model" value={form.model} onChange={handleChange} placeholder="Ej: Galaxy S23, Air Max..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2">
+                                                Garantía <span className="material-symbols-outlined text-[14px] text-indigo-400">verified_user</span>
+                                            </label>
+                                            <p className="text-[11px] text-slate-500 mb-2 font-medium">Información sobre la garantía de este producto.</p>
+                                            <input 
+                                                name="warranty" type="text" value={form.warranty} onChange={handleChange} placeholder="Ej: 6 meses, Sin garantía..."
+                                                className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                            />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Garantía</label>
-                                            <input name="warranty" value={form.warranty} onChange={handleChange} placeholder="Ej: 6 meses, Sin garantía..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2">
+                                                Marca <span className="material-symbols-outlined text-[14px] text-indigo-400">auto_awesome</span>
+                                            </label>
+                                            <p className="text-[11px] text-slate-500 mb-2 font-medium">Indicá la marca para identificar el producto.</p>
+                                            <input 
+                                                name="brand" type="text" value={form.brand} onChange={handleChange} placeholder="Ejemplo: Nike"
+                                                className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                            />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Tags (separados por coma)</label>
-                                            <input name="tags" value={form.tags} onChange={handleChange} placeholder="Ejemplo: campera, cuero, invierno" className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2">
+                                                Modelo <span className="material-symbols-outlined text-[14px] text-indigo-400">devices</span>
+                                            </label>
+                                            <p className="text-[11px] text-slate-500 mb-2 font-medium">Indicá el modelo para mayor precisión.</p>
+                                            <input 
+                                                name="model" type="text" value={form.model} onChange={handleChange} placeholder="Ejemplo: Air Max 90"
+                                                className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                            />
                                         </div>
                                     </div>
-                                    <div className="pt-4 border-t border-slate-100 space-y-4">
-                                        <h4 className="text-sm font-bold text-slate-800">SEO</h4>
-                                        <p className="text-xs text-slate-500">Mejorá la visibilidad de este producto en Google, marketplaces y redes.</p>
+
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2">
+                                            SEO <span className="material-symbols-outlined text-[14px] text-indigo-400">auto_awesome</span>
+                                        </label>
+                                        <p className="text-[11px] text-slate-500 mb-4 font-medium">Mejorá la visibilidad de este producto en Google, marketplaces y redes sociales.</p>
                                         
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Título SEO</label>
-                                            <input name="seoTitle" value={form.seoTitle} onChange={handleChange} placeholder="Ejemplo: Remeras estampadas" className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                                            <span className="text-[10px] text-slate-400 mt-1 block">{form.seoTitle.length}/70 caracteres</span>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Descripción SEO</label>
-                                            <textarea name="seoDescription" value={form.seoDescription} onChange={handleChange} placeholder="Breve descripción para buscadores..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 min-h-[80px] font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
-                                            <span className="text-[10px] text-slate-400 mt-1 block">{form.seoDescription.length}/160 caracteres</span>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-500 mb-1">Título SEO</label>
+                                                <input 
+                                                    name="seoTitle" type="text" value={form.seoTitle} onChange={handleChange} placeholder="Ejemplo: Remeras estampadas"
+                                                    maxLength={70}
+                                                    className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                                />
+                                                <p className="text-[10px] text-slate-400 text-right mt-1">{(form.seoTitle || '').length}/70 caracteres</p>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-500 mb-1">Descripción SEO</label>
+                                                <textarea 
+                                                    name="seoDescription" value={form.seoDescription} onChange={handleChange} placeholder="Ejemplo: ¡Todo el sitio en promoción y con envío gratis!"
+                                                    maxLength={160} rows={3}
+                                                    className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none" 
+                                                />
+                                                <p className="text-[10px] text-slate-400 text-right mt-1">{(form.seoDescription || '').length}/160 caracteres</p>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-500 mb-1">URL del producto (Identificador URL)</label>
+                                                <input 
+                                                    name="seoTitle" type="text" value={form.seoTitle} onChange={handleChange} placeholder="Ejemplo: remera-negra-estampada"
+                                                    className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+                                                />
+                                                <p className="text-[10px] text-slate-400 mt-1">En caso de que no la definas, usaremos una basada en el título.</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1140,7 +1209,7 @@ Reglas de formato y contenido:
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {[
                                         { id: 'en_mano', label: 'En persona', sub: 'Punto de encuentro' },
-                                        { id: 'domicilio', label: 'Envío local', sub: 'A domicilio propio' },
+                                        { id: 'domicilio', label: 'Envío local por app (Uber/Cabify)', sub: 'A domicilio propio' },
                                         { id: 'correo_argentino', label: 'Correo', sub: 'Servicio Nacional' },
                                         { id: 'acordar', label: 'Acordar', sub: 'Coordinar chat' }
                                     ].map(method => (
@@ -1161,6 +1230,8 @@ Reglas de formato y contenido:
                                     ))}
                                 </div>
                             </Card>
+
+
                         </StepContainer>
                     )}
                 </div>

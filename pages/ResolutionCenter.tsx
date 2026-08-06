@@ -51,13 +51,19 @@ export default function ResolutionCenter() {
                 const qEligible = query(
                     collection(db, "transactions"),
                     where("buyerId", "==", user.uid),
-                    where("status", "in", ["PAID_HELD", "SHIPPED", "DELIVERED_PENDING_REVIEW"]),
-                    orderBy("createdAt", "desc")
+                    where("status", "in", ["PAID_HELD", "SHIPPED", "DELIVERED_PENDING_REVIEW"])
                 );
                 const eligibleSnap = await getDocs(qEligible);
                 const eligible = eligibleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Sort client-side to avoid requiring a Firebase composite index
+                eligible.sort((a: any, b: any) => {
+                    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                    return timeB - timeA;
+                });
+                
                 setEligibleTransactions(eligible);
-
             } catch (error) {
                 console.error("Error fetching resolution data:", error);
             } finally {

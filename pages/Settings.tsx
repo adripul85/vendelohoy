@@ -690,18 +690,19 @@ export default function Settings() {
                 </div>
 
                 {/* Tabs Navigation */}
-                <div className="flex gap-2 p-1.5 bg-slate-200/50 rounded-2xl mb-8">
+                <div className="flex gap-2 p-1.5 bg-slate-200/50 rounded-2xl mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide hide-scrollbar">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
+                            type="button"
                             onClick={() => setActiveTab(tab.id as TabType)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
+                            className={`shrink-0 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                 ? 'bg-white text-slate-900 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-xl">{tab.icon}</span>
-                            <span className="hidden sm:inline">{tab.label}</span>
+                            <span className="inline">{tab.label}</span>
                         </button>
                     ))}
                 </div>

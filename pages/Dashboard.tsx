@@ -470,7 +470,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex overflow-x-auto snap-x scrollbar-hide bg-surface-container-lowest py-2 px-6 md:px-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0">
+          <div className="flex gap-2 overflow-x-auto snap-x scrollbar-hide hide-scrollbar bg-surface-container-lowest py-2 px-6 md:px-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-auto">
             {[
               { id: 'publicaciones', label: 'Publicaciones', icon: 'inventory_2' },
               { id: 'compras', label: 'Compras', icon: 'shopping_bag' },

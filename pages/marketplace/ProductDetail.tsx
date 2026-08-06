@@ -521,7 +521,7 @@ const ProductDetail = () => {
 
             {/* Short Description */}
             <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
-              {product.description.substring(0, 150)}{product.description.length > 150 ? '...' : ''}
+              {product.description.replace(/<[^>]+>/g, '').substring(0, 150)}{product.description.replace(/<[^>]+>/g, '').length > 150 ? '...' : ''}
             </p>
 
             {/* Conditional Variants (Only if size or color exist) */}
@@ -845,21 +845,28 @@ const ProductDetail = () => {
       </div>
 
       {/* MOBILE FIXED BOTTOM ACTION BAR */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface border-t border-outline-variant/30 px-4 py-3 pb-safe flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface border-t border-outline-variant/30 px-3 py-3 pb-safe flex gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <button
           onClick={handleContactSeller}
-          className="flex-1 max-w-[120px] bg-surface-container text-on-surface py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border border-outline-variant/50 active:scale-95 transition-transform"
+          className="w-[50px] shrink-0 bg-surface-container text-on-surface py-3.5 rounded-2xl flex items-center justify-center border border-outline-variant/50 active:scale-95 transition-transform"
         >
-          <span className="material-symbols-outlined text-lg">chat_bubble</span>
-          Chat
+          <span className="material-symbols-outlined text-xl">chat_bubble</span>
+        </button>
+        <button
+          onClick={handleAddToCart}
+          disabled={product.status !== 'AVAILABLE'}
+          className="flex-1 bg-surface-container-low border border-outline-variant/30 text-on-surface py-3.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
+        >
+          <span className="material-symbols-outlined text-lg">add_shopping_cart</span>
+          Al Carrito
         </button>
         <button
           onClick={handleBuyNow}
           disabled={isMatingPayment || product.status !== 'AVAILABLE'}
-          className="flex-1 bg-primary text-on-primary py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-premium active:scale-95 transition-transform disabled:opacity-50"
+          className="flex-1 bg-primary text-on-primary py-3.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 shadow-premium active:scale-95 transition-transform disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-lg">{isMatingPayment ? 'sync' : 'shopping_bag'}</span>
-          {isMatingPayment ? 'Procesando' : product.status !== 'AVAILABLE' ? 'No disponible' : 'Comprar Ahora'}
+          <span className="material-symbols-outlined text-lg">{isMatingPayment ? 'sync' : 'bolt'}</span>
+          {isMatingPayment ? 'Procesando' : product.status !== 'AVAILABLE' ? 'Agotado' : 'Comprar Ya'}
         </button>
       </div>
 

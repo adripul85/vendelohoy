@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, updateUserProfile } from '../../lib/users';
+import { UserProfile, updateUserProfile, getUserProfile } from '../../lib/users';
 import { ItemData, getItemsBySeller, deleteItem, updateItem, adjustItemStock } from '../../lib/items';
 import { TransactionData, getUserTransactions } from '../../lib/transactions';
 import { useNotification } from '../../context/NotificationContext';
@@ -175,11 +175,14 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
         }
     };
     
-    const handlePriceUpdate = async (newPrice: number) => {
+    const handlePriceUpdate = async (newPrice: number, newCost?: number) => {
         if (!selectedPriceItem) return;
         try {
-            await updateItem(selectedPriceItem.id, { price: newPrice });
-            setItems(items.map(item => item.id === selectedPriceItem.id ? { ...item, price: newPrice } : item));
+            const updates: Partial<any> = { price: newPrice };
+            if (newCost !== undefined) updates.cost = newCost;
+            
+            await updateItem(selectedPriceItem.id, updates);
+            setItems(items.map(item => item.id === selectedPriceItem.id ? { ...item, price: newPrice, cost: newCost ?? item.cost } : item));
             notify("Precio actualizado correctamente", "success");
         } catch (error) {
             console.error("Error updating price:", error);
@@ -316,7 +319,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
         }
     };
 
-    const handleDownloadReport = () => {
+    const handleDownloadReport = async () => {
         const filteredSales = sales.filter(s => {
             if (!s.createdAt) return false;
             const saleDate = s.createdAt.toDate();
@@ -329,13 +332,64 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
             notify({ type: 'warning', title: 'Sin datos', message: 'No hay ventas en este rango de fechas.', icon: 'warning' });
             return;
         }
+        
+        notify({ type: 'info', title: 'Generando reporte', message: 'Por favor, espera un momento...', icon: 'downloading' });
 
-        const headers = "ID Pedido,Fecha,Comprador,Producto,Estado,Monto\n";
-        const rows = filteredSales.map(s => {
-            const date = s.createdAt ? format(s.createdAt.toDate(), 'yyyy-MM-dd HH:mm') : 'N/A';
+        const headers = "ID Venta,Fecha,Comprador,DNI,Email,Teléfono,Domicilio,Producto,Opciones,Envío,Estado,Monto\n";
+        
+        const rowPromises = filteredSales.map(async s => {
+            const date = s.createdAt ? format(s.createdAt.toDate(), 'dd/MM/yyyy HH:mm') : 'N/A';
             const status = s.status === 'COMPLETED' ? 'Completado' : s.status === 'SHIPPED' ? 'Enviado' : 'Pendiente';
-            return `"${s.id}","${date}","${s.buyerId}","${s.itemId}","${status}",${s.amount}`;
-        }).join('\n');
+            const amount = `$${(s.amountTotal || s.amount).toLocaleString()}`;
+            
+            // Fetch buyer info
+            let buyerName = 'No especificado';
+            let buyerDni = 'No especificado';
+            let buyerEmail = 'No especificado';
+            let buyerPhone = 'No especificado';
+            let buyerAddress = 'No especificado';
+            
+            try {
+                const buyer = await getUserProfile(s.buyerId);
+                if (buyer) {
+                    buyerName = buyer.displayName || `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim() || 'No especificado';
+                    buyerDni = buyer.documentNumber || 'No especificado';
+                    buyerEmail = buyer.email || 'No especificado';
+                    buyerPhone = buyer.phoneNumber || 'No especificado';
+                    if (buyer.address) {
+                        buyerAddress = `${buyer.address.street} ${buyer.address.number}, ${buyer.address.city}, ${buyer.address.province}`;
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching buyer", err);
+            }
+            
+            // Resolve product title (handles old "Pedido de Carrito" entries)
+            let productTitle = s.itemTitle || 'Producto desconocido';
+            if (productTitle.toLowerCase().includes('pedido de carrito') || productTitle.toLowerCase().includes('cart')) {
+                const matchById = items.find(i => i.id === s.itemId);
+                if (matchById) {
+                    productTitle = matchById.title;
+                } else {
+                    const salePrice = s.amountProduct || s.amount || 0;
+                    const matchByPrice = salePrice > 0 ? items.find(i => i.price === salePrice) : null;
+                    if (matchByPrice) {
+                        productTitle = matchByPrice.title;
+                    } else if (s.itemImage) {
+                        const matchByImage = items.find(i => i.images && i.images.includes(s.itemImage));
+                        productTitle = matchByImage ? matchByImage.title : 'Compra múltiple';
+                    } else {
+                        productTitle = 'Compra múltiple';
+                    }
+                }
+            }
+            const options = [s.selectedColor, s.selectedSize].filter(Boolean).join(' / ') || 'N/A';
+            const shipping = s.deliveryMethod || 'N/A';
+
+            return `"${s.id}","${date}","${buyerName}","${buyerDni}","${buyerEmail}","${buyerPhone}","${buyerAddress}","${productTitle}","${options}","${shipping}","${status}","${amount}"`;
+        });
+        
+        const rows = (await Promise.all(rowPromises)).join('\n');
 
         const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
         const encodedUri = encodeURI(csvContent);
@@ -360,8 +414,8 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                         Bienvenido de nuevo, aquí está el resumen de tu tienda.
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm text-sm">
+                <div className="flex items-center gap-3 overflow-x-auto whitespace-nowrap scrollbar-hide w-full md:w-auto pb-2 md:pb-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm text-sm shrink-0">
                         <span className="material-symbols-outlined text-slate-400 text-[18px]">calendar_today</span>
                         <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="bg-transparent text-slate-700 font-bold outline-none cursor-pointer" />
                         <span className="text-slate-300">-</span>
