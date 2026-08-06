@@ -108,6 +108,7 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
     const renderTabButton = (id: typeof activeTab, label: string) => (
         <button
             key={id}
+            type="button"
             onClick={() => setActiveTab(id)}
             className={`relative px-3 md:px-5 py-3.5 font-bold text-[11px] md:text-xs uppercase tracking-wide transition-colors duration-200 shrink-0 ${
                 activeTab === id 
@@ -166,9 +167,9 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-fit">
-                            <button onClick={() => setDateFilter('7d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '7d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 7 días</button>
-                            <button onClick={() => setDateFilter('30d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '30d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 30 días</button>
-                            <button onClick={() => setDateFilter('all')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === 'all' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Historial Completo</button>
+                            <button type="button" onClick={() => setDateFilter('7d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '7d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 7 días</button>
+                            <button type="button" onClick={() => setDateFilter('30d')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === '30d' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Últimos 30 días</button>
+                            <button type="button" onClick={() => setDateFilter('all')} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${dateFilter === 'all' ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100'}`}>Historial Completo</button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                             <MetricCard title="Visitas a Productos" value={totalViews} previousValue={Math.floor(totalViews * 0.8)} />

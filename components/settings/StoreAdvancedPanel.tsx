@@ -421,7 +421,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                         <span className="text-slate-300">-</span>
                         <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} className="bg-transparent text-slate-700 font-bold outline-none cursor-pointer" />
                     </div>
-                    <button onClick={handleDownloadReport} className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 transition-colors rounded-xl text-sm font-bold text-white flex items-center gap-2 shadow-sm shrink-0">
+                    <button type="button" onClick={handleDownloadReport} className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 transition-colors rounded-xl text-sm font-bold text-white flex items-center gap-2 shadow-sm shrink-0">
                         <span className="material-symbols-outlined text-lg">download</span>
                         Descargar Reporte
                     </button>
