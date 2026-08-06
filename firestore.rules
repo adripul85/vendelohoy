@@ -105,7 +105,7 @@ service cloud.firestore {
       allow update: if request.auth != null && (
         // El propio usuario puede editarse, excepto campos protegidos financieros, de rol y de reputación
         (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['balance', 'isAdmin', 'wallet', 'wallet.available', 'wallet.inEscrow', 'wallet.pending', 'wallet.lastUpdated', 'salesCount', 'successfulSales', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'rating', 'lastDailyXpDate'])) ||
+          .hasAny(['balance', 'isAdmin', 'role', 'wallet', 'wallet.available', 'wallet.inEscrow', 'wallet.pending', 'wallet.lastUpdated', 'salesCount', 'successfulSales', 'reputation', 'reputationPoints', 'points', 'trustLevel', 'sellerStatus', 'rating', 'lastDailyXpDate'])) ||
         // Admin puede todo
         isAdmin()
       );
