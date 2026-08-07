@@ -9,7 +9,8 @@ import { startChat } from '../../lib/chat';
 import { Wallet, initMercadoPago } from '@mercadopago/sdk-react';
 
 // Inicializar MP (Usar clave pública desde .env)
-initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY || 'TEST-c13f9948-4cb2-4753-9993-4fc3c0352778');
+// Security note: Hardcoded keys were removed to prevent accidental leakage.
+initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY || '');
 
 // Hooks
 import { useProduct } from '../../hooks/useProduct';
