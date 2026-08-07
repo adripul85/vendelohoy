@@ -401,49 +401,24 @@ export default function Publish() {
             return;
         }
 
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            notify({ type: 'warning', title: 'Requiere Configuración', message: 'Falta la API Key gratuita. Revisá la consola (F12) para las instrucciones.', icon: 'key' });
-            console.info("%c✨ Generador de IA Gratuito", "font-size:16px; font-weight:bold; color:#4f46e5;");
-            console.info("Para habilitar esto gratis, conseguí tu API Key en: https://aistudio.google.com/app/apikey");
-            console.info("Luego, pegala en tu archivo .env así: VITE_GEMINI_API_KEY=tu_clave_aqui");
-            return;
-        }
-
         setIsGeneratingAI(true);
         try {
-            const ai = new GoogleGenAI({ apiKey });
-            const prompt = `Actúa como un experto en redacción publicitaria (copywriter) para comercio electrónico (ecommerce).
-Tu tarea es escribir una excelente, persuasiva y robusta descripción de producto en formato HTML.
+            const { generateProductDescription } = await import('../../lib/ai');
+            const newDescription = await generateProductDescription(
+                form.title, 
+                form.category, 
+                form.condition === 'new' ? 'Nuevo' : 'Usado'
+            );
 
-Información del producto:
-- Nombre: "${form.title}"
-- Categoría: ${form.category}
-- Condición: ${form.condition === 'new' ? 'Nuevo' : 'Usado'}
-
-Reglas de formato y contenido:
-1. Usa lenguaje vendedor, entusiasta y muy profesional que incite a la compra.
-2. La descripción debe tener al menos 3 o 4 párrafos bien nutridos.
-3. Incluye una sección de "Beneficios principales" (usando viñetas).
-4. Incluye una sección de "¿Por qué elegir este producto?".
-5. Usa etiquetas HTML básicas y limpias: <h3>, <p>, <ul>, <li>, <strong>, <br>. 
-6. NO uses etiquetas <html>, <head>, <body> ni bloques de código markdown (como \`\`\`html). Devuelve SOLO el HTML puro.
-7. Haz que la descripción sea amplia, detallada y genere confianza en el comprador.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-flash-latest',
-                contents: prompt,
-            });
-
-            if (response.text) {
-                let cleanText = response.text;
-                // Remove formatting blocks if the model wrapped it in markdown
-                cleanText = cleanText.replace(/^```html/i, '').replace(/^```/, '').replace(/```$/i, '').trim();
-                setForm(prev => ({ ...prev, description: cleanText }));
-                notify({ type: 'success', title: 'Descripción Generada', message: 'La IA ha escrito una excelente descripción base. ¡Revisala!', icon: 'auto_awesome' });
-            }
+            setForm(prev => ({ ...prev, description: newDescription }));
+            notify({ type: 'success', title: 'Descripción Generada', message: 'La IA ha escrito una excelente descripción base. ¡Revisala!', icon: 'auto_awesome' });
         } catch (error: any) {
             notify({ type: 'error', title: 'Error de IA', message: 'Hubo un problema al generar: ' + error.message, icon: 'error' });
+            if (error.message.includes('VITE_GEMINI_API_KEY')) {
+                console.info("%c✨ Generador de IA Gratuito", "font-size:16px; font-weight:bold; color:#4f46e5;");
+                console.info("Para habilitar esto gratis, conseguí tu API Key en: https://aistudio.google.com/app/apikey");
+                console.info("Luego, pegala en tu archivo .env.local así: VITE_GEMINI_API_KEY=tu_clave_aqui");
+            }
         } finally {
             setIsGeneratingAI(false);
         }

@@ -115,11 +115,13 @@ const Shop = () => {
     const rating = seller.reputation?.averageRating || 0;
 
     const theme = seller.shopTheme || {
+        layoutTemplate: 'classic',
         backgroundType: 'gradient',
         primaryColor: '#e11d48', // primary-600
         secondaryColor: '#4f46e5', // indigo-600
         accentColor: '#e11d48',
     };
+    const layoutTemplate = theme.layoutTemplate || 'classic';
 
     const headerStyle = seller.coverImage || theme.backgroundType === 'image'
         ? { backgroundImage: `url(${seller.coverImage || theme.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -198,12 +200,17 @@ const Shop = () => {
 
             {/* SHOP HEADER */}
             <div 
-                className={`relative overflow-hidden transition-colors duration-1000 ${!theme.backgroundColor && theme.backgroundType !== 'image' && theme.backgroundType !== 'gradient' ? 'bg-dark-950' : ''}`}
-                style={store?.banner ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : headerStyle}
+                className={`relative overflow-hidden transition-colors duration-1000 ${layoutTemplate === 'bold' || (!theme.backgroundColor && theme.backgroundType !== 'image' && theme.backgroundType !== 'gradient') ? 'bg-dark-950' : ''}`}
+                style={store?.banner && layoutTemplate !== 'minimalist' ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : headerStyle}
             >
                 {/* Background Effects Overlay */}
-                <div className="absolute inset-0 z-0">
-                    {store?.banner ? (
+                <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    transition={{ duration: 1.5 }}
+                    className="absolute inset-0 z-0"
+                >
+                    {store?.banner && layoutTemplate !== 'minimalist' ? (
                         <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
                     ) : (
                         <>
@@ -215,65 +222,90 @@ const Shop = () => {
                             )}
                         </>
                     )}
-                </div>
+                </motion.div>
 
                 {/* Hero Content */}
-                <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-14 flex flex-col items-center text-center gap-5">
-                    {/* Store Logo */}
-                    {store?.logo && (
-                        <div className="size-24 rounded-3xl bg-white/10 backdrop-blur-md border-2 border-white/20 shadow-2xl shadow-black/30 overflow-hidden flex items-center justify-center">
-                            <img 
-                                src={store.logo} 
-                                alt={store.name || 'Logo'} 
-                                className="w-full h-full object-contain p-2"
-                            />
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 20 }}
+                    className={`relative z-10 max-w-7xl mx-auto px-6 ${layoutTemplate === 'minimalist' ? 'pt-20 pb-8 flex flex-row items-center justify-between text-left gap-8' : layoutTemplate === 'modern' ? 'pt-28 pb-20 flex flex-col md:flex-row items-center text-left gap-12' : 'pt-28 pb-14 flex flex-col items-center text-center gap-5'}`}
+                >
+                    
+                    {layoutTemplate === 'modern' && store?.banner && (
+                        <div className="hidden md:block absolute right-0 top-0 bottom-0 w-1/2 bg-black/20" style={{ backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center', clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0 100%)' }}>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />
                         </div>
                     )}
 
-                    {/* Store Name */}
-                    {store?.name && (
-                        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-lg flex items-center gap-3">
-                            {store.name}
-                            {store.paidOfficialTick && (
-                                <span className="material-symbols-outlined text-sky-400 text-2xl drop-shadow-md" title="Tienda Verificada">verified</span>
-                            )}
-                        </h1>
-                    )}
-
-                    {/* Tagline */}
-                    {store?.tagline && (
-                        <p className="text-white/70 text-sm font-bold tracking-wide italic max-w-2xl mx-auto">
-                            "{store.tagline}"
-                        </p>
-                    )}
-
-                    {/* Quick Stats */}
-                    <div className="flex items-center gap-6 mt-2">
-                        <div className="flex items-center gap-1.5 text-white/60">
-                            <span className="material-symbols-outlined text-sm">inventory_2</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest">{products.length} productos</span>
-                        </div>
-                        {rating > 0 && (
-                            <div className="flex items-center gap-1.5 text-yellow-400/80">
-                                <span className="material-symbols-outlined text-sm">star</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">{rating.toFixed(1)} reputación</span>
+                    <div className={`flex flex-col gap-4 ${layoutTemplate === 'minimalist' ? 'items-start flex-1' : layoutTemplate === 'modern' ? 'items-start md:w-1/2 z-10' : 'items-center'}`}>
+                        {/* Store Logo */}
+                        {store?.logo && (
+                            <div className={`${layoutTemplate === 'minimalist' ? 'size-20 rounded-2xl' : layoutTemplate === 'modern' ? 'size-28 rounded-[2rem]' : 'size-24 rounded-3xl'} bg-white/10 backdrop-blur-md border-2 border-white/20 shadow-2xl shadow-black/30 overflow-hidden flex items-center justify-center`}>
+                                <img 
+                                    src={store.logo} 
+                                    alt={store.name || 'Logo'} 
+                                    className="w-full h-full object-contain p-2"
+                                />
                             </div>
                         )}
-                        {seller.location?.city && (
+
+                        {/* Store Name */}
+                        {store?.name && (
+                            <h1 className={`${layoutTemplate === 'minimalist' ? 'text-2xl sm:text-3xl' : layoutTemplate === 'bold' ? 'text-5xl sm:text-6xl tracking-tighter' : 'text-3xl sm:text-4xl'} font-black text-white drop-shadow-lg flex items-center gap-3`}>
+                                {store.name}
+                                {store.paidOfficialTick && (
+                                    <span className="material-symbols-outlined text-sky-400 text-2xl drop-shadow-md" title="Tienda Verificada">verified</span>
+                                )}
+                            </h1>
+                        )}
+
+                        {/* Tagline */}
+                        {store?.tagline && (
+                            <p className={`text-white/70 ${layoutTemplate === 'bold' ? 'text-lg font-bold uppercase tracking-widest' : 'text-sm font-bold tracking-wide italic'} max-w-2xl mx-auto`}>
+                                "{store.tagline}"
+                            </p>
+                        )}
+
+                        {/* Quick Stats */}
+                        <div className={`flex flex-wrap items-center gap-6 mt-2 ${layoutTemplate === 'minimalist' || layoutTemplate === 'modern' ? 'justify-start' : 'justify-center'}`}>
                             <div className="flex items-center gap-1.5 text-white/60">
-                                <span className="material-symbols-outlined text-sm">location_on</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">{seller.location.city}</span>
+                                <span className="material-symbols-outlined text-sm">inventory_2</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">{products.length} productos</span>
                             </div>
-                        )}
-                        <button
-                            onClick={() => setShowPoliciesModal(true)}
-                            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-full backdrop-blur-md transition-all border border-white/20 cursor-pointer shadow-sm"
-                        >
-                            <span className="material-symbols-outlined text-xs text-emerald-400">shield</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest">Garantía y Políticas</span>
-                        </button>
+                            {rating > 0 && (
+                                <div className="flex items-center gap-1.5 text-yellow-400/80">
+                                    <span className="material-symbols-outlined text-sm">star</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{rating.toFixed(1)} reputación</span>
+                                </div>
+                            )}
+                            {seller.location?.city && (
+                                <div className="flex items-center gap-1.5 text-white/60">
+                                    <span className="material-symbols-outlined text-sm">location_on</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{seller.location.city}</span>
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setShowPoliciesModal(true)}
+                                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-full backdrop-blur-md transition-all border border-white/20 cursor-pointer shadow-sm"
+                            >
+                                <span className="material-symbols-outlined text-xs text-emerald-400">shield</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Garantía y Políticas</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+
+                    {layoutTemplate === 'minimalist' && store?.banner && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, rotate: 2 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
+                            className="hidden md:block w-1/3 max-w-[300px] h-32 rounded-3xl overflow-hidden shadow-lg border-2 border-white/20 ml-auto flex-shrink-0"
+                        >
+                            <img src={store.banner} alt="Banner" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
+                        </motion.div>
+                    )}
+                </motion.div>
             </div>
 
             {/* VIP FEATURED PRODUCTS SHOWCASE */}
@@ -302,8 +334,8 @@ const Shop = () => {
             )}
 
             {/* PRODUCT GRID SECTION */}
-            <main className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-6 md:gap-12 relative z-10">
-                {/* Left Column (Main) */}
+            <main className={`max-w-7xl mx-auto px-6 py-12 flex flex-col ${layoutTemplate === 'modern' ? 'lg:flex-row-reverse' : layoutTemplate === 'bold' ? 'lg:flex-col' : 'lg:flex-row'} gap-6 md:gap-12 relative z-10 ${layoutTemplate === 'bold' ? 'bg-dark-900 rounded-[32px] mt-6 p-8 shadow-2xl' : ''}`}>
+                {/* Main Column */}
                 <div className="flex-1">
                     <div className="flex items-end justify-between mb-8 border-b border-outline-variant/30 pb-8">
                         <div>
@@ -420,9 +452,36 @@ const Shop = () => {
                     )}
 
                     {processedProducts.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                            {processedProducts.map(p => <ProductCard key={p.id} product={p} />)}
-                        </div>
+                        <motion.div 
+                            layout={layoutTemplate === 'magnetic'}
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+                            style={layoutTemplate === 'spatial' ? { perspective: '1000px' } : undefined}
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                            }}
+                        >
+                            <AnimatePresence mode="popLayout">
+                                {processedProducts.map(p => (
+                                    <motion.div 
+                                        key={p.id}
+                                        layout={layoutTemplate === 'magnetic'}
+                                        initial={layoutTemplate === 'cinematic' ? { opacity: 0, scale: 0.8, y: 80 } : { opacity: 0, y: 20 }}
+                                        animate={layoutTemplate === 'cinematic' ? undefined : { opacity: 1, y: 0, scale: 1 }}
+                                        whileInView={layoutTemplate === 'cinematic' ? { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } } : undefined}
+                                        viewport={layoutTemplate === 'cinematic' ? { once: false, margin: "-50px" } : undefined}
+                                        exit={layoutTemplate === 'magnetic' ? { opacity: 0, scale: 0.5, transition: { duration: 0.2 } } : undefined}
+                                        whileHover={layoutTemplate === 'spatial' ? { rotateX: 5, rotateY: -5, scale: 1.03, z: 20 } : layoutTemplate === 'magnetic' ? { scale: 1.02, y: -5 } : undefined}
+                                        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+                                        style={layoutTemplate === 'spatial' ? { transformStyle: 'preserve-3d' } : undefined}
+                                    >
+                                        <ProductCard product={p} />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
                     ) : searchQuery ? (
                         <div className="py-24 text-center bg-surface rounded-[40px] border border-outline-variant/30 p-8">
                             <div className="size-16 bg-surface-container-low rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -462,8 +521,13 @@ const Shop = () => {
                     </div>
                 </div>
 
-                {/* Right Column (Sidebar) */}
-                <div className="w-full lg:w-[420px] flex-shrink-0 space-y-6">
+                {/* Sidebar Column */}
+                <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
+                    className={`${layoutTemplate === 'bold' ? 'w-full grid grid-cols-1 md:grid-cols-2 gap-6' : 'w-full lg:w-[420px] flex-shrink-0 space-y-6'}`}
+                >
                     <ReputationCard seller={seller} />
                     
                     {/* Actions & Stats Card */}
@@ -706,7 +770,7 @@ const Shop = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </main>
 
             {/* STORE POLICIES & TRUST MODAL */}

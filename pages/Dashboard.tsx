@@ -15,6 +15,8 @@ import ReviewModal from '../components/ReviewModal';
 import MyPurchases from '../components/dashboard/MyPurchases';
 import MySales from '../components/dashboard/MySales';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import BulkUpload from '../components/dashboard/BulkUpload';
+
 export default function Dashboard() {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +54,7 @@ export default function Dashboard() {
   const [txToRelease, setTxToRelease] = useState<string | null>(null);
   const [isGeneratingLabel, setIsGeneratingLabel] = useState(false);
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -796,6 +799,15 @@ export default function Dashboard() {
                     className="bg-transparent outline-none w-20 placeholder:text-on-surface-variant font-black uppercase"
                   />
                 </button>
+                {activeTab === 'publicaciones' && (
+                  <button
+                    onClick={() => setShowBulkUpload(!showBulkUpload)}
+                    className={`flex items-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 snap-start ${showBulkUpload ? 'bg-indigo-100 text-indigo-700' : 'bg-surface-container-lowest border border-outline-variant/50 text-on-surface hover:bg-surface'}`}
+                  >
+                    <span className="material-symbols-outlined text-lg">upload_file</span>
+                    Carga Masiva
+                  </button>
+                )}
                 <button
                   onClick={() => navigate('/publish')}
                   className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-on-surface text-on-primary text-[10px] font-black uppercase tracking-widest hover:bg-inverse-surface transition-all shadow-xl shadow-dark-800/10 active:scale-95 shrink-0 snap-start"
@@ -817,7 +829,12 @@ export default function Dashboard() {
                     <LoadingSpinner size="lg" text="Sincronizando historial..." />
                   </div>
                 ) : activeTab === 'publicaciones' ? (
-                  filteredUserItems.length > 0 ? (
+                  showBulkUpload ? (
+                    <BulkUpload onComplete={() => {
+                        setShowBulkUpload(false);
+                        // Force a refresh of the snapshot if needed or wait for realtime
+                    }} />
+                  ) : filteredUserItems.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {filteredUserItems.map(item => (
                       <div key={item.id} className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/50 shadow-premium overflow-hidden transition-all hover:shadow-premium-lg group animate-in fade-in duration-500">

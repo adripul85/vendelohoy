@@ -134,6 +134,39 @@ export const publishItem = async (data: ItemData) => {
     }
 };
 
+import { writeBatch } from "firebase/firestore";
+
+export const publishItemsBatch = async (items: ItemData[]) => {
+    try {
+        if (!auth.currentUser) throw new Error("UNAUTHORIZED");
+        
+        const batch = writeBatch(db);
+        const collectionRef = collection(db, "items");
+        
+        items.forEach(item => {
+            if (item.price > 0) {
+                const docRef = doc(collectionRef);
+                const cleanPayload = cleanUndefined({
+                    ...item,
+                    sellerId: auth.currentUser!.uid,
+                    status: item.status || 'AVAILABLE',
+                    quantity: item.quantity ?? 1,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    searchKeywords: generateKeywords(item.title)
+                });
+                batch.set(docRef, cleanPayload);
+            }
+        });
+        
+        await batch.commit();
+        return { success: true, count: items.length };
+    } catch (error) {
+        console.error("Error al publicar lote:", error);
+        return { success: false, error };
+    }
+};
+
 // Pequeña ayuda para poder buscar "iphone" y encontrar "iPhone 13"
 const generateKeywords = (title: string) => {
     return title.toLowerCase().split(' ');

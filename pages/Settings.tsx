@@ -124,6 +124,7 @@ export default function Settings() {
             taxCondition: 'Monotributo' as 'Monotributo' | 'Responsable Inscripto' | 'Consumidor Final' | 'Exento',
         },
         shopTheme: {
+            layoutTemplate: 'classic' as 'classic' | 'minimalist' | 'modern' | 'bold',
             backgroundType: 'gradient' as 'color' | 'image' | 'gradient',
             primaryColor: '#0369a1',
             secondaryColor: '#65a30d',
@@ -227,6 +228,7 @@ export default function Settings() {
                     taxCondition: userProfile.taxDetails?.taxCondition || 'Monotributo',
                 },
                 shopTheme: {
+                    layoutTemplate: userProfile.shopTheme?.layoutTemplate || 'classic',
                     backgroundType: userProfile.shopTheme?.backgroundType || 'gradient',
                     primaryColor: userProfile.shopTheme?.primaryColor || '#0369a1',
                     secondaryColor: userProfile.shopTheme?.secondaryColor || '#65a30d',
@@ -1072,6 +1074,48 @@ export default function Settings() {
                                                 />
                                                 <p className="text-[10px] text-slate-400 px-2 font-medium">{formData.storeInfo.description.length}/400 — Los compradores lo verán en tu perfil de tienda.</p>
                                             </div>
+
+                                {/* Layout Template Selector */}
+                                <div className="space-y-4 pt-4 border-t border-slate-100 mb-6">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Plantilla de la Tienda (Diseño Estructural)</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {[
+                                            { id: 'classic', label: 'Clásica', desc: 'Banner completo, diseño centrado y estructurado.', icon: 'web' },
+                                            { id: 'minimalist', label: 'Minimalista', desc: 'Espacios limpios, logo lateral, sin distracciones.', icon: 'space_dashboard' },
+                                            { id: 'modern', label: 'Moderna', desc: 'Hero asimétrico con la info principal alineada.', icon: 'view_quilt' },
+                                            { id: 'bold', label: 'Bold (Oscura)', desc: 'Alto contraste, modo oscuro forzado, impacto visual.', icon: 'dark_mode' },
+                                            { id: 'spatial', label: 'Spatial 3D', desc: 'Tarjetas de cristal con efecto de rotación y tilt 3D ultra premium.', icon: '3d_rotation' },
+                                            { id: 'cinematic', label: 'Cinemática', desc: 'Efectos parallax profundos y elementos atados al scroll de la página.', icon: 'movie_filter' },
+                                            { id: 'magnetic', label: 'Magnética', desc: 'Botones y tarjetas fluidas con morphing y físicas de atracción.', icon: 'animation' },
+                                        ].map(tpl => (
+                                            <button
+                                                key={tpl.id}
+                                                type="button"
+                                                onClick={() => setFormData({ 
+                                                    ...formData, 
+                                                    shopTheme: { ...formData.shopTheme, layoutTemplate: tpl.id as any } 
+                                                })}
+                                                className={`flex flex-col text-left gap-2 p-5 rounded-3xl border-2 transition-all cursor-pointer relative overflow-hidden group ${formData.shopTheme.layoutTemplate === tpl.id || (!formData.shopTheme.layoutTemplate && tpl.id === 'classic')
+                                                    ? 'bg-sky-900 border-sky-900 text-white shadow-xl shadow-sky-900/20'
+                                                    : 'bg-white border-slate-100 text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:shadow-md'
+                                                    }`}
+                                            >
+                                                <div className={`size-10 rounded-2xl flex items-center justify-center mb-2 transition-colors ${formData.shopTheme.layoutTemplate === tpl.id ? 'bg-sky-800 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+                                                    <span className="material-symbols-outlined">{tpl.icon}</span>
+                                                </div>
+                                                <span className="text-sm font-black">{tpl.label}</span>
+                                                <span className={`text-[11px] font-medium leading-relaxed ${formData.shopTheme.layoutTemplate === tpl.id ? 'text-sky-200' : 'text-slate-400'}`}>{tpl.desc}</span>
+                                                
+                                                {/* Active Checkmark */}
+                                                {(formData.shopTheme.layoutTemplate === tpl.id || (!formData.shopTheme.layoutTemplate && tpl.id === 'classic')) && (
+                                                    <div className="absolute top-4 right-4 size-6 bg-sky-500 rounded-full flex items-center justify-center shadow-md">
+                                                        <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 {/* Background Type Selector */}
                                 <div className="space-y-4">
