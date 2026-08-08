@@ -61,7 +61,8 @@ const BulkUpload: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                 const rows = results.data as ParsedRow[];
                 
                 const products: PendingProduct[] = rows.map(row => {
-                    const expectedImages = row.imagenes ? row.imagenes.split(',').map(s => s.trim()) : [];
+                    // Limit to maximum 6 images per product
+                    const expectedImages = row.imagenes ? row.imagenes.split(',').map(s => s.trim()).slice(0, 6) : [];
                     
                     const foundImages = expectedImages.map(imgName => 
                         imageFiles.find(f => f.name === imgName)

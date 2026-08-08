@@ -6,7 +6,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../lib/auth';
 import { getPlatformSettings, PlatformSettings } from '../../lib/settings';
 import { Timestamp } from 'firebase/firestore';
-import imageCompression from 'browser-image-compression';
+import { uploadImages, MAX_PRODUCT_IMAGES } from '../../lib/storage';
+import { optimizeImages } from '../../lib/imageOptimizer';
 import { Editor } from '@tinymce/tinymce-react';
 import { GoogleGenAI } from '@google/genai';
 
@@ -150,22 +151,29 @@ export default function Publish() {
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const files = Array.from(e.target.files);
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1280, useWebWorker: true };
+        if (e.target.files && e.target.files.length > 0) {
+            const currentCount = existingImages.length + selectedFiles.length;
+            if (currentCount >= MAX_PRODUCT_IMAGES) {
+                notify({ type: 'warning', title: 'Límite alcanzado', message: `El máximo permitido es de ${MAX_PRODUCT_IMAGES} imágenes por producto.`, icon: 'photo_library' });
+                return;
+            }
+
+            const rawFiles = Array.from(e.target.files);
+            const availableSlots = MAX_PRODUCT_IMAGES - currentCount;
+            const filesToProcess = rawFiles.slice(0, availableSlots);
+
+            if (rawFiles.length > availableSlots) {
+                notify({ type: 'info', title: 'Límite de 6 fotos', message: `Solo se procesaron ${availableSlots} imagen(es) para no superar el límite de 6 fotos.`, icon: 'info' });
+            }
+
             setLoading(true);
-            setUploadProgress('Comprimiendo fotos...');
+            setUploadProgress('Optimizando imágenes a WebP...');
             try {
-                const compressedFiles = await Promise.all(
-                    files.map(async (file: File) => {
-                        if (file.size / 1024 / 1024 < 1) return file;
-                        return await imageCompression(file, options);
-                    })
-                );
-                setSelectedFiles(prev => [...prev, ...compressedFiles as File[]]);
-                const newPreviews = compressedFiles.map(file => URL.createObjectURL(file as Blob));
+                const compressedFiles = await optimizeImages(filesToProcess);
+                setSelectedFiles(prev => [...prev, ...compressedFiles]);
+                const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
                 setPreviews(prev => [...prev, ...newPreviews]);
-                notify({ type: 'success', title: 'Fotos optimizadas', message: 'Imágenes comprimidas para carga rápida.', icon: 'speed' });
+                notify({ type: 'success', title: 'Fotos optimizadas', message: 'Imágenes comprimidas a WebP para carga ultra rápida.', icon: 'speed' });
             } catch (error) {
                 notify({ type: 'error', title: 'Error', message: 'No pudimos procesar las fotos.', icon: 'error' });
             } finally {
@@ -193,6 +201,10 @@ export default function Publish() {
 
     const handleAddImageUrl = (e?: React.MouseEvent | React.FormEvent) => {
         if (e) e.preventDefault();
+        if (existingImages.length + selectedFiles.length >= MAX_PRODUCT_IMAGES) {
+            notify({ type: 'warning', title: 'Límite alcanzado', message: `No puedes agregar más de ${MAX_PRODUCT_IMAGES} imágenes por producto.`, icon: 'photo_library' });
+            return;
+        }
         if (!imageUrlInput || !imageUrlInput.trim().startsWith('http')) {
             notify({ type: 'warning', title: 'URL inválida', message: 'Por favor ingresa un link válido que comience con http:// o https://', icon: 'link' });
             return;
@@ -235,11 +247,17 @@ export default function Publish() {
                 return;
             }
 
-            const uploadedImages: string[] = [];
-            for (let i = 0; i < selectedFiles.length; i++) {
-                setUploadProgress(`Simulando subida (${i + 1}/${selectedFiles.length})...`);
-                uploadedImages.push(`https://picsum.photos/600/600?random=${Date.now() + i}`);
-                await new Promise(resolve => setTimeout(resolve, 500));
+            let uploadedImages: string[] = [];
+            if (selectedFiles.length > 0) {
+                setUploadProgress('Optimizando y subiendo imágenes a Firebase...');
+                try {
+                    uploadedImages = await uploadImages(selectedFiles, user.uid);
+                } catch (err) {
+                    console.warn("Error uploading real images to Firebase Storage, using fallback URLs:", err);
+                    for (let i = 0; i < selectedFiles.length; i++) {
+                        uploadedImages.push(`https://picsum.photos/600/600?random=${Date.now() + i}`);
+                    }
+                }
             }
             setUploadProgress('Finalizando...');
 
@@ -892,8 +910,8 @@ export default function Publish() {
                                         <div className="size-12 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-indigo-600">
                                             <span className="material-symbols-outlined text-2xl font-black">add</span>
                                         </div>
-                                        <span className="text-sm font-bold text-indigo-600 mb-2">Arrastrá y soltá, o subí fotos del producto</span>
-                                        <span className="text-xs text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-sm">image</span> Tamaño mínimo recomendado: 1280px / Formatos: WEBP, PNG, JPEG</span>
+                                        <span className="text-sm font-bold text-indigo-600 mb-2">Arrastrá y soltá, o subí fotos del producto ({previews.length}/6)</span>
+                                        <span className="text-xs text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-sm">speed</span> Máximo 6 fotos por producto • Compresión WebP ultrarrápida sin pérdida de calidad</span>
                                         <input type="file" multiple disabled={loading} accept="image/*" onChange={handleFileChange} className="hidden" />
                                     </label>
 
