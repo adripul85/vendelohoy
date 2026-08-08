@@ -9,7 +9,7 @@ interface MobileHeaderProps {
 export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-    const { user, userProfile } = useAuth();
+    const { user, userProfile, logout } = useAuth();
 
     // Listen for custom event if triggered from elsewhere
     React.useEffect(() => {
@@ -134,6 +134,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
                                 <button onClick={() => { setIsMenuOpen(false); navigate('/settings'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-on-surface rounded-xl hover:bg-surface-container-low transition-colors text-left">
                                     <span className="material-symbols-outlined text-on-surface-variant">settings</span>
                                     Configuración
+                                </button>
+                                <div className="px-4 my-3 h-px bg-outline-variant/30" />
+                                <button onClick={() => { logout(); setIsMenuOpen(false); navigate('/'); }} className="w-full flex items-center gap-4 px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50 transition-colors text-left">
+                                    <span className="material-symbols-outlined text-red-400">logout</span>
+                                    Cerrar Sesión
                                 </button>
                             </nav>
                         ) : (

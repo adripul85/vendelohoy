@@ -63,6 +63,9 @@ export const useFirestoreNotifications = () => {
             setNotifications(newNotifications);
             setUnreadCount(newNotifications.filter(n => !n.read).length);
             setLoading(false);
+        }, (err) => {
+            console.warn("Notifications onSnapshot error:", err);
+            setLoading(false);
         });
 
         return () => unsubscribe();

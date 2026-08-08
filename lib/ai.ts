@@ -18,7 +18,7 @@ export const generateProductDescription = async (
     throw new Error("VITE_GEMINI_API_KEY no está configurada en .env.local");
   }
 
-  const modelInstance = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const modelInstance = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `Eres un experto copywriter de e-commerce persuasivo y vendedor.
 Tu objetivo es escribir una descripción de producto atractiva que impulse la conversión.
@@ -41,6 +41,14 @@ Escribe solo la descripción, sin saludos ni aclaraciones previas.`;
     return response.text().trim();
   } catch (error: any) {
     console.error("Error generando descripción con Gemini:", error);
+    
+    // Handle rate limit (429) with a user-friendly message
+    if (error.message?.includes('429') || error.message?.includes('quota')) {
+      const retryMatch = error.message.match(/retry in (\d+)/i);
+      const seconds = retryMatch ? retryMatch[1] : '30';
+      throw new Error(`Límite de uso alcanzado. Esperá ${seconds} segundos e intentá de nuevo. (Cuota gratuita de Google AI)`);
+    }
+    
     throw new Error(error.message || "Error al conectar con la IA.");
   }
 };

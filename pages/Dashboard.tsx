@@ -114,6 +114,9 @@ export default function Dashboard() {
       };
       checkReviews();
       setLoading(false);
+    }, (err) => {
+      console.warn("Dashboard unsubBuy error:", err);
+      setLoading(false);
     });
 
     const unsubSell = onSnapshot(qSell, (snapshot) => {
@@ -122,6 +125,9 @@ export default function Dashboard() {
         .map(doc => ({ id: doc.id, ...doc.data() as any, type: 'venta' }))
         .filter(tx => !hiddenTxs.includes(tx.id));
       setTransactions(prev => ({ ...prev, ventas }));
+      setLoading(false);
+    }, (err) => {
+      console.warn("Dashboard unsubSell error:", err);
       setLoading(false);
     });
 
@@ -216,12 +222,42 @@ export default function Dashboard() {
 
   const list = activeTab === 'compras' ? filteredPurchases : filteredTransactions;
 
+  const [itemStatusSubFilter, setItemStatusSubFilter] = useState<'ALL' | 'AVAILABLE' | 'PAUSED'>('ALL');
+
   const filteredUserItems = userItems.filter(item => {
     const matchesQuery = item.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
       item.category.toLowerCase().includes(filterQuery.toLowerCase());
     const isAvailable = !item.status || item.status === 'AVAILABLE';
-    return matchesQuery && isAvailable;
+    const isPaused = item.status === 'PAUSED' || item.status === 'HIDDEN' || item.status === 'SOLD' || (item.quantity === 0 && !item.hasInfiniteStock);
+
+    if (itemStatusSubFilter === 'AVAILABLE') return matchesQuery && isAvailable;
+    if (itemStatusSubFilter === 'PAUSED') return matchesQuery && isPaused;
+    return matchesQuery;
   });
+
+  const handleTogglePauseItem = async (item: ItemData & { id: string }) => {
+    const isAvailable = !item.status || item.status === 'AVAILABLE';
+    const newStatus = isAvailable ? 'PAUSED' : 'AVAILABLE';
+    
+    try {
+      const { updateItem } = await import('../lib/items');
+      const updates: any = { status: newStatus };
+      if (!isAvailable && (!item.quantity || item.quantity <= 0) && !item.hasInfiniteStock) {
+        updates.quantity = 1;
+      }
+      
+      await updateItem(item.id, updates);
+      setUserItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updates } : i));
+      notify({
+        type: 'success',
+        title: isAvailable ? 'Publicación Pausada' : 'Publicación Activada',
+        message: isAvailable ? 'El producto ya no estará visible en el catálogo.' : 'El producto vuelve a estar disponible para venta.',
+        icon: isAvailable ? 'pause_circle' : 'play_circle'
+      });
+    } catch (err) {
+      notify({ type: 'error', title: 'Error', message: 'No se pudo cambiar el estado.', icon: 'error' });
+    }
+  };
 
   const handleDeleteItem = async (id: string) => {
     setIsDeleting(true);
@@ -832,72 +868,129 @@ export default function Dashboard() {
                   showBulkUpload ? (
                     <BulkUpload onComplete={() => {
                         setShowBulkUpload(false);
-                        // Force a refresh of the snapshot if needed or wait for realtime
                     }} />
-                  ) : filteredUserItems.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {filteredUserItems.map(item => (
-                      <div key={item.id} className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/50 shadow-premium overflow-hidden transition-all hover:shadow-premium-lg group animate-in fade-in duration-500">
-                        <div className="p-8">
-                          <div className="flex gap-6">
-                            <div className="size-24 rounded-2xl bg-surface shrink-0 overflow-hidden border border-outline-variant/30 flex items-center justify-center">
-                              {item.images && item.images[0] ? (
-                                <img src={item.images[0]} className="w-full h-full object-cover" alt={item.title} />
-                              ) : (
-                                <span className="material-symbols-outlined text-3xl text-outline-variant">image</span>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">{item.category}</p>
-                              <h3 className="text-xl font-black text-on-surface tracking-tight group-hover:text-red-600 transition-colors line-clamp-1">{item.title}</h3>
-                              <div className="flex items-baseline gap-2 pt-1">
-                                <p className="text-2xl font-black text-on-surface">${item.price.toLocaleString()}</p>
-                                {item.oldPrice && item.oldPrice > item.price && (
-                                  <p className="text-sm font-bold text-on-surface-variant line-through opacity-70">
-                                    ${item.oldPrice.toLocaleString()}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="size-2 bg-emerald-500 rounded-full"></span>
-                                <span className="text-[10px] font-bold text-emerald-600 uppercase">Activo</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-3 mt-8">
-                            <button onClick={() => navigate(`/product/${item.id}`)} className="flex-1 py-3 bg-surface-container-lowest text-on-surface rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container transition-all">Ver Publicación</button>
-                            <button
-                              onClick={() => handleToggleFeatured(item)}
-                              className={`flex-1 py-3 border rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${item.isFeatured
-                                ? 'bg-amber-50 border-amber-200 text-amber-600'
-                                : 'bg-surface-container-lowest border-outline-variant/50 text-on-surface hover:bg-surface'
-                                }`}
-                            >
-                              <span className={`material-symbols-outlined text-sm ${item.isFeatured ? 'fill-1' : ''}`}>bolt</span>
-                              {item.isFeatured ? 'Destacado' : 'Destacar'}
-                            </button>
-                            <button onClick={() => navigate(`/publish?edit=${item.id}`)} className="size-10 flex items-center justify-center bg-surface-container-lowest border border-outline-variant/50 text-on-surface rounded-xl hover:bg-surface transition-all">
-                              <span className="material-symbols-outlined text-lg">edit</span>
-                            </button>
-                            <button onClick={() => setItemToDelete(item.id)} className="size-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all">
-                              <span className="material-symbols-outlined text-lg">delete</span>
-                            </button>
-                          </div>
-                        </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* SUB-FILTROS DE ESTADO DE PRODUCTO */}
+                      <div className="flex gap-2 border-b border-outline-variant/30 pb-4 overflow-x-auto">
+                        {[
+                          { id: 'ALL', label: `Todos (${userItems.length})` },
+                          { id: 'AVAILABLE', label: `Activos (${userItems.filter(i => !i.status || i.status === 'AVAILABLE').length})` },
+                          { id: 'PAUSED', label: `Pausados / Inactivos (${userItems.filter(i => i.status === 'PAUSED' || i.status === 'HIDDEN' || i.status === 'SOLD' || (i.quantity === 0 && !i.hasInfiniteStock)).length})` }
+                        ].map(f => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setItemStatusSubFilter(f.id as any)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                              itemStatusSubFilter === f.id
+                                ? 'bg-primary text-on-primary shadow-md'
+                                : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface border border-outline-variant/30'
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-24 bg-surface-container-lowest rounded-[40px] border border-outline-variant/50 shadow-premium">
-                    <div className="bg-surface-container-lowest size-24 rounded-full flex items-center justify-center mx-auto mb-8">
-                      <span className="material-symbols-outlined text-4xl text-outline">inventory</span>
+
+                      {filteredUserItems.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {filteredUserItems.map(item => {
+                          const isAvailable = !item.status || item.status === 'AVAILABLE';
+                          const isPaused = item.status === 'PAUSED' || item.status === 'HIDDEN';
+                          const isOut = item.quantity === 0 && !item.hasInfiniteStock;
+
+                          return (
+                          <div key={item.id} className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/50 shadow-premium overflow-hidden transition-all hover:shadow-premium-lg group animate-in fade-in duration-500">
+                            <div className="p-8">
+                              <div className="flex gap-6">
+                                <div className="size-24 rounded-2xl bg-surface shrink-0 overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+                                  {item.images && item.images[0] ? (
+                                    <img src={item.images[0]} className="w-full h-full object-cover" alt={item.title} />
+                                  ) : (
+                                    <span className="material-symbols-outlined text-3xl text-outline-variant">image</span>
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">{item.category}</p>
+                                  <h3 className="text-xl font-black text-on-surface tracking-tight group-hover:text-red-600 transition-colors line-clamp-1">{item.title}</h3>
+                                  <div className="flex items-baseline gap-2 pt-1">
+                                    <p className="text-2xl font-black text-on-surface">${item.price.toLocaleString()}</p>
+                                    {item.oldPrice && item.oldPrice > item.price && (
+                                      <p className="text-sm font-bold text-on-surface-variant line-through opacity-70">
+                                        ${item.oldPrice.toLocaleString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {isPaused ? (
+                                      <>
+                                        <span className="size-2 bg-amber-500 rounded-full"></span>
+                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Pausado</span>
+                                      </>
+                                    ) : isOut ? (
+                                      <>
+                                        <span className="size-2 bg-rose-500 rounded-full"></span>
+                                        <span className="text-[10px] font-bold text-rose-600 uppercase">Sin Stock / Vendido</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="size-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        <span className="text-[10px] font-bold text-emerald-600 uppercase">Activo</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-3 mt-8">
+                                <button onClick={() => navigate(`/product/${item.id}`)} className="flex-1 py-3 bg-surface-container-lowest text-on-surface rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container transition-all">Ver Publicación</button>
+                                <button
+                                  onClick={() => handleToggleFeatured(item)}
+                                  className={`py-3 px-4 border rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${item.isFeatured
+                                    ? 'bg-amber-50 border-amber-200 text-amber-600'
+                                    : 'bg-surface-container-lowest border-outline-variant/50 text-on-surface hover:bg-surface'
+                                    }`}
+                                >
+                                  <span className={`material-symbols-outlined text-sm ${item.isFeatured ? 'fill-1' : ''}`}>bolt</span>
+                                  {item.isFeatured ? 'Destacado' : 'Destacar'}
+                                </button>
+                                <button
+                                  onClick={() => handleTogglePauseItem(item)}
+                                  title={isAvailable ? 'Pausar publicación' : 'Activar publicación'}
+                                  className={`size-10 flex items-center justify-center rounded-xl border transition-all ${
+                                    isAvailable
+                                      ? 'bg-surface-container-lowest border-outline-variant/50 text-amber-600 hover:bg-amber-50'
+                                      : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                                  }`}
+                                >
+                                  <span className="material-symbols-outlined text-lg">
+                                    {isAvailable ? 'pause_circle' : 'play_circle'}
+                                  </span>
+                                </button>
+                                <button onClick={() => navigate(`/publish?edit=${item.id}`)} className="size-10 flex items-center justify-center bg-surface-container-lowest border border-outline-variant/50 text-on-surface rounded-xl hover:bg-surface transition-all">
+                                  <span className="material-symbols-outlined text-lg">edit</span>
+                                </button>
+                                <button onClick={() => setItemToDelete(item.id)} className="size-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all">
+                                  <span className="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )})}
+                      </div>
+                      ) : (
+                        <div className="text-center py-24 bg-surface-container-lowest rounded-[40px] border border-outline-variant/50 shadow-premium">
+                          <div className="bg-surface-container-lowest size-24 rounded-full flex items-center justify-center mx-auto mb-8">
+                            <span className="material-symbols-outlined text-4xl text-outline">inventory</span>
+                          </div>
+                          <h3 className="text-3xl font-black text-on-surface mb-4 uppercase tracking-tighter">No hay productos en esta vista</h3>
+                          <p className="text-sm font-bold text-on-surface-variant mb-10 max-w-sm mx-auto uppercase">Cambia de filtro o crea una nueva publicación.</p>
+                          <Link to="/publish" className="inline-block bg-red-600 text-on-primary px-4 md:px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Publicar un Producto</Link>
+                        </div>
+                      )}
                     </div>
-                    <h3 className="text-3xl font-black text-on-surface mb-4 uppercase tracking-tighter">No tienes publicaciones</h3>
-                    <p className="text-sm font-bold text-on-surface-variant mb-10 max-w-sm mx-auto uppercase">Comienza a vender tus activos en nuestra red segura hoy mismo.</p>
-                    <Link to="/publish" className="inline-block bg-red-600 text-on-primary px-4 md:px-12 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Publicar un Producto</Link>
-                  </div>
-                )
-              ) : list.length > 0 ? (
+                  )
+                ) : list.length > 0 ? (
                 activeTab === 'compras' ? (
                   <MyPurchases
                     purchases={list}

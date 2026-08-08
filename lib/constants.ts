@@ -36,7 +36,7 @@ export const CATEGORIES: MasterCategory[] = [
             { name: 'Polleras', sub: ['General'] },
             { name: 'Remeras, Musculosas y Chombas', sub: ['General'] },
             { name: 'Ropa Deportiva', sub: ['Bolsos Deportivos', 'Buzos', 'Calzas', 'Camperas', 'Conjuntos Deportivos', 'Fajas', 'Gorras', 'Guantes', 'Mangas de Compresión', 'Medias', 'Pantalones y Joggings', 'Remeras y Chombas', 'Ropa de Danza y Patinaje', 'Shorts', 'Tobilleras', 'Tops', 'Vestidos', 'Otros'] },
-            { name: 'Ropa Interior y de Dormir', sub: ['Ropa Interior', 'Ropa de Dormir'] },
+            { name: 'Ropa Interior y de Dormir', sub: ['Boxers y Slips', 'Fajas', 'Lencería', 'Medias y Panties', 'Ropa de Dormir', 'Ropa Interior', 'Otros'] },
             { name: 'Ropa y Calzado para Bebés', sub: ['Accesorios', 'Batas', 'Bermudas y Shorts', 'Blusas', 'Bodys', 'Bolsas de Dormir', 'Buzos', 'Calzados', 'Camisas', 'Camperas', 'Conjuntos', 'Jardineros', 'Kits para Salida del Hospital', 'Medias', 'Pantalones', 'Pijamas', 'Polleras', 'Remeras, Musculosas y Chombas', 'Saquitos y Sweaters', 'Trajes de Baño', 'Vestidos', 'Otros'] },
             { name: 'Trajes', sub: ['General'] },
             { name: 'Trajes de Baño', sub: ['General'] },

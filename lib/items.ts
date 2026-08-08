@@ -76,12 +76,19 @@ export const adjustItemStock = async (
         
         const itemRef = doc(db, 'items', itemId);
         
-        // Update item quantity
-        await updateDoc(itemRef, {
+        // Update item quantity and reactivate if stock is available
+        const updateData: any = {
             quantity: newQuantity,
             hasInfiniteStock,
             updatedAt: serverTimestamp()
-        });
+        };
+        
+        // Auto-reactivate product if it has stock now
+        if (hasInfiniteStock || newQuantity > 0) {
+            updateData.status = 'AVAILABLE';
+        }
+        
+        await updateDoc(itemRef, updateData);
 
         // Add history entry in subcollection
         const historyRef = collection(itemRef, 'stock_history');

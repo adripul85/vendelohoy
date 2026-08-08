@@ -165,7 +165,8 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
             });
             if (res.success) {
                 notify('Stock actualizado', 'success');
-                setItems(items.map(item => item.id === selectedAdjustItem.id ? { ...item, quantity: newStock, hasInfiniteStock: isInfinite } : item));
+                const newStatus = (isInfinite || newStock > 0) ? 'AVAILABLE' : item.status;
+                setItems(items.map(item => item.id === selectedAdjustItem.id ? { ...item, quantity: newStock, hasInfiniteStock: isInfinite, status: newStatus } : item));
             } else {
                 notify('Error al actualizar stock', 'error');
             }

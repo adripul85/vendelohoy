@@ -761,23 +761,24 @@ export default function Publish() {
                                             <div>
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Numérico / Pantalones</span>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52', '54'].map(sz => {
-                                                        const isSelected = form.size.includes(sz);
+                                                    {['28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52', '54'].map(num => {
+                                                        const szVal = `Talle ${num}`;
+                                                        const isSelected = form.size.includes(szVal);
                                                         return (
                                                             <button
-                                                                key={sz}
+                                                                key={num}
                                                                 type="button"
                                                                 onClick={() => {
                                                                     setForm(prev => ({
                                                                         ...prev,
                                                                         size: isSelected 
-                                                                            ? prev.size.filter(s => s !== sz) 
-                                                                            : [...prev.size, sz]
+                                                                            ? prev.size.filter(s => s !== szVal) 
+                                                                            : [...prev.size, szVal]
                                                                     }));
                                                                 }}
                                                                 className={`px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all active:scale-95 ${isSelected ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                                                             >
-                                                                {sz}
+                                                                {num}
                                                             </button>
                                                         );
                                                     })}
