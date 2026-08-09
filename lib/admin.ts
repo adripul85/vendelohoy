@@ -145,14 +145,31 @@ export const deleteUserByAdmin = async (uid: string) => {
         const userRevSnap = await getDocs(collection(db, "users", uid, "reviews"));
         for (const d of userRevSnap.docs) await deleteDoc(d.ref);
 
-        // 10. Wipe user doc but KEEP email
-        const { setDoc } = await import('firebase/firestore');
-        await setDoc(userRef, {
+        // 10. Wipe user doc but KEEP email — use updateDoc (NOT setDoc) 
+        // because Firestore treats setDoc without merge as a "create" operation,
+        // and our rules only allow create when auth.uid == userId.
+        // updateDoc triggers the "update" rule where isAdmin() is permitted.
+        await updateDoc(userRef, {
             email: userEmail,
             deleted: true,
             deletedAt: serverTimestamp(),
             displayName: '[Usuario Eliminado]',
-            role: 'user'
+            role: 'user',
+            avatar: '',
+            phone: '',
+            dni: '',
+            location: { city: '', state: '' },
+            isAdmin: false,
+            isSuspended: true,
+            wallet: { available: 0, inEscrow: 0, pending: 0, lastUpdated: serverTimestamp() },
+            verificationBadges: { identityVerified: false, addressVerified: false, phoneVerified: false },
+            verificationEvidence: null,
+            bankDetails: null,
+            points: 0,
+            reputationPoints: 0,
+            trustLevel: 0,
+            salesCount: 0,
+            successfulSales: 0,
         });
 
         const deletedCounts = {

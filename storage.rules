@@ -59,10 +59,10 @@ service firebase.storage {
     }
 
     // --- Marketing (Heros y Banners) ---
-    // Solo admins pueden modificar marketing
+    // Solo admins (verificados via custom claim) pueden modificar marketing
     match /marketing/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && isLessThan5MB(); // TODO: Necesita un custom claim admin en el token de firebase auth
+      allow write: if isAuthenticated() && request.auth.token.admin == true && isImage() && isLessThan5MB();
     }
 
     // --- Perfiles y Portadas ---

@@ -1,60 +1,70 @@
 
-import React, { useState, createContext, useContext, useCallback, useEffect, useRef } from 'react';
+import React, { useState, createContext, useContext, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { FaInstagram, FaFacebookF, FaXTwitter, FaTiktok, FaWhatsapp } from 'react-icons/fa6';
 import Home from './pages/marketplace/Home';
-import Dashboard from './pages/Dashboard';
-import Dispute from './pages/transactions/Dispute';
-import Profile from './pages/Profile';
-import Wallet from './pages/Wallet';
-import Verification from './pages/Verification';
-import Login from './pages/Login';
-import RegisterWizard from './pages/RegisterWizard';
-import Publish from './pages/publish/Publish';
-import ImportExportProducts from './pages/publish/ImportExportProducts';
-import Messages from './pages/Messages';
-import ProductDetail from './pages/marketplace/ProductDetail';
-import Search from './pages/marketplace/Search';
-import Checkout from './pages/transactions/Checkout';
-import TransactionDetail from './pages/transactions/TransactionDetail';
-import Success from './pages/transactions/Success';
-import PaymentSuccess from './pages/transactions/PaymentSuccess';
-import PaymentFailure from './pages/transactions/PaymentFailure';
-import ESgrow from './pages/transactions/ESgrow';
-import CompleteProfile from './pages/CompleteProfile';
-import AdminDashboard from './pages/AdminDashboard';
-import Settings from './pages/Settings';
-import EscrowInfo from './pages/EscrowInfo';
-import VerifyDelivery from './pages/VerifyDelivery';
-import TermsAndCosts from './pages/legal/TermsAndCosts';
-import PaymentMethods from './pages/legal/PaymentMethods';
-import ProhibitedItems from './pages/legal/ProhibitedItems';
-import ResolutionCenter from './pages/ResolutionCenter';
-import RequireProfile from './components/RequireProfile';
-import ProtectedRoute from './components/ProtectedRoute';
-import ReportedItems from './pages/admin/ReportedItems';
 import { AuthProvider, useAuth } from './lib/auth';
 import { NotificationProvider } from './context/NotificationContext';
 import { DialogProvider } from './context/DialogContext';
 import { CartProvider } from './context/CartContext';
-import TermsAndConditions from './pages/legal/TermsAndConditions';
-import LegalNotice from './pages/legal/LegalNotice';
-import PrivacyPolicy from './pages/legal/PrivacyPolicy';
-import CookiesPolicy from './pages/legal/CookiesPolicy';
-import ScamPrevention from './pages/legal/ScamPrevention';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import RequireProfile from './components/RequireProfile';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import Header from './components/Header';
 import Logo from './components/Logo';
-import Deals from './pages/Deals';
-import Cart from './pages/Cart';
-import Shop from './pages/marketplace/Shop';
-import About from './pages/About';
-import SecurityInfo from './pages/SecurityInfo';
-import GamificationRules from './pages/GamificationRules';
-import Favorites from './pages/Favorites';
 import { motion, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
+
+// Code-Splitting: Lazy loading pages for ultra-fast initial load times
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Dispute = lazy(() => import('./pages/transactions/Dispute'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Wallet = lazy(() => import('./pages/Wallet'));
+const Verification = lazy(() => import('./pages/Verification'));
+const Login = lazy(() => import('./pages/Login'));
+const RegisterWizard = lazy(() => import('./pages/RegisterWizard'));
+const Publish = lazy(() => import('./pages/publish/Publish'));
+const ImportExportProducts = lazy(() => import('./pages/publish/ImportExportProducts'));
+const Messages = lazy(() => import('./pages/Messages'));
+const ProductDetail = lazy(() => import('./pages/marketplace/ProductDetail'));
+const Search = lazy(() => import('./pages/marketplace/Search'));
+const Checkout = lazy(() => import('./pages/transactions/Checkout'));
+const TransactionDetail = lazy(() => import('./pages/transactions/TransactionDetail'));
+const Success = lazy(() => import('./pages/transactions/Success'));
+const PaymentSuccess = lazy(() => import('./pages/transactions/PaymentSuccess'));
+const PaymentFailure = lazy(() => import('./pages/transactions/PaymentFailure'));
+const ESgrow = lazy(() => import('./pages/transactions/ESgrow'));
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+const EscrowInfo = lazy(() => import('./pages/EscrowInfo'));
+const VerifyDelivery = lazy(() => import('./pages/VerifyDelivery'));
+const TermsAndCosts = lazy(() => import('./pages/legal/TermsAndCosts'));
+const PaymentMethods = lazy(() => import('./pages/legal/PaymentMethods'));
+const ProhibitedItems = lazy(() => import('./pages/legal/ProhibitedItems'));
+const ResolutionCenter = lazy(() => import('./pages/ResolutionCenter'));
+const ReportedItems = lazy(() => import('./pages/admin/ReportedItems'));
+const TermsAndConditions = lazy(() => import('./pages/legal/TermsAndConditions'));
+const LegalNotice = lazy(() => import('./pages/legal/LegalNotice'));
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const CookiesPolicy = lazy(() => import('./pages/legal/CookiesPolicy'));
+const ScamPrevention = lazy(() => import('./pages/legal/ScamPrevention'));
+const Deals = lazy(() => import('./pages/Deals'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Shop = lazy(() => import('./pages/marketplace/Shop'));
+const About = lazy(() => import('./pages/About'));
+const SecurityInfo = lazy(() => import('./pages/SecurityInfo'));
+const GamificationRules = lazy(() => import('./pages/GamificationRules'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+
+const PageFallback = () => (
+  <div className="w-full min-h-[60vh] flex flex-col items-center justify-center py-20">
+    <div className="size-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-3"></div>
+    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Cargando...</span>
+  </div>
+);
 
 // --- App Infrastructure ---
 const ScrollToTop = () => {
@@ -228,55 +238,58 @@ function App() {
               <Header />
               <main className="flex-grow">
                 <PageTransition>
-                  <Routes>
-                    <Route path="/admin/reports" element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <ReportedItems />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/" element={<Home />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/deals" element={<Deals />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/shop/:slug" element={<Shop />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/dashboard" element={<RequireProfile><Dashboard /></RequireProfile>} />
-                    <Route path="/publish" element={<RequireProfile><Publish /></RequireProfile>} />
-                    <Route path="/publish/bulk" element={<RequireProfile><ImportExportProducts /></RequireProfile>} />
-                    <Route path="/transaction/:id" element={<RequireProfile><ESgrow /></RequireProfile>} />
-                    <Route path="/escrow/:id" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/messages" element={<RequireProfile><Messages /></RequireProfile>} />
-                    <Route path="/messages/:chatId" element={<RequireProfile><Messages /></RequireProfile>} />
-                    <Route path="/wallet" element={<RequireProfile><Wallet /></RequireProfile>} />
-                    <Route path="/favorites" element={<RequireProfile><Favorites /></RequireProfile>} />
-                    <Route path="/profile/:uid?" element={<Profile />} />
-                    <Route path="/complete-profile" element={<CompleteProfile />} />
-                    <Route path="/settings" element={<RequireProfile><Settings /></RequireProfile>} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<RegisterWizard />} />
+                  <Suspense fallback={<PageFallback />}>
+                    <Routes>
+                      <Route path="/verify-email" element={<VerifyEmail />} />
+                      <Route path="/admin/reports" element={
+                        <ProtectedRoute requireAdmin={true}>
+                          <ReportedItems />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/" element={<Home />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/deals" element={<Deals />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/shop/:slug" element={<Shop />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/dashboard" element={<RequireProfile><Dashboard /></RequireProfile>} />
+                      <Route path="/publish" element={<RequireProfile><Publish /></RequireProfile>} />
+                      <Route path="/publish/bulk" element={<RequireProfile><ImportExportProducts /></RequireProfile>} />
+                      <Route path="/transaction/:id" element={<RequireProfile><ESgrow /></RequireProfile>} />
+                      <Route path="/escrow/:id" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/messages" element={<RequireProfile><Messages /></RequireProfile>} />
+                      <Route path="/messages/:chatId" element={<RequireProfile><Messages /></RequireProfile>} />
+                      <Route path="/wallet" element={<RequireProfile><Wallet /></RequireProfile>} />
+                      <Route path="/favorites" element={<RequireProfile><Favorites /></RequireProfile>} />
+                      <Route path="/profile/:uid?" element={<Profile />} />
+                      <Route path="/complete-profile" element={<CompleteProfile />} />
+                      <Route path="/settings" element={<RequireProfile><Settings /></RequireProfile>} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<RegisterWizard />} />
 
-                    <Route path="/checkout" element={<RequireProfile><Checkout /></RequireProfile>} />
-                    <Route path="/success" element={<Success />} />
-                    <Route path="/payment/success" element={<PaymentSuccess />} />
-                    <Route path="/payment/failure" element={<PaymentFailure />} />
-                    <Route path="/payment/pending" element={<PaymentSuccess />} />
-                    <Route path="/dispute/:transactionId" element={<Dispute />} />
-                    <Route path="/verification" element={<Verification />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/escrow-info" element={<EscrowInfo />} />
-                    <Route path="/legal/costs" element={<TermsAndCosts />} />
-                    <Route path="/legal/prohibited" element={<ProhibitedItems />} />
-                    <Route path="/legal/terms" element={<TermsAndConditions />} />
-                    <Route path="/legal/notice" element={<LegalNotice />} />
-                    <Route path="/legal/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/legal/cookies" element={<CookiesPolicy />} />
-                    <Route path="/legal/scam-prevention" element={<ScamPrevention />} />
-                    <Route path="/verify-delivery" element={<VerifyDelivery />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/security" element={<SecurityInfo />} />
-                    <Route path="/reputacion" element={<GamificationRules />} />
-                    <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
-                  </Routes>
+                      <Route path="/checkout" element={<RequireProfile><Checkout /></RequireProfile>} />
+                      <Route path="/success" element={<Success />} />
+                      <Route path="/payment/success" element={<PaymentSuccess />} />
+                      <Route path="/payment/failure" element={<PaymentFailure />} />
+                      <Route path="/payment/pending" element={<PaymentSuccess />} />
+                      <Route path="/dispute/:transactionId" element={<Dispute />} />
+                      <Route path="/verification" element={<Verification />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/escrow-info" element={<EscrowInfo />} />
+                      <Route path="/legal/costs" element={<TermsAndCosts />} />
+                      <Route path="/legal/prohibited" element={<ProhibitedItems />} />
+                      <Route path="/legal/terms" element={<TermsAndConditions />} />
+                      <Route path="/legal/notice" element={<LegalNotice />} />
+                      <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+                      <Route path="/legal/cookies" element={<CookiesPolicy />} />
+                      <Route path="/legal/scam-prevention" element={<ScamPrevention />} />
+                      <Route path="/verify-delivery" element={<VerifyDelivery />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/security" element={<SecurityInfo />} />
+                      <Route path="/reputacion" element={<GamificationRules />} />
+                      <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
+                    </Routes>
+                  </Suspense>
                 </PageTransition>
               </main>
               <Footer />

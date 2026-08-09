@@ -260,122 +260,60 @@ export const acceptAmicableReturn = async (id: string, sellerId: string) => {
  */
 export const confirmReturnReceipt = async (id: string, sellerId: string) => {
     try {
-        const docRef = doc(db, "transactions", id);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) return { success: false, error: 'Transacción no encontrada' };
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) return { success: false, error: 'No autorizado' };
 
-        const data = docSnap.data() as TransactionData;
-
-        // Update status
-        await import("firebase/firestore").then(({ updateDoc }) =>
-            updateDoc(docRef, {
-                status: 'REFUNDED',
-                escrowReleased: true,
-                lastSystemMessage: '📦 El vendedor ha confirmado la recepción del retorno. Reembolso procesado.',
-                updatedAt: serverTimestamp()
-            })
-        );
-
-        // Refund buyer the product amount
-        const productAmount = data.amountProduct || data.amount;
-        const buyerRef = doc(db, "users", data.buyerId);
-        await import("firebase/firestore").then(({ updateDoc, increment }) =>
-            updateDoc(buyerRef, { "wallet.available": increment(productAmount) })
-        );
-
-        // Log wallet movements
-        const { logWalletMovement } = await import('./users');
-        await logWalletMovement({
-            uid: data.buyerId,
-            type: 'ESCROW_RELEASE',
-            amount: productAmount,
-            referenceId: id,
-            itemTitle: data.itemTitle,
-            description: `Reembolso por devolución amigable: ${data.itemTitle}`
+        const idToken = await auth.currentUser.getIdToken();
+        const response = await fetch('/api/confirm-return-receipt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ transactionId: id })
         });
 
-        await logWalletMovement({
-            uid: data.sellerId,
-            type: 'ESCROW_RELEASE',
-            amount: productAmount,
-            referenceId: id,
-            itemTitle: data.itemTitle,
-            description: `Fondos liberados del escrow por devolución: ${data.itemTitle}`
-        });
-
-        return { success: true };
+        if (response.ok) {
+            return { success: true };
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API confirm-return-receipt error:", errorData);
+        return { success: false, error: errorData.error || 'Error al procesar el reembolso. Intenta de nuevo.' };
     } catch (error: any) {
         console.error("Error confirming return receipt:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.message || 'Error de conexión' };
     }
 };
 
 /**
  * ADMIN: Refund funds to buyer (Official resolution)
- * Actually moves money: returns product price to buyer, logs everything.
- */
+ * Actually moves money: returns product price to buyer, logs everything. */
 export const adminRefundFunds = async (id: string, adminId: string) => {
     try {
-        const docRef = doc(db, "transactions", id);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) return { success: false, error: 'Transacción no encontrada' };
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) return { success: false, error: 'No autorizado' };
 
-        const data = docSnap.data() as TransactionData;
-
-        // Update status
-        await import("firebase/firestore").then(({ updateDoc }) =>
-            updateDoc(docRef, {
-                status: 'REFUNDED',
-                escrowReleased: true,
-                lastSystemMessage: `⚖️ Resolución Administrativa: Reembolso completo emitido al Comprador por el administrador #${adminId?.slice(0, 5)}.`,
-                updatedAt: serverTimestamp()
-            })
-        );
-
-        // Refund buyer the product amount
-        const productAmount = data.amountProduct || data.amount;
-        const buyerRef = doc(db, "users", data.buyerId);
-        await import("firebase/firestore").then(({ updateDoc, increment }) =>
-            updateDoc(buyerRef, { "wallet.available": increment(productAmount) })
-        );
-
-        // Log wallet movements
-        const { logWalletMovement } = await import('./users');
-
-        // Buyer: refund received
-        await logWalletMovement({
-            uid: data.buyerId,
-            type: 'ESCROW_RELEASE',
-            amount: productAmount,
-            referenceId: id,
-            itemTitle: data.itemTitle,
-            description: `Reembolso administrativo: ${data.itemTitle}`
+        const idToken = await auth.currentUser.getIdToken();
+        const response = await fetch('/api/admin-refund', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ transactionId: id })
         });
 
-        // Seller: escrow released (no payout)
-        await logWalletMovement({
-            uid: data.sellerId,
-            type: 'ESCROW_RELEASE',
-            amount: productAmount,
-            referenceId: id,
-            itemTitle: data.itemTitle,
-            description: `Escrow devuelto al comprador por resolución admin: ${data.itemTitle}`
-        });
-
-        // Log financial event
-        await addDoc(collection(db, "financial_logs"), {
-            transactionId: id,
-            type: 'admin_refund' as any,
-            amount: productAmount,
-            currency: 'ARS',
-            relatedUser: data.buyerId,
-            timestamp: serverTimestamp()
-        });
-
-        return { success: true };
+        if (response.ok) {
+            return { success: true };
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API admin-refund error:", errorData);
+        return { success: false, error: errorData.error || 'Error procesando el reembolso administrativo. Intenta de nuevo.' };
     } catch (error: any) {
-        console.error("Error in admin refund:", error);
-        return { success: false, error: error.message };
+        console.error("Error confirming admin refund:", error);
+        return { success: false, error: error.message || 'Error de conexión' };
     }
 };
 

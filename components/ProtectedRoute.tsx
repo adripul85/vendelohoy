@@ -24,6 +24,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    if (!user.emailVerified) {
+        return <Navigate to="/verify-email" replace />;
+    }
+
     if (requireAdmin && userProfile?.role !== 'admin') {
         return <Navigate to="/" replace />;
     }

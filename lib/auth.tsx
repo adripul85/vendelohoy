@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Fetch user profile
     const fetchUserProfile = async (currentUser: User) => {
         setProfileLoading(true);
-        const profile = await getUserProfile(currentUser.uid);
+        let profile = await getUserProfile(currentUser.uid);
 
         // If profile doesn't exist, create a basic one
         if (!profile) {
@@ -49,11 +49,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 profileComplete: false
             });
             // Fetch again after creation
-            const newProfile = await getUserProfile(currentUser.uid);
-            setUserProfile(newProfile);
-        } else {
-            setUserProfile(profile);
+            profile = await getUserProfile(currentUser.uid);
         }
+
+        // Ensure Custom Claims are synced if the user is an admin in Firestore
+        if (profile && (profile.isAdmin || profile.role === 'admin')) {
+            try {
+                const tokenResult = await currentUser.getIdTokenResult();
+                if (!tokenResult.claims.admin) {
+                    const idToken = await currentUser.getIdToken();
+                    const res = await fetch('/api/sync-admin-claim', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${idToken}` }
+                    });
+                    if (res.ok) {
+                        // Force refresh token to apply the new claim immediately
+                        await currentUser.getIdToken(true);
+                        console.log("✅ Custom admin claim synced and applied.");
+                    } else {
+                        // Silently handle non-ok responses (e.g., 405 in dev mode).
+                        // The isAdmin() Firestore rule has a fallback that checks the user document directly,
+                        // so custom claims are an optimization, not a hard requirement.
+                        console.warn(`⚠️ Admin claim sync returned ${res.status}. Using Firestore fallback for admin checks.`);
+                    }
+                }
+            } catch (err) {
+                // Network errors (e.g., dev proxy issues) — safe to ignore
+                console.warn("⚠️ Admin claim sync unavailable (likely dev mode). Firestore rules will use document-level fallback.");
+            }
+        }
+
+        setUserProfile(profile);
         setProfileLoading(false);
     };
 

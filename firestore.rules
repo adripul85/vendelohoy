@@ -2,10 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Función auxiliar para verificar si el usuario es Admin (usando campo en el documento)
+    // Función auxiliar para verificar si el usuario es Admin
+    // Primero verifica el Custom Claim (GRATIS), si no está, lee la BD (1 lectura)
     function isAdmin() {
-      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return userData.isAdmin == true || userData.role == 'admin';
+      return (request.auth.token.admin == true) || 
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) || 
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     // REGLAS PARA TRANSACCIONES
@@ -66,27 +68,31 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.reviewerId == request.auth.uid;
+      allow delete: if isAdmin();
     }
     
     // REGLAS PARA LOGS DE REPUTACION
     match /reputationLogs/{logId} {
       allow read: if request.auth != null && resource.data.uid == request.auth.uid;
       allow create: if request.auth != null;
+      allow delete: if isAdmin();
     }
 
     // REGLAS PARA MOVIMIENTOS DE BILLETERA
     match /walletMovements/{movementId} {
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
     }
     match /wallet_movements/{movementId} {
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
     }
 
     // REGLAS PARA NOTIFICACIONES (subcolección en users)
     match /users/{userId}/notifications/{notificationId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow create: if request.auth != null;
     }
 
@@ -94,12 +100,14 @@ service cloud.firestore {
     match /withdrawals/{withdrawalId} {
       allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
     }
     
     // REGLAS PARA USUARIOS
     match /users/{userId} {
       allow read: if true; // Permitir que visitantes y compradores vean el perfil y nombre del vendedor
       allow create: if request.auth != null && request.auth.uid == userId;
+      allow delete: if isAdmin();
       
       // Actualización del propio usuario: bloquear campos sensibles
       allow update: if request.auth != null && (
@@ -138,9 +146,11 @@ service cloud.firestore {
         request.auth.uid in resource.data.participants ||
         isAdmin()
       );
+      allow delete: if isAdmin();
       
       match /messages/{messageId} {
         allow read, write: if request.auth != null;
+        allow delete: if isAdmin();
       }
     }
 
@@ -153,6 +163,7 @@ service cloud.firestore {
         resource.data.sellerId == request.auth.uid ||
         isAdmin()
       );
+      allow delete: if isAdmin();
     }
 
     // REGLAS GLOBALES (MARKETING Y PLATAFORMA) — Solo Admin puede escribir
@@ -187,21 +198,25 @@ service cloud.firestore {
     match /reports/{document=**} {
       allow read: if request.auth != null && (resource.data.reporterId == request.auth.uid || isAdmin());
       allow create: if request.auth != null;
+      allow delete: if isAdmin();
     }
     match /disputes/{document=**} {
       allow read: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
       allow create: if request.auth != null;
       allow update: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
     }
     match /verifications/{document=**} {
       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && isAdmin();
+      allow delete: if isAdmin();
     }
     match /store_registry/{document=**} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
     }
     match /financial_logs/{document=**} {
       allow read: if isAdmin();
@@ -210,11 +225,12 @@ service cloud.firestore {
     match /store_events/{document=**} {
       allow create: if true;
       allow read: if request.auth != null && isAdmin();
+      allow delete: if isAdmin();
     }
     
     // PERMITIR SUBCONJUNTOS EN USERS (COMO FAVORITOS)
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
   }
 }

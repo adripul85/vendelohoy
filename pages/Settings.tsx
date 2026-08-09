@@ -2337,38 +2337,6 @@ export default function Settings() {
                                                     <span className="material-symbols-outlined text-base">link</span>
                                                     Vincular Cuenta
                                                 </button>
-                                                
-                                                {/* MOCK LINK FOR TESTING (NO CLIENT SECRET NEEDED) */}
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const confirm = await showConfirm("Vincular MercadoPago", "¿Vincular usando el Access Token de Prueba proporcionado?", "Vincular", "Cancelar", "link");
-                                                        if (confirm) {
-                                                            setIsSaving(true);
-                                                            const testToken = "APP_USR-4773832435343676-031310-0064546a2496fc97279e7909f582cab5-3117965906";
-                                                            try {
-                                                                const res = await updateUserProfile(user.uid, {
-                                                                    mercadoPagoOAuth: {
-                                                                        accessToken: testToken,
-                                                                        publicKey: "APP_USR-32ad7602-56a5-4d63-b13b-503512d4f1e5",
-                                                                        userId: "3117965906",
-                                                                        updatedAt: new Date()
-                                                                    }
-                                                                });
-                                                                if (res.success) {
-                                                                    refreshProfile();
-                                                                    notify({ type: 'success', title: 'Test Linked', message: 'Modo test activado.', icon: 'science' });
-                                                                }
-                                                            } catch (err) {
-                                                                console.error(err);
-                                                            }
-                                                            setIsSaving(false);
-                                                        }
-                                                    }}
-                                                    className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors py-2"
-                                                >
-                                                    [ Modulo de Testeo: Vincular Manualmente ]
-                                                </button>
                                             </div>
                                         )}
                                     </div>

@@ -30,5 +30,12 @@ serviceAccountKey.json
 .env
 .env
 
+# Local Node Scripts
+*.cjs
+recover.cjs
+search.cjs
+search_api.cjs
+
+# Vercel
 .vercel
 .env*

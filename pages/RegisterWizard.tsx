@@ -29,14 +29,58 @@ const RegisterWizard = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 8) val = val.slice(0, 8);
+        let formatted = val;
+        if (val.length > 5) {
+            formatted = val.replace(/^(\d{1,2})(\d{3})(\d{3})$/, '$1.$2.$3');
+        } else if (val.length > 2) {
+            formatted = val.replace(/^(\d{1,2})(\d{1,3})$/, '$1.$2');
+        }
+        setFormData({ ...formData, dni: formatted });
+    };
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.startsWith('54')) val = val.slice(2);
+        if (val.startsWith('9')) val = val.slice(1);
+        
+        let formatted = '+54 9 ';
+        if (val.length > 0) {
+            if (val.length <= 2) {
+                formatted += val;
+            } else if (val.length <= 6) {
+                formatted += val.slice(0, 2) + ' ' + val.slice(2);
+            } else {
+                formatted += val.slice(0, 2) + ' ' + val.slice(2, 6) + '-' + val.slice(6, 10);
+            }
+            setFormData({ ...formData, phone: formatted });
+        } else {
+            setFormData({ ...formData, phone: '' });
+        }
+    };
+
+    const getPasswordStrength = (pass: string) => {
+        let score = 0;
+        if (pass.length > 5) score += 1;
+        if (pass.length >= 8) score += 1;
+        if (/[A-Z]/.test(pass)) score += 1;
+        if (/[0-9]/.test(pass)) score += 1;
+        if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+        return score; // 0 to 5
+    };
+
+    const passwordScore = getPasswordStrength(formData.password);
+
     const handleNext = async () => {
         if (step === 1) {
             if (!formData.email || !formData.password) {
                 notify({ type: 'error', title: 'Faltan datos', message: 'Email y contraseña son obligatorios.', icon: 'error' });
                 return;
             }
-            if (formData.password.length < 8) {
-                notify({ type: 'error', title: 'Contraseña débil', message: 'La contraseña debe tener al menos 8 caracteres.', icon: 'error' });
+            if (passwordScore < 2) {
+                notify({ type: 'error', title: 'Contraseña débil', message: 'Por favor, usa una contraseña más segura (mínimo 8 caracteres, números y letras).', icon: 'shield' });
                 return;
             }
             setIsLoading(true);
@@ -55,7 +99,6 @@ const RegisterWizard = () => {
                 return;
             }
             
-            // Validación de formato de DNI (solo números, 7 u 8 dígitos ignorando puntos)
             const cleanDni = formData.dni.replace(/\./g, '');
             if (!/^\d{7,8}$/.test(cleanDni)) {
                 notify({ type: 'error', title: 'DNI Inválido', message: 'El documento debe contener 7 u 8 números válidos.', icon: 'badge' });
@@ -86,8 +129,8 @@ const RegisterWizard = () => {
                 });
 
                 await refreshProfile();
-                notify({ type: 'success', title: '¡Bienvenido!', message: 'Cuenta configurada con éxito. Por favor, revisa tu casilla de correo para verificar tu email.', icon: 'mark_email_read' });
-                navigate('/dashboard');
+                notify({ type: 'success', title: '¡Bienvenido!', message: 'Cuenta configurada con éxito. Verifica tu email para comenzar.', icon: 'mark_email_read' });
+                navigate('/verify-email');
             } catch (error: any) {
                 notify({ type: 'error', title: 'Error Final', message: error.message || 'No se pudo completar el perfil.', icon: 'error' });
             } finally {
@@ -104,7 +147,7 @@ const RegisterWizard = () => {
 
     return (
         <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-primary-500/30">
-            {/* Background elements (matching Login.tsx) */}
+            {/* Background elements */}
             <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-primary/10 rounded-full blur-[120px]"></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-secondary/10 rounded-full blur-[120px]"></div>
@@ -125,7 +168,7 @@ const RegisterWizard = () => {
                     <div className="flex justify-between items-center mb-4">
                         {steps.map((s) => (
                             <div key={s.id} className="flex flex-col items-center gap-2">
-                                <div className={`size-10 rounded-xl flex items-center justify-center transition-all duration-500 ${step >= s.id ? 'bg-primary text-on-surface shadow-lg shadow-primary/20' : 'bg-surface-container-lowest text-on-surface-variant border border-outline-variant/30'}`}>
+                                <div className={`size-10 rounded-xl flex items-center justify-center transition-all duration-500 ${step >= s.id ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-surface-container-lowest text-on-surface-variant border border-outline-variant/30'}`}>
                                     <span className="material-symbols-outlined text-xl">{s.icon}</span>
                                 </div>
                                 <span className={`text-[8px] font-black uppercase tracking-widest ${step >= s.id ? 'text-primary' : 'text-outline-variant'}`}>{s.title}</span>
@@ -156,7 +199,7 @@ const RegisterWizard = () => {
                                     <h2 className="text-2xl font-black text-on-surface uppercase tracking-tight mb-2">Crear Cuenta</h2>
                                     <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Paso 1: Tus datos de acceso</p>
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     <div className="group">
                                         <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant mb-2 ml-2">Email Corporativo / Personal</label>
                                         <input
@@ -178,6 +221,28 @@ const RegisterWizard = () => {
                                             placeholder="••••••••"
                                             className="w-full px-6 py-4 rounded-2xl border-2 border-outline-variant/30 bg-surface-container text-on-surface text-[11px] font-black tracking-widest outline-none focus:border-primary/50 transition-all placeholder:text-outline-variant"
                                         />
+                                        {/* Password Strength Meter */}
+                                        {formData.password && (
+                                            <div className="mt-3 animate-in fade-in duration-300">
+                                                <div className="flex gap-1 h-1.5 mb-1.5">
+                                                    {[1, 2, 3, 4, 5].map((lvl) => (
+                                                        <div 
+                                                            key={lvl} 
+                                                            className={`flex-1 rounded-full transition-all duration-300 ${
+                                                                passwordScore >= lvl 
+                                                                    ? passwordScore < 2 ? 'bg-error' : passwordScore < 4 ? 'bg-amber-500' : 'bg-emerald-500' 
+                                                                    : 'bg-outline-variant/20'
+                                                            }`}
+                                                        ></div>
+                                                    ))}
+                                                </div>
+                                                <p className={`text-[9px] font-black uppercase tracking-widest text-right ${
+                                                    passwordScore < 2 ? 'text-error' : passwordScore < 4 ? 'text-amber-500' : 'text-emerald-500'
+                                                }`}>
+                                                    {passwordScore < 2 ? 'Débil' : passwordScore < 4 ? 'Aceptable' : 'Fuerte'}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -213,7 +278,7 @@ const RegisterWizard = () => {
                                             type="text"
                                             name="dni"
                                             value={formData.dni}
-                                            onChange={handleChange}
+                                            onChange={handleDniChange}
                                             placeholder="12.345.678"
                                             className="w-full px-6 py-4 rounded-2xl border-2 border-outline-variant/30 bg-surface-container text-on-surface text-[11px] font-black tracking-widest outline-none focus:border-primary/50 transition-all placeholder:text-outline-variant"
                                         />
@@ -241,7 +306,7 @@ const RegisterWizard = () => {
                                             type="tel"
                                             name="phone"
                                             value={formData.phone}
-                                            onChange={handleChange}
+                                            onChange={handlePhoneChange}
                                             placeholder="+54 9 11 0000-0000"
                                             className="w-full px-6 py-4 rounded-2xl border-2 border-outline-variant/30 bg-surface-container text-on-surface text-[11px] font-black tracking-widest outline-none focus:border-primary/50 transition-all placeholder:text-outline-variant"
                                         />

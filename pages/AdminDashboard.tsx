@@ -1416,7 +1416,7 @@ export default function AdminDashboard() {
                             <div className="lg:col-span-4 bg-surface-container-low p-6 md:p-8 border-r border-outline-variant/30 flex flex-col justify-between">
                                 <div>
                                     <div className="text-center mb-6">
-                                        <img src={selectedUser.avatar} alt="" className="size-24 rounded-2xl mx-auto mb-4 shadow-md border-2 border-surface object-cover" />
+                                        <img src={selectedUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.displayName || 'U')} alt="" className="size-24 rounded-2xl mx-auto mb-4 shadow-md border-2 border-surface object-cover" />
                                         <h3 className="text-lg font-black text-on-surface mb-1 tracking-tight font-display">{selectedUser.displayName}</h3>
                                         <p className="text-xs font-bold text-on-surface-variant mb-3 truncate">{selectedUser.email}</p>
                                         <div className="inline-flex items-center gap-1.5 bg-surface px-3 py-1 rounded-lg border border-outline-variant/30 text-[9px] font-mono font-bold text-on-surface-variant shadow-2xs">
@@ -1466,36 +1466,38 @@ export default function AdminDashboard() {
                                     )}
                                 </div>
 
-                                <div className="pt-6 flex flex-col gap-2.5 mt-6 border-t border-outline-variant/20">
+                                <div className="pt-6 flex flex-col gap-3 mt-auto border-t border-outline-variant/20">
                                     <button
                                         onClick={() => handleSuspendUser(selectedUser.uid, !selectedUser.isSuspended)}
-                                        className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all shadow-2xs active:scale-95 border ${selectedUser.isSuspended
+                                        className={`w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all shadow-2xs flex items-center justify-center gap-2 active:scale-95 border ${selectedUser.isSuspended
                                             ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500 hover:text-white'
                                             : 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500 hover:text-white'
                                             }`}
                                     >
+                                        <span className="material-symbols-outlined text-base">{selectedUser.isSuspended ? 'lock_open' : 'block'}</span>
                                         {selectedUser.isSuspended ? 'Reactivar Usuario' : 'Suspender Usuario'}
                                     </button>
                                     <button
                                         onClick={() => handleDeleteUser(selectedUser.uid)}
-                                        className="w-full bg-error/10 text-error hover:bg-error hover:text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all shadow-2xs active:scale-95 border border-error/20"
+                                        className="w-full bg-error/10 text-error hover:bg-error hover:text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all shadow-2xs flex items-center justify-center gap-2 active:scale-95 border border-error/20"
                                     >
+                                        <span className="material-symbols-outlined text-base">delete_forever</span>
                                         Terminar Nodo
                                     </button>
                                 </div>
                             </div>
 
                             {/* Verification Evidence Inspection */}
-                            <div className="lg:col-span-8 p-6 md:p-8 flex flex-col justify-between">
+                            <div className="lg:col-span-8 p-6 md:p-8 flex flex-col justify-between bg-surface">
                                 <div>
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="size-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
+                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-outline-variant/20">
+                                        <div className="size-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center border border-primary/20">
                                             <span className="material-symbols-outlined text-xl font-black">verified</span>
                                         </div>
                                         <h4 className="text-lg font-black text-on-surface uppercase tracking-tight font-display">Documentación de Evidencia</h4>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
                                         {[
                                             { key: 'dniFront', label: 'Frente del Documento' },
                                             { key: 'dniBack', label: 'Dorso del Documento' },
@@ -1503,10 +1505,12 @@ export default function AdminDashboard() {
                                             { key: 'addressProof', label: 'Verificación de Residencia' }
                                         ].map(img => (
                                             <div key={img.key} className="group">
-                                                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-wider mb-1.5 ml-0.5 truncate">{img.label}</p>
-                                                <div className="aspect-video bg-surface-container-low rounded-xl overflow-hidden border border-dashed border-outline-variant/40 group-hover:border-primary flex items-center justify-center transition-all bg-cover bg-center relative cursor-zoom-in"
-                                                    onClick={() => selectedUser.verificationEvidence?.[img.key as keyof typeof selectedUser.verificationEvidence] && setZoomedImage(selectedUser.verificationEvidence[img.key as keyof typeof selectedUser.verificationEvidence] as string)}
-                                                    style={{ backgroundImage: selectedUser.verificationEvidence?.[img.key as keyof typeof selectedUser.verificationEvidence] ? `none` : `none` }}>
+                                                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-wider mb-2 ml-1 truncate flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-[10px]">image</span>
+                                                    {img.label}
+                                                </p>
+                                                <div className="aspect-video bg-surface-container-lowest rounded-2xl overflow-hidden border-2 border-dashed border-outline-variant/30 group-hover:border-primary/50 group-hover:bg-primary/5 flex items-center justify-center transition-all bg-cover bg-center relative cursor-zoom-in shadow-sm"
+                                                    onClick={() => selectedUser.verificationEvidence?.[img.key as keyof typeof selectedUser.verificationEvidence] && setZoomedImage(selectedUser.verificationEvidence[img.key as keyof typeof selectedUser.verificationEvidence] as string)}>
                                                     {selectedUser.verificationEvidence?.[img.key as keyof typeof selectedUser.verificationEvidence] ? (
                                                         <img
                                                             src={selectedUser.verificationEvidence[img.key as keyof typeof selectedUser.verificationEvidence] as string}
@@ -1514,13 +1518,13 @@ export default function AdminDashboard() {
                                                             alt={img.label}
                                                         />
                                                     ) : (
-                                                        <div className="text-center opacity-40">
+                                                        <div className="text-center opacity-40 group-hover:opacity-60 transition-opacity">
                                                             <span className="material-symbols-outlined text-3xl mb-1">image_not_supported</span>
                                                             <p className="text-[8px] font-black uppercase tracking-widest text-outline-variant">Sin evidencia</p>
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-on-surface/0 group-hover:bg-on-surface/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                        <span className="material-symbols-outlined text-surface text-2xl font-black">zoom_in</span>
+                                                    <div className="absolute inset-0 bg-on-surface/0 group-hover:bg-on-surface/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-sm">
+                                                        <span className="material-symbols-outlined text-surface text-3xl font-black drop-shadow-lg">zoom_in</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1528,23 +1532,28 @@ export default function AdminDashboard() {
                                     </div>
 
                                     {selectedUser.verificationEvidence?.submittedAt && (
-                                        <div className="mt-4 p-5 bg-surface-container-low rounded-2xl border border-outline-variant/30">
+                                        <div className="mt-6 p-5 bg-surface-container-low rounded-2xl border border-outline-variant/30 shadow-2xs">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div>
-                                                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Estado de Verificación</p>
-                                                    <p className={`text-xs font-black mt-0.5 ${selectedUser.verificationEvidence.status === 'approved' ? 'text-emerald-600' :
-                                                        selectedUser.verificationEvidence.status === 'rejected' ? 'text-error' :
-                                                            selectedUser.verificationEvidence.status === 'pending' ? 'text-amber-600' : 'text-on-surface-variant'
+                                                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Estado de Verificación</p>
+                                                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black border ${selectedUser.verificationEvidence.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                                        selectedUser.verificationEvidence.status === 'rejected' ? 'bg-error/10 text-error border-error/20' :
+                                                            selectedUser.verificationEvidence.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-surface text-on-surface-variant border-outline-variant/30'
                                                         }`}>
+                                                        <span className="material-symbols-outlined text-[11px]">
+                                                            {selectedUser.verificationEvidence.status === 'approved' ? 'check_circle' :
+                                                                selectedUser.verificationEvidence.status === 'rejected' ? 'cancel' :
+                                                                    selectedUser.verificationEvidence.status === 'pending' ? 'pending' : 'info'}
+                                                        </span>
                                                         {selectedUser.verificationEvidence.status === 'approved' ? 'DOCUMENTACIÓN APROBADA' :
                                                             selectedUser.verificationEvidence.status === 'rejected' ? 'DOCUMENTACIÓN RECHAZADA' :
                                                                 selectedUser.verificationEvidence.status === 'pending' ? 'PENDIENTE DE REVISIÓN' : 'SIN ENVÍOS'
                                                         }
-                                                    </p>
+                                                    </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest text-right">Enviado el</p>
-                                                    <p className="text-[10px] font-bold text-on-surface mt-0.5">
+                                                    <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Enviado el</p>
+                                                    <p className="text-[10px] font-bold text-on-surface bg-surface px-2.5 py-1 rounded-lg border border-outline-variant/30 inline-block">
                                                         {selectedUser.verificationEvidence.submittedAt?.toDate ? selectedUser.verificationEvidence.submittedAt.toDate().toLocaleString() : 'N/A'}
                                                     </p>
                                                 </div>
@@ -1580,18 +1589,20 @@ export default function AdminDashboard() {
                                                                 }
                                                                 setIsUpdating(null);
                                                             }}
-                                                            className="flex-1 py-2.5 bg-error text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm hover:bg-error/90 transition-all"
+                                                            className="flex-1 py-2.5 bg-error text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm hover:bg-error/90 transition-all flex items-center justify-center gap-1.5"
                                                         >
+                                                            <span className="material-symbols-outlined text-xs">close</span>
                                                             Confirmar Rechazo
                                                         </button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex gap-3">
+                                                <div className="flex gap-3 mt-4 border-t border-outline-variant/20 pt-4">
                                                     <button
                                                         onClick={() => setShowRejectionInput(true)}
-                                                        className="flex-1 py-3 bg-error/10 text-error border border-error/20 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-error hover:text-white transition-all shadow-2xs"
+                                                        className="flex-1 py-2.5 bg-error/10 text-error border border-error/20 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-error hover:text-white transition-all shadow-2xs flex items-center justify-center gap-1.5"
                                                     >
+                                                        <span className="material-symbols-outlined text-xs">cancel</span>
                                                         Rechazar Evidencia
                                                     </button>
                                                     <button
@@ -1609,8 +1620,9 @@ export default function AdminDashboard() {
                                                             }
                                                             setIsUpdating(null);
                                                         }}
-                                                        className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm hover:bg-emerald-500 transition-all"
+                                                        className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm hover:bg-emerald-500 transition-all flex items-center justify-center gap-1.5"
                                                     >
+                                                        <span className="material-symbols-outlined text-xs">check_circle</span>
                                                         Aprobar Identidad
                                                     </button>
                                                 </div>
@@ -1619,25 +1631,35 @@ export default function AdminDashboard() {
                                     )}
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row gap-2.5 pt-6 border-t border-outline-variant/20 mt-6">
-                                    {[
-                                        { key: 'identityVerified' as const, label: 'Identidad' },
-                                        { key: 'addressVerified' as const, label: 'Dirección' },
-                                        { key: 'phoneVerified' as const, label: 'Teléfono' }
-                                    ].map(badge => (
-                                        <button
-                                            key={badge.key}
-                                            onClick={() => handleToggleBadge(selectedUser.uid, badge.key, selectedUser.verificationBadges?.[badge.key] || false)}
-                                            className={`flex-1 px-4 py-3 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5 border ${selectedUser.verificationBadges?.[badge.key]
-                                                ? 'bg-primary text-on-primary border-primary shadow-sm hover:opacity-90'
-                                                : 'bg-surface text-on-surface-variant border-outline-variant/30 hover:border-primary/50'}`}
-                                        >
-                                            <span className="material-symbols-outlined text-sm">
-                                                {selectedUser.verificationBadges?.[badge.key] ? 'check_circle' : 'pending_actions'}
-                                            </span>
-                                            {badge.label}
-                                        </button>
-                                    ))}
+                                <div className="flex flex-col gap-4 pt-8 border-t border-outline-variant/20 mt-8">
+                                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest text-center mb-1">Badges de Confianza del Usuario</p>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        {[
+                                            { key: 'identityVerified' as const, label: 'Identidad', icon: 'badge' },
+                                            { key: 'addressVerified' as const, label: 'Dirección', icon: 'home_pin' },
+                                            { key: 'phoneVerified' as const, label: 'Teléfono', icon: 'smartphone' }
+                                        ].map(badge => (
+                                            <button
+                                                key={badge.key}
+                                                onClick={() => handleToggleBadge(selectedUser.uid, badge.key, selectedUser.verificationBadges?.[badge.key] || false)}
+                                                className={`flex-1 px-4 py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm active:scale-95 flex flex-col items-center justify-center gap-2 border-2 ${selectedUser.verificationBadges?.[badge.key]
+                                                    ? 'bg-primary text-on-primary border-primary hover:opacity-90'
+                                                    : 'bg-surface text-on-surface-variant border-outline-variant/30 hover:border-primary/50'}`}
+                                            >
+                                                <div className={`size-8 rounded-full flex items-center justify-center ${selectedUser.verificationBadges?.[badge.key] ? 'bg-white/20' : 'bg-surface-container'}`}>
+                                                    <span className="material-symbols-outlined text-base">
+                                                        {badge.icon}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    {badge.label}
+                                                    {selectedUser.verificationBadges?.[badge.key] && (
+                                                        <span className="material-symbols-outlined text-[10px] text-emerald-300 ml-1">check_circle</span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>

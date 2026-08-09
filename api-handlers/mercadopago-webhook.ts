@@ -1,18 +1,43 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminDb } from '../lib/firebase-admin.js';
+import crypto from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).send('Method Not Allowed');
     }
 
-    // Mercado Pago envía notificaciones por query params o body dependiendo del tipo
-    const { action, data, type } = req.body;
-
-    // A veces MercadoPago envía un ping de confirmación
-    if (action === "test.created") {
+    // Validación de Firma (HMAC) de MercadoPago
+    const signature = req.headers['x-signature'] as string;
+    const requestId = req.headers['x-request-id'] as string;
+    
+    // A veces MercadoPago envía un ping de confirmación o request vacío de prueba
+    if (req.body.action === "test.created" || !req.body.data?.id) {
         return res.status(200).send('OK');
     }
+
+    if (signature && requestId && process.env.MP_WEBHOOK_SECRET) {
+        const parts = signature.split(',');
+        let ts = '';
+        let v1 = '';
+        parts.forEach(part => {
+            if (part.startsWith('ts=')) ts = part.substring(3);
+            if (part.startsWith('v1=')) v1 = part.substring(3);
+        });
+
+        const manifest = `id:${req.body.data.id};request-id:${requestId};ts:${ts};`;
+        const hmac = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET);
+        hmac.update(manifest);
+        const generatedHash = hmac.digest('hex');
+        
+        if (generatedHash !== v1) {
+            console.error("Invalid Webhook Signature:", { expected: v1, generated: generatedHash });
+            return res.status(401).send('Invalid Signature');
+        }
+    }
+
+    // Mercado Pago envía notificaciones por query params o body dependiendo del tipo
+    const { action, data, type } = req.body;
 
     try {
         // Solo nos interesan los pagos (payment)
