@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import { getFlashSaleItems } from '../lib/items';
 import { getPlatformSettings } from '../lib/settings';
 import ProductCard from '../components/ProductCard';
@@ -36,6 +38,7 @@ const Deals = () => {
 
     return (
         <div className="bg-light-50 min-h-screen">
+            <SEO title="Ofertas Flash | Vendelo Hoy!" description="Las mejores ofertas por tiempo limitado." />
             <div className="bg-white border-b border-light-200">
                 <div className="max-w-[1440px] mx-auto px-6 py-16 md:py-24 flex flex-col items-center text-center">
                     <div className="flex items-center gap-3 bg-red-50 border border-red-100 px-6 py-2.5 rounded-full mb-8 animate-in fade-in slide-in-from-top-4 duration-700">

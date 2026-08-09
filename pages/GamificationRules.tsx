@@ -3,18 +3,19 @@ import { motion } from 'framer-motion';
 
 export default function GamificationRules() {
     const levels = [
-        { name: 'Bronce', min: 0, max: 999, icon: 'military_tech', color: 'text-amber-600', bg: 'bg-amber-600/10', border: 'border-amber-600/20' },
-        { name: 'Plata', min: 1000, max: 2499, icon: 'military_tech', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/20' },
-        { name: 'Oro', min: 2500, max: 4999, icon: 'workspace_premium', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
-        { name: 'Diamante', min: 5000, max: '∞', icon: 'diamond', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/20' }
+        { name: 'Bronce', min: 0, max: 1499, icon: 'military_tech', color: 'text-amber-600', bg: 'bg-amber-600/10', border: 'border-amber-600/20' },
+        { name: 'Plata', min: 1500, max: 4999, icon: 'military_tech', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/20' },
+        { name: 'Oro', min: 5000, max: 14999, icon: 'workspace_premium', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+        { name: 'Diamante', min: 15000, max: '∞', icon: 'diamond', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/20' }
     ];
 
     const actions = [
-        { action: 'Verificar Identidad (DNI)', points: '+500 XP', frequency: 'Única vez' },
-        { action: 'Vincular Cuenta de Cobro (CBU)', points: '+300 XP', frequency: 'Única vez' },
-        { action: 'Completar Perfil (Foto, Bio)', points: '+200 XP', frequency: 'Única vez' },
-        { action: 'Venta Exitosa (Sin reclamos)', points: '+25 XP', frequency: 'Ilimitado' },
-        { action: 'Recibir recomendación de 5 estrellas', points: '+5 XP', frequency: 'Ilimitado' },
+        { action: 'Verificar Identidad (DNI)', points: '+100 XP', frequency: 'Única vez' },
+        { action: 'Vincular Cuenta de Cobro (CBU)', points: '+50 XP', frequency: 'Única vez' },
+        { action: 'Completar Perfil (Foto, Bio)', points: '+50 XP', frequency: 'Única vez' },
+        { action: 'Venta Exitosa (Sin reclamos)', points: '+10 XP', frequency: 'Ilimitado' },
+        { action: 'Calificación de 4-5 estrellas', points: '+5 XP', frequency: 'Ilimitado' },
+        { action: 'Racha de 10 ventas exitosas (Sin reclamos)', points: '+100 XP', frequency: 'Cada 10 ventas' },
     ];
 
     return (
@@ -64,26 +65,47 @@ export default function GamificationRules() {
                                     <div className="mt-8 space-y-3 relative z-10">
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Beneficios</h4>
                                         <ul className="space-y-2">
+                                            {i === 0 && (
+                                                <>
+                                                    <li className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                                        <span className="material-symbols-outlined text-amber-600 text-lg">image</span>
+                                                        Hasta 4 fotos por producto
+                                                    </li>
+                                                    <li className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                                        <span className="material-symbols-outlined text-amber-600 text-lg">percent</span>
+                                                        Comisión estándar (7%)
+                                                    </li>
+                                                </>
+                                            )}
                                             {i >= 1 && (
                                                 <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                    <span className="material-symbols-outlined text-emerald-500 text-lg">image</span>
+                                                    Hasta 8 fotos HD por producto
+                                                </li>
+                                            )}
+                                            {i >= 1 && i <= 2 && (
+                                                <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
                                                     <span className="material-symbols-outlined text-emerald-500 text-lg">check_circle</span>
-                                                    Badge de Verificado
+                                                    Badge de Vendedor Verificado
                                                 </li>
                                             )}
-                                            {i >= 2 && (
+                                            {i === 2 && (
                                                 <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                                    <span className="material-symbols-outlined text-primary-vibrant text-lg">star</span>
-                                                    Publicaciones Destacadas Gratis
+                                                    <span className="material-symbols-outlined text-primary-vibrant text-lg">percent</span>
+                                                    Comisión reducida (5%)
                                                 </li>
                                             )}
-                                            {i >= 3 && (
-                                                <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                                    <span className="material-symbols-outlined text-cyan-500 text-lg">support_agent</span>
-                                                    Soporte Prioritario VIP
-                                                </li>
-                                            )}
-                                            {i === 0 && (
-                                                <li className="text-sm font-medium text-slate-500">Beneficios básicos de la plataforma.</li>
+                                            {i === 3 && (
+                                                <>
+                                                    <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                        <span className="material-symbols-outlined text-cyan-500 text-lg">percent</span>
+                                                        0% Comisión (3 Ventas/mes)
+                                                    </li>
+                                                    <li className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                                        <span className="material-symbols-outlined text-cyan-500 text-lg">timer</span>
+                                                        Liberación de fondos en 24h
+                                                    </li>
+                                                </>
                                             )}
                                         </ul>
                                     </div>

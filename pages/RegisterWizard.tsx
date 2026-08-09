@@ -23,6 +23,7 @@ const RegisterWizard = () => {
         phone: '',
         city: '',
         state: '',
+        acceptedTerms: false,
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,6 +84,10 @@ const RegisterWizard = () => {
                 notify({ type: 'error', title: 'Contraseña débil', message: 'Por favor, usa una contraseña más segura (mínimo 8 caracteres, números y letras).', icon: 'shield' });
                 return;
             }
+            if (!formData.acceptedTerms) {
+                notify({ type: 'error', title: 'Términos y Condiciones', message: 'Debes aceptar los términos legales y políticas para crear tu cuenta.', icon: 'warning' });
+                return;
+            }
             setIsLoading(true);
             try {
                 await register(formData.email, formData.password);
@@ -125,7 +130,9 @@ const RegisterWizard = () => {
                         city: formData.city,
                         state: formData.state
                     },
-                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.displayName)}&background=random`
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.displayName)}&background=random`,
+                    termsAccepted: formData.acceptedTerms,
+                    termsAcceptedAt: new Date().toISOString()
                 });
 
                 await refreshProfile();
@@ -243,6 +250,28 @@ const RegisterWizard = () => {
                                                 </p>
                                             </div>
                                         )}
+                                    </div>
+                                    
+                                    {/* Terms Checkbox */}
+                                    <div className="mt-5 flex items-start gap-3">
+                                        <div className="flex h-6 items-center">
+                                            <input
+                                                id="terms"
+                                                name="acceptedTerms"
+                                                type="checkbox"
+                                                checked={formData.acceptedTerms}
+                                                onChange={(e) => setFormData({ ...formData, acceptedTerms: e.target.checked })}
+                                                className="h-4 w-4 rounded border-outline-variant/30 text-primary focus:ring-primary/50 bg-surface-container"
+                                            />
+                                        </div>
+                                        <div className="text-[10px] leading-tight text-on-surface-variant">
+                                            <label htmlFor="terms" className="font-medium">
+                                                He leído y acepto los{' '}
+                                                <a href="/legal/terms" target="_blank" className="text-primary hover:underline font-bold">Términos y Condiciones</a>,{' '}
+                                                la <a href="/legal/privacy" target="_blank" className="text-primary hover:underline font-bold">Política de Privacidad</a> y comprendo los{' '}
+                                                <a href="/legal/prohibited" target="_blank" className="text-primary hover:underline font-bold">Elementos Prohibidos</a> para la venta.
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

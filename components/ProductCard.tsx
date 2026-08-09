@@ -101,9 +101,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                                 Nuevo
                             </span>
                         )}
-                        {!isSold && product.oldPrice && product.oldPrice > product.price && (
+                        {!isSold && product.oldPrice && product.oldPrice > 0 && product.oldPrice !== product.price && (
                             <div className="bg-tertiary-container text-white px-3 py-1 rounded-md font-black text-[9px] shadow-xl flex items-center gap-1">
-                                -{Math.round((1 - product.price / product.oldPrice) * 100)}%
+                                -{Math.round((1 - Math.min(product.price, product.oldPrice) / Math.max(product.price, product.oldPrice)) * 100)}%
                             </div>
                         )}
                     </div>
@@ -129,16 +129,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                         </h3>
                     </div>
 
-                    <div className="flex items-baseline gap-2 mt-auto">
-                        <span className={`text-lg font-black font-display tracking-tighter ${isSold ? 'text-primary/20' : 'text-primary'}`}>
-                            ${product.price.toLocaleString('es-AR')}
-                        </span>
-                        {product.oldPrice && product.oldPrice > product.price && !isSold && (
-                            <span className="text-[11px] font-bold text-primary/20 line-through">
-                                ${product.oldPrice.toLocaleString('es-AR')}
-                            </span>
-                        )}
-                    </div>
+                        {(() => {
+                            const hasPromo = product.oldPrice && product.oldPrice > 0 && product.oldPrice !== product.price;
+                            const displayPrice = hasPromo ? Math.min(product.price, product.oldPrice!) : product.price;
+                            const displayOldPrice = hasPromo ? Math.max(product.price, product.oldPrice!) : null;
+
+                            return (
+                                <>
+                                    <span className={`text-lg font-black font-display tracking-tighter ${isSold ? 'text-primary/20' : 'text-primary'}`}>
+                                        ${displayPrice.toLocaleString('es-AR')}
+                                    </span>
+                                    {hasPromo && displayOldPrice && !isSold && (
+                                        <span className="text-[11px] font-bold text-primary/20 line-through">
+                                            ${displayOldPrice.toLocaleString('es-AR')}
+                                        </span>
+                                    )}
+                                </>
+                            );
+                        })()}
                 </div>
             </Link>
         </motion.div>

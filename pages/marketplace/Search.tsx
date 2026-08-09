@@ -4,6 +4,7 @@ import { getItems, ItemData } from '../../lib/items';
 import { CATEGORIES } from '../../lib/constants';
 import { trackUserSearch } from '../../lib/users';
 import { useAuth } from '../../lib/auth';
+import SEO from '../../components/SEO';
 import SkeletonCard from '../../components/SkeletonCard';
 import ProductCard from '../../components/ProductCard';
 import { useNotification } from '../../context/NotificationContext';
@@ -167,6 +168,10 @@ const Search = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 min-h-screen bg-background font-body">
+      <SEO 
+        title={q ? `Resultados para "${q}"` : "Buscar productos"} 
+        description={`Explora los mejores productos${q ? ` relacionados con ${q}` : ''} en De Oportunidades.`}
+      />
       {/* Header & Search Bar */}
       <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-surface p-8 rounded-3xl border border-outline-variant/30 shadow-sm">
         <div className="flex items-center gap-6">

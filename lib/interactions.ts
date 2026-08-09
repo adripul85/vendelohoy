@@ -381,11 +381,18 @@ export const getFollowedSellers = async (userId: string): Promise<FollowedSeller
 
 export const trackProductView = async (productId: string) => {
     try {
-        const { increment, updateDoc } = await import("firebase/firestore");
-        const productRef = doc(db, "items", productId);
-        await updateDoc(productRef, {
-            views: increment(1)
-        });
+        const VIEW_KEY = 'viewed_products';
+        const viewedProducts = JSON.parse(localStorage.getItem(VIEW_KEY) || '[]');
+        
+        if (!viewedProducts.includes(productId)) {
+            const { increment, updateDoc } = await import("firebase/firestore");
+            const productRef = doc(db, "items", productId);
+            await updateDoc(productRef, {
+                views: increment(1)
+            });
+            viewedProducts.push(productId);
+            localStorage.setItem(VIEW_KEY, JSON.stringify(viewedProducts));
+        }
     } catch (error) {
         console.error("Error tracking product view:", error);
     }

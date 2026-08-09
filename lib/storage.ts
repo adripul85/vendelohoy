@@ -30,11 +30,8 @@ export const uploadFile = async (file: File | Blob, path: string): Promise<strin
 export const uploadImages = async (files: File[], userId: string): Promise<string[]> => {
     if (!files || files.length === 0) return [];
     
-    // Enforce maximum 6 images limit per upload
-    const limitedFiles = files.slice(0, MAX_PRODUCT_IMAGES);
-    
     // Client-side optimization: convert heavy photos to lightweight WebP/JPG
-    const optimizedFiles = await optimizeImages(limitedFiles);
+    const optimizedFiles = await optimizeImages(files);
 
     const uploadPromises = optimizedFiles.map(async (file) => {
         // Generate a unique path for each image

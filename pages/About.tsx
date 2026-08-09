@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 export default function About() {
     return (
         <div className="bg-white min-h-screen">
+            <SEO title="Quiénes Somos | Vendelo Hoy!" description="Conoce nuestra historia y por qué somos el marketplace más seguro." />
             {/* Hero Section */}
             <div className="relative py-20 lg:py-32 overflow-hidden bg-dark-900 text-white">
                 <div className="absolute inset-0 opacity-20">

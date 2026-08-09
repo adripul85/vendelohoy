@@ -20,6 +20,8 @@ export interface UserProfile {
     avatar: string;
     coverImage?: string;
     profileComplete: boolean;
+    termsAccepted?: boolean;
+    termsAcceptedAt?: any;
     certifications?: string[];
     role?: 'admin' | 'moderator' | 'user';
     trustLevel?: 'Bajo' | 'Medio' | 'Alto' | 'Premium';
@@ -271,7 +273,7 @@ export const approveVerification = async (uid: string) => {
         });
         
         // Award gamification points
-        await addReputationPoints(uid, 500, "Identidad Verificada");
+        await addReputationPoints(uid, 100, "Identidad Verificada");
         
         return { success: true };
     } catch (error) {
@@ -310,6 +312,7 @@ export const completeUserProfile = async (uid: string, data: Partial<UserProfile
             profileComplete: true,
             updatedAt: serverTimestamp(),
         });
+        await addReputationPoints(uid, 50, "Perfil Completado");
         return { success: true };
     } catch (error) {
         console.error("Error completing user profile:", error);
@@ -700,13 +703,13 @@ export const recalculateReputation = async (uid: string) => {
         const hasBank = !!(data.bankDetails?.cbu || data.bankDetails?.alias);
 
         // Logic based on XP and requirements
-        if (xp >= 5000 && hasDni && hasBank) {
+        if (xp >= 15000 && hasDni && hasBank) {
             newLevel = 'Premium'; // Diamante
             newStatus = 'Socio Elite';
-        } else if (xp >= 2500 && hasDni && hasBank) {
+        } else if (xp >= 5000 && hasDni && hasBank) {
             newLevel = 'Alto'; // Oro
             newStatus = 'Socio Elite';
-        } else if (xp >= 1000 && hasDni) {
+        } else if (xp >= 1500 && hasDni) {
             newLevel = 'Medio'; // Plata
             newStatus = 'Socio Activo';
         } else {

@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
     images: string[];
@@ -50,15 +50,22 @@ const ProductMedia: React.FC<Props> = ({
                 onMouseMove={onMouseMove}
                 onClick={onFullscreen}
             >
-                <img
-                    src={images[activeImg]}
-                    alt="Producto Principal"
-                    className="w-full h-full object-contain transition-transform duration-700 ease-out"
-                    style={{
-                        transform: isHovered ? `scale(1.5)` : 'scale(1)',
-                        transformOrigin: `${mousePos.x}% ${mousePos.y}%`
-                    }}
-                />
+                <AnimatePresence mode="wait">
+                    <motion.img
+                        key={activeImg}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        src={images[activeImg]}
+                        alt="Producto Principal"
+                        className="w-full h-full object-contain absolute inset-0"
+                        style={{
+                            transform: isHovered ? `scale(1.5)` : 'scale(1)',
+                            transformOrigin: `${mousePos.x}% ${mousePos.y}%`
+                        }}
+                    />
+                </AnimatePresence>
 
                 <button 
                     onClick={(e) => { e.stopPropagation(); onFullscreen(); }}

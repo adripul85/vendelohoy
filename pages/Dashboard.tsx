@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import { useAuth } from '../lib/auth';
 import { getUserTransactions, TransactionData, TransactionStatus } from '../lib/transactions';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
@@ -470,14 +471,17 @@ export default function Dashboard() {
 
 
   const MetricCard = ({ title, value, subtext, icon, color }: { title: string, value: string | number, subtext: string, icon: string, color: string }) => (
-    <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/50 shadow-premium flex items-start gap-6 relative overflow-hidden group">
-      <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 ${color}`}>
-        <span className="material-symbols-outlined text-2xl font-black">{icon}</span>
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">{title}</p>
-        <h4 className="text-3xl font-black text-on-surface tracking-tighter mb-1">{value}</h4>
-        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">{subtext}</p>
+    <div className="relative p-8 rounded-[32px] border border-outline-variant/30 overflow-hidden group bg-gradient-to-br from-surface to-surface-container shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] transition-all duration-300">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+      <div className="flex items-start gap-6 relative z-10">
+          <div className={`size-14 rounded-[20px] flex items-center justify-center shrink-0 ${color} shadow-inner border border-white/50`}>
+            <span className="material-symbols-outlined text-[28px] font-black">{icon}</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-1.5">{title}</p>
+            <h4 className="text-4xl font-black text-on-surface tracking-tighter mb-2 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">{value}</h4>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{subtext}</p>
+          </div>
       </div>
     </div>
   );
@@ -496,6 +500,7 @@ export default function Dashboard() {
 
   return (
     <div className="bg-surface min-h-screen">
+      <SEO title="Dashboard | Vendelo Hoy!" description="Administra tus ventas, compras y publicaciones en De Oportunidades." />
       <div className="max-w-[1440px] mx-auto px-6 py-10">
 
         {/* TOP NAV BAR (Mockup style) */}
@@ -768,6 +773,87 @@ export default function Dashboard() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* GAMIFICATION WIDGET */}
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[40px] border border-slate-700 shadow-premium text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[14px]">military_tech</span>
+                    Tu Nivel
+                  </h3>
+                  
+                  {(() => {
+                    const xp = userProfile?.reputationPoints || 0;
+                    let level = 'Bronce';
+                    let nextLevel = 'Plata';
+                    let currentMin = 0;
+                    let nextMin = 1500;
+                    let icon = 'military_tech';
+                    let color = 'text-amber-500';
+                    let bgIcon = 'bg-amber-500/20';
+
+                    if (xp >= 15000) {
+                      level = 'Diamante';
+                      nextLevel = 'MAX';
+                      currentMin = 15000;
+                      nextMin = 15000;
+                      icon = 'diamond';
+                      color = 'text-cyan-400';
+                      bgIcon = 'bg-cyan-400/20';
+                    } else if (xp >= 5000) {
+                      level = 'Oro';
+                      nextLevel = 'Diamante';
+                      currentMin = 5000;
+                      nextMin = 15000;
+                      icon = 'workspace_premium';
+                      color = 'text-yellow-400';
+                      bgIcon = 'bg-yellow-400/20';
+                    } else if (xp >= 1500) {
+                      level = 'Plata';
+                      nextLevel = 'Oro';
+                      currentMin = 1500;
+                      nextMin = 5000;
+                      icon = 'military_tech';
+                      color = 'text-slate-300';
+                      bgIcon = 'bg-slate-300/20';
+                    }
+
+                    const progress = nextMin === currentMin ? 100 : Math.min(100, Math.max(0, ((xp - currentMin) / (nextMin - currentMin)) * 100));
+
+                    return (
+                      <div className="relative z-10 space-y-6">
+                        <div className="flex items-center gap-4">
+                          <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 ${bgIcon} ${color} shadow-inner`}>
+                            <span className="material-symbols-outlined text-[32px] font-black">{icon}</span>
+                          </div>
+                          <div>
+                            <h4 className={`text-2xl font-black ${color} tracking-tighter`}>{level}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{xp} XP Totales</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                            <span>{xp} XP</span>
+                            <span>{nextLevel !== 'MAX' ? `${nextMin} XP` : 'MAX'}</span>
+                          </div>
+                          <div className="h-2 w-full bg-slate-700/50 rounded-full overflow-hidden">
+                            <div className={`h-full ${color.replace('text-', 'bg-')} rounded-full transition-all duration-1000`} style={{ width: `${progress}%` }}></div>
+                          </div>
+                          {nextLevel !== 'MAX' && (
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-3 text-center">
+                              A {nextMin - xp} XP de ser {nextLevel}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Link to="/reputacion" className="block w-full text-center py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-black uppercase tracking-widest transition-colors">
+                          Ver Beneficios
+                        </Link>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/50 shadow-premium">

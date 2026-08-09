@@ -46,8 +46,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'La transacción no está en estado válido para confirmar recepción.' });
         }
 
+        const sellerRef = adminDb.collection('users').doc(data.sellerId);
+        const sellerSnap = await sellerRef.get();
+        const sellerLevel = sellerSnap.data()?.trustLevel || 'Bajo';
+        
+        // Diamante (Premium) gets 24h escrow, others get 48h
+        const hours = sellerLevel === 'Premium' ? 24 : 48;
+
         const now = new Date();
-        const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        const deadline = new Date(now.getTime() + hours * 60 * 60 * 1000);
 
         await docRef.update({
             status: 'DELIVERED_PENDING_REVIEW',

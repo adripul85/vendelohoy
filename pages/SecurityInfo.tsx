@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 export default function SecurityInfo() {
     const features = [
@@ -27,6 +29,7 @@ export default function SecurityInfo() {
 
     return (
         <div className="bg-light-50 min-h-screen py-20 lg:py-32">
+            <SEO title="Centro de Seguridad | Vendelo Hoy!" description="Descubre cómo protegemos tus compras y ventas en nuestra plataforma." />
             <div className="max-w-4xl mx-auto px-6">
 
                 <div className="text-center mb-20 lg:mb-32">

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import SEO from '../../components/SEO';
 import { publishItem, getProduct, updateItem } from '../../lib/items';
 import { CATEGORIES } from '../../lib/constants';
 import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../lib/auth';
 import { getPlatformSettings, PlatformSettings } from '../../lib/settings';
 import { Timestamp } from 'firebase/firestore';
-import { uploadImages, MAX_PRODUCT_IMAGES } from '../../lib/storage';
+import { uploadImages } from '../../lib/storage';
 import { optimizeImages } from '../../lib/imageOptimizer';
 import { Editor } from '@tinymce/tinymce-react';
 import { GoogleGenAI } from '@google/genai';
@@ -28,6 +29,7 @@ export default function Publish() {
     const navigate = useNavigate();
     const { notify } = useNotification();
     const { user, userProfile } = useAuth();
+    const maxImagesAllowed = userProfile?.trustLevel === 'Bajo' ? 4 : 8;
     const [searchParams] = useSearchParams();
     const editId = searchParams.get('edit');
 
@@ -92,10 +94,14 @@ export default function Publish() {
             setLoading(true);
             getProduct(editId).then(item => {
                 if (item) {
+                    const hasPromo = item.oldPrice && item.oldPrice > 0;
+                    const regularPrice = hasPromo ? Math.max(item.price, item.oldPrice) : item.price;
+                    const promoPrice = hasPromo ? Math.min(item.price, item.oldPrice) : null;
+
                     setForm({
                         title: item.title || '',
-                        price: item.price ? item.price.toLocaleString('es-AR') : '',
-                        oldPrice: item.oldPrice ? item.oldPrice.toLocaleString('es-AR') : '',
+                        price: regularPrice ? regularPrice.toLocaleString('es-AR') : '',
+                        oldPrice: promoPrice ? promoPrice.toLocaleString('es-AR') : '',
                         cost: item.cost ? item.cost.toLocaleString('es-AR') : '',
                         showPriceInStore: item.showPriceInStore !== undefined ? item.showPriceInStore : true,
                         description: item.description || '',
@@ -153,13 +159,13 @@ export default function Publish() {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const currentCount = existingImages.length + selectedFiles.length;
-            if (currentCount >= MAX_PRODUCT_IMAGES) {
-                notify({ type: 'warning', title: 'Límite alcanzado', message: `El máximo permitido es de ${MAX_PRODUCT_IMAGES} imágenes por producto.`, icon: 'photo_library' });
+            if (currentCount >= maxImagesAllowed) {
+                notify({ type: 'warning', title: 'Límite alcanzado', message: `El máximo permitido es de ${maxImagesAllowed} imágenes por producto para tu nivel.`, icon: 'photo_library' });
                 return;
             }
 
             const rawFiles = Array.from(e.target.files);
-            const availableSlots = MAX_PRODUCT_IMAGES - currentCount;
+            const availableSlots = maxImagesAllowed - currentCount;
             const filesToProcess = rawFiles.slice(0, availableSlots);
 
             if (rawFiles.length > availableSlots) {
@@ -201,8 +207,8 @@ export default function Publish() {
 
     const handleAddImageUrl = (e?: React.MouseEvent | React.FormEvent) => {
         if (e) e.preventDefault();
-        if (existingImages.length + selectedFiles.length >= MAX_PRODUCT_IMAGES) {
-            notify({ type: 'warning', title: 'Límite alcanzado', message: `No puedes agregar más de ${MAX_PRODUCT_IMAGES} imágenes por producto.`, icon: 'photo_library' });
+        if (existingImages.length + selectedFiles.length >= maxImagesAllowed) {
+            notify({ type: 'warning', title: 'Límite alcanzado', message: `No puedes agregar más de ${maxImagesAllowed} imágenes por producto para tu nivel.`, icon: 'photo_library' });
             return;
         }
         if (!imageUrlInput || !imageUrlInput.trim().startsWith('http')) {
@@ -275,10 +281,18 @@ export default function Publish() {
 
             const tagsArray = form.tags.split(',').map(t => t.trim()).filter(t => t !== '');
 
+            let finalPrice = parsedPrice;
+            let finalOldPrice = null;
+
+            if (parsedOldPrice !== null && parsedOldPrice > 0) {
+                finalPrice = Math.min(parsedPrice, parsedOldPrice);
+                finalOldPrice = Math.max(parsedPrice, parsedOldPrice);
+            }
+
             const payload = {
                 title: form.title,
-                price: parsedPrice,
-                oldPrice: parsedOldPrice !== null ? parsedOldPrice : (null as any),
+                price: finalPrice,
+                oldPrice: finalOldPrice !== null ? finalOldPrice : (null as any),
                 cost: parsedCost !== null ? parsedCost : (null as any),
                 showPriceInStore: form.showPriceInStore,
                 description: form.description,
@@ -444,6 +458,7 @@ export default function Publish() {
 
     return (
         <div className="bg-slate-50 min-h-screen font-body pb-20">
+            <SEO title={editId ? "Editar Producto | Vendelo Hoy!" : "Publicar Producto | Vendelo Hoy!"} description="Publica tu producto en segundos y llega a miles de compradores." />
             {/* Cabecera superior fija o pegajosa estilo dashboard */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
                 <div>
@@ -910,8 +925,8 @@ export default function Publish() {
                                         <div className="size-12 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-indigo-600">
                                             <span className="material-symbols-outlined text-2xl font-black">add</span>
                                         </div>
-                                        <span className="text-sm font-bold text-indigo-600 mb-2">Arrastrá y soltá, o subí fotos del producto ({previews.length}/6)</span>
-                                        <span className="text-xs text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-sm">speed</span> Máximo 6 fotos por producto • Compresión WebP ultrarrápida sin pérdida de calidad</span>
+                                        <span className="text-sm font-bold text-indigo-600 mb-2">Arrastrá y soltá, o subí fotos del producto ({previews.length}/{maxImagesAllowed})</span>
+                                        <span className="text-xs text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-sm">speed</span> Máximo {maxImagesAllowed} fotos por producto • Compresión WebP ultrarrápida sin pérdida de calidad</span>
                                         <input type="file" multiple disabled={loading} accept="image/*" onChange={handleFileChange} className="hidden" />
                                     </label>
 

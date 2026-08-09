@@ -317,11 +317,11 @@ export default function Settings() {
                         const hasCbuLog = logs.some(l => l.reason === 'Cuenta de Cobro Vinculada');
 
                         if ((userProfile.dni || userProfile.verificationBadges?.identityVerified) && !hasDniLog) {
-                            await addReputationPoints(user.uid, 500, 'Identidad Verificada');
+                            await addReputationPoints(user.uid, 100, 'Identidad Verificada');
                             needsRefresh = true;
                         }
                         if ((userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) && !hasCbuLog) {
-                            await addReputationPoints(user.uid, 300, 'Cuenta de Cobro Vinculada');
+                            await addReputationPoints(user.uid, 50, 'Cuenta de Cobro Vinculada');
                             needsRefresh = true;
                         }
 
@@ -1790,7 +1790,7 @@ export default function Settings() {
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-1">
                                                         <p className={`text-sm font-bold ${(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) ? 'text-slate-900 line-through opacity-50' : 'text-slate-900'}`}>Vincular Cuenta de Cobro</p>
-                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+300 XP</span>
+                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+50 XP</span>
                                                     </div>
                                                     <p className="text-xs font-medium text-slate-500">Obligatorio para nivel Oro. Agrega CBU o CVU.</p>
                                                     {!(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) && (
@@ -1844,10 +1844,7 @@ export default function Settings() {
                                                     <span className="material-symbols-outlined text-primary-vibrant">auto_awesome</span>
                                                     Publicaciones Destacadas Gratis (Nivel Oro o superior)
                                                 </li>
-                                                <li className="flex items-center gap-4 text-sm font-bold text-slate-700">
-                                                    <span className="material-symbols-outlined text-slate-400">support_agent</span>
-                                                    Soporte Prioritario (Nivel Diamante)
-                                                </li>
+
                                             </ul>
                                         </div>
 

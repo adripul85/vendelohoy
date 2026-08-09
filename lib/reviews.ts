@@ -52,10 +52,10 @@ export const createReview = async (data: Omit<ReviewData, 'createdAt'>) => {
         // Update seller's reputation
         await updateSellerReputation(data.sellerId);
 
-        // Gamification: Reward seller for good service
+        // If rating is 4 or 5, award XP
         if (data.rating >= 4) {
             const { addReputationPoints } = await import('./users');
-            await addReputationPoints(data.sellerId, 50, `Recibiste una calificación de ${data.rating} estrellas por una venta.`);
+            await addReputationPoints(data.sellerId, 5, `Recibiste una calificación de ${data.rating} estrellas por una venta.`);
         }
 
         return { success: true, id: docRef.id };

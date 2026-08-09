@@ -95,10 +95,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // 3. XP for successful sale and recalculate level
             const currentPoints = sellerData.reputationPoints || 0;
-            const newPoints = Math.max(0, currentPoints + 25);
+            const currentConsecutive = sellerData.consecutiveSuccessfulSales || 0;
+            
+            let pointsToAward = 10;
+            let newConsecutive = currentConsecutive + 1;
+            let reason = "Completar una Venta Exitosa";
+
+            if (newConsecutive >= 10) {
+                pointsToAward += 100; // Bonus
+                newConsecutive = 0; // Reset streak
+                reason = "Completar una Venta Exitosa + Bonus Racha de 10 Ventas";
+            }
+
+            const newPoints = Math.max(0, currentPoints + pointsToAward);
 
             t.update(sellerRef, {
                 reputationPoints: newPoints,
+                consecutiveSuccessfulSales: newConsecutive,
                 updatedAt: FieldValue.serverTimestamp()
             });
 
@@ -106,8 +119,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const repLogRef = adminDb.collection('reputationLogs').doc();
             t.set(repLogRef, {
                 uid: data.sellerId,
-                points: 25,
-                reason: "Completar una Venta Exitosa",
+                points: pointsToAward,
+                reason: reason,
                 timestamp: FieldValue.serverTimestamp()
             });
 
@@ -140,13 +153,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // 4. DISTRIBUTE FUNDS
             const baseSellerProceeds = data.amountProduct || data.amount || 0;
-            const basePlatformRevenue = data.amountPlatformFee || data.platformFee || 0;
+            
+            // GAMIFICATION V2: Seller Commission Logic
+            let commissionRate = 0.07; // Standard 7%
+            let isFreeDiamondSale = false;
+            
+            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+            let monthlyQuota = sellerData.monthlyQuota || { freeSalesUsed: 0, lastResetMonth: currentMonth };
+            
+            if (monthlyQuota.lastResetMonth !== currentMonth) {
+                monthlyQuota.freeSalesUsed = 0;
+                monthlyQuota.lastResetMonth = currentMonth;
+            }
+
+            if (newLevel === 'Premium') {
+                if (monthlyQuota.freeSalesUsed < 3) {
+                    commissionRate = 0;
+                    isFreeDiamondSale = true;
+                    monthlyQuota.freeSalesUsed += 1;
+                } else {
+                    commissionRate = 0.05;
+                }
+            } else if (newLevel === 'Alto') {
+                commissionRate = 0.05;
+            }
+
+            t.update(sellerRef, { monthlyQuota });
+
+            const baseCommission = Math.round(baseSellerProceeds * commissionRate);
+            
+            const buyerPlatformFee = data.amountPlatformFee || data.platformFee || 0;
             const featuredCommission = data.featuredFeeApplied ? Math.round(baseSellerProceeds * data.featuredFeeApplied) : 0;
             const flashSaleCommission = data.flashSaleFeeApplied ? Math.round(baseSellerProceeds * data.flashSaleFeeApplied) : 0;
 
-            const totalCommissions = featuredCommission + flashSaleCommission;
+            const totalCommissions = baseCommission + featuredCommission + flashSaleCommission;
             const sellerProceeds = baseSellerProceeds - totalCommissions;
-            const platformRevenue = basePlatformRevenue + totalCommissions;
+            const platformRevenue = buyerPlatformFee + totalCommissions;
 
             // A. Pay Seller (DIRECT TRANSFER MODEL)
             t.update(sellerRef, {

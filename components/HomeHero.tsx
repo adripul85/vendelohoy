@@ -98,11 +98,32 @@ export default function HomeHero({ featuredItems }: HomeHeroProps) {
                     className="relative w-full"
                 >
                     {/* Background Gradient & Mesh Layer - COMPACT & CONTAINED */}
-                    <div className="absolute inset-0 rounded-[40px] -z-10 overflow-hidden transition-colors duration-1000 shadow-xl" style={slide.bgStyle || { backgroundColor: '#2222FF' }}>
-                        {/* If it's a fallback or has specific classes, we can still use them */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${slide.bgColorFrom || ''} ${slide.bgColorTo || ''} opacity-60`}></div>
-                        <div className="absolute top-0 right-0 w-1/2 h-full bg-surface/5 backdrop-blur-3xl"></div>
-                        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-white/5 rounded-full blur-[80px] animate-pulse"></div>
+                    <div className="absolute inset-0 rounded-[40px] -z-10 overflow-hidden transition-colors duration-1000 shadow-2xl border border-white/10" style={slide.bgStyle || { backgroundColor: '#0f172a' }}>
+                        {/* Dynamic Animated Blobs */}
+                        <motion.div 
+                            animate={{ 
+                                scale: [1, 1.2, 1],
+                                opacity: [0.3, 0.5, 0.3],
+                                rotate: [0, 90, 0]
+                            }}
+                            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                            className="absolute -top-32 -right-32 w-96 h-96 bg-primary/40 rounded-full blur-[100px]"
+                        />
+                        <motion.div 
+                            animate={{ 
+                                scale: [1, 1.5, 1],
+                                opacity: [0.2, 0.4, 0.2],
+                                x: [0, 100, 0]
+                            }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                            className="absolute -bottom-32 -left-32 w-96 h-96 bg-secondary/30 rounded-full blur-[100px]"
+                        />
+                        
+                        <div className={`absolute inset-0 bg-gradient-to-br ${slide.bgColorFrom || ''} ${slide.bgColorTo || ''} opacity-80 backdrop-blur-[2px]`}></div>
+                        
+                        {/* Glassmorphism Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
                     </div>
 
                     <div className="px-6 sm:px-10 py-12 md:py-16">
@@ -137,21 +158,24 @@ export default function HomeHero({ featuredItems }: HomeHeroProps) {
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.4 }}
-                                    className="flex flex-wrap gap-4 pt-2"
+                                    className="flex flex-wrap gap-4 pt-4"
                                 >
                                     {slide.btn1 && (
                                         <Link
                                             to={slide.btn1.to}
-                                            className="btn-secondary group px-6 py-3.5 text-xs font-black uppercase tracking-widest"
+                                            className="group relative px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-900 bg-white rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                                         >
-                                            {slide.btn1.label}
-                                            <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ml-2">arrow_right_alt</span>
+                                            <span className="relative z-10 flex items-center">
+                                                {slide.btn1.label}
+                                                <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ml-2">arrow_right_alt</span>
+                                            </span>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-white via-slate-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                         </Link>
                                     )}
                                     {slide.btn2 && (
                                         <Link
                                             to={slide.btn2.to}
-                                            className="btn-tertiary text-white hover:bg-white/10 px-6 py-3.5 text-xs font-black uppercase tracking-widest"
+                                            className="group px-8 py-4 text-xs font-black uppercase tracking-widest text-white border border-white/20 rounded-full hover:bg-white/10 hover:border-white/40 transition-all backdrop-blur-md"
                                         >
                                             {slide.btn2.label}
                                         </Link>

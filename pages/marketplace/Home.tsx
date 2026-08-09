@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../../components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFeaturedItems, getFlashSaleItems, getItems, ItemData } from '../../lib/items';
 import { useAuth } from '../../lib/auth';
@@ -630,9 +630,10 @@ const Home = () => {
 
   return (
     <div className="bg-background font-body text-on-surface w-full flex">
-      <Helmet>
-        <title>Tu Mercado Online en Argentina</title>
-      </Helmet>
+      <SEO 
+        title="Tu Mercado Online en Argentina" 
+        description="Descubre los mejores productos y ofertas en Vendelo Hoy!, el marketplace más seguro y rápido de Argentina." 
+      />
 
       {/* --- SIDEBAR PANEL DE FILTROS --- */}
       <aside className="hidden lg:block w-60 shrink-0 bg-surface sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar z-20 border-r border-outline-variant/50">
@@ -962,9 +963,10 @@ const Home = () => {
                   recentProducts.slice(0, 10).map((p, idx) => (
                     <motion.div
                       key={p.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: (idx % 5) * 0.08 }}
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ delay: (idx % 5) * 0.1, duration: 0.5, type: 'spring' }}
                       className="editorial-shadow rounded-xl overflow-hidden h-full bg-surface"
                     >
                       <ProductCard product={p} location={p.location} />
@@ -982,13 +984,20 @@ const Home = () => {
                 { icon: 'support_agent', title: 'Soporte 24/7', desc: 'Siempre disponibles' },
                 { icon: 'inventory_2', title: 'Miles de Productos', desc: 'Catálogo en crecimiento' },
               ].map((item, i) => (
-                <div key={i} className="bg-surface rounded-2xl p-6 border border-outline-variant/30 flex flex-col items-center text-center gap-3 hover:border-secondary/40 hover:shadow-lg hover:shadow-secondary/5 transition-all group">
-                  <div className="bg-secondary-container/15 p-4 rounded-2xl group-hover:bg-secondary-container/30 transition-colors">
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="bg-surface rounded-3xl p-6 border border-outline-variant/30 flex flex-col items-center text-center gap-3 hover:border-secondary/40 hover:shadow-2xl hover:shadow-secondary/10 transition-all group backdrop-blur-sm bg-white/50"
+                >
+                  <div className="bg-gradient-to-br from-secondary/10 to-secondary/30 p-4 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                     <span className="material-symbols-outlined text-3xl text-secondary">{item.icon}</span>
                   </div>
-                  <h4 className="font-bold text-primary text-sm">{item.title}</h4>
-                  <p className="text-on-surface-variant text-xs">{item.desc}</p>
-                </div>
+                  <h4 className="font-black text-slate-800 text-sm tracking-tight">{item.title}</h4>
+                  <p className="text-on-surface-variant text-xs font-medium">{item.desc}</p>
+                </motion.div>
               ))}
             </section>
 

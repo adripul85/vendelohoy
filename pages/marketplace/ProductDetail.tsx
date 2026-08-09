@@ -510,14 +510,28 @@ const ProductDetail = () => {
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mb-6">
-              <p className="text-2xl font-light text-on-surface tracking-tight">${product.price.toLocaleString()}</p>
-              {product.oldPrice && product.oldPrice > product.price && (
-                <p className="text-sm text-on-surface-variant line-through opacity-60">
-                  ${product.oldPrice.toLocaleString()}
-                </p>
-              )}
-            </div>
+            {(() => {
+              const hasPromo = product.oldPrice && product.oldPrice > 0 && product.oldPrice !== product.price;
+              const displayPrice = hasPromo ? Math.min(product.price, product.oldPrice!) : product.price;
+              const displayOldPrice = hasPromo ? Math.max(product.price, product.oldPrice!) : null;
+              const discountPct = hasPromo && displayOldPrice ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100) : 0;
+
+              return (
+                <div className="flex items-baseline gap-3 mb-6">
+                  <p className="text-2xl font-light text-on-surface tracking-tight">${displayPrice.toLocaleString()}</p>
+                  {hasPromo && displayOldPrice && (
+                    <>
+                      <p className="text-sm text-on-surface-variant line-through opacity-60">
+                        ${displayOldPrice.toLocaleString()}
+                      </p>
+                      <span className="text-xs font-black text-white bg-secondary px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
+                        {discountPct}% OFF
+                      </span>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Short Description */}
             <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
@@ -573,7 +587,21 @@ const ProductDetail = () => {
                       {(() => {
                         const rawSizes = Array.isArray(product.size) ? product.size : [product.size];
                         const cleaned = rawSizes.map((sz: string) => sz.replace(/^(Nº\s*|Talle\s*)/i, '').trim());
-                        const unique = [...new Set(cleaned)];
+                        const unique = [...new Set(cleaned)] as string[];
+                        
+                        // Order sizes from smallest to largest
+                        const sizeOrder = ['XXS', '2XS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', 'XXXXL', '4XL'];
+                        unique.sort((a, b) => {
+                          const indexA = sizeOrder.indexOf(a.toUpperCase());
+                          const indexB = sizeOrder.indexOf(b.toUpperCase());
+                          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                          if (indexA !== -1) return -1;
+                          if (indexB !== -1) return 1;
+                          const numA = parseFloat(a);
+                          const numB = parseFloat(b);
+                          if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                          return a.localeCompare(b);
+                        });
                         return unique.map((sz: string) => (
                           <button 
                             key={sz}
@@ -659,7 +687,7 @@ const ProductDetail = () => {
             </div>
             
             {product.status === 'AVAILABLE' && (
-              <p className="text-[10px] text-center text-on-surface-variant mb-8">Envío express gratuito disponible en esta zona.</p>
+              <div className="mb-4"></div>
             )}
           </div>
         </div>
@@ -839,7 +867,7 @@ const ProductDetail = () => {
         <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter mb-8">Te podría interesar</h2>
         
         {/* We use QuestionsSection here temporarily or replace it entirely. Let's keep it clean */}
-        <div className="px-4 md:px-0">
+        <div className="max-w-4xl mx-auto px-4 md:px-0">
           <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
         </div>
       </div>

@@ -58,6 +58,7 @@ const SecurityInfo = lazy(() => import('./pages/SecurityInfo'));
 const GamificationRules = lazy(() => import('./pages/GamificationRules'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PageFallback = () => (
   <div className="w-full min-h-[60vh] flex flex-col items-center justify-center py-20">
@@ -288,6 +289,7 @@ function App() {
                       <Route path="/security" element={<SecurityInfo />} />
                       <Route path="/reputacion" element={<GamificationRules />} />
                       <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
                 </PageTransition>
