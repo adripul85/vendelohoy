@@ -1,0 +1,4 @@
+## 2025-03-05 - [CRITICAL] Privilege Escalation via Unprotected Role Field Update
+**Vulnerability:** The Firestore security rules protected the `isAdmin` field in the `users` collection but omitted the `role` field. The custom `isAdmin()` function in the rules permitted authorization if either `isAdmin == true` or `role == 'admin'`. This allowed any authenticated user to update their own `role` to `'admin'`, thereby elevating privileges across the entire database.
+**Learning:** Checking multiple fields for administrative access creates multiple attack vectors. If an authorization function relies on fields like `isAdmin` and `role`, all such fields must be explicitly protected from arbitrary updates in the security rules.
+**Prevention:** Ensure that all fields checked in role-based access control (RBAC) definitions within Firestore rules are explicitly included in the `affectedKeys().hasAny([])` rejection array for standard user document updates.
