@@ -340,11 +340,8 @@ export const autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRu
         .get();
 
     if (snapshot.empty) {
-        console.log('No transactions to auto-release.');
         return null;
     }
-
-    console.log(`Auto-releasing ${snapshot.size} transactions...`);
 
     const results = [];
     for (const doc of snapshot.docs) {
@@ -405,7 +402,6 @@ export const mercadoPagoWebhook = functions.https.onRequest(async (req, res) => 
                             lastSystemMessage: '✅ Pago confirmado via Mercado Pago. Fondos en garantía.',
                             updatedAt: admin.firestore.FieldValue.serverTimestamp()
                         });
-                        console.log(`Transaction ${txId} marked as PAID_HELD.`);
                     }
                 }
             }
