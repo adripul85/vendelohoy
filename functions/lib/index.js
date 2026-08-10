@@ -300,8 +300,7 @@ exports.autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRun(asy
         return null;
     }
     console.log(`Auto-releasing ${snapshot.size} transactions...`);
-    const results = [];
-    for (const doc of snapshot.docs) {
+    const results = await Promise.all(snapshot.docs.map(async (doc) => {
         const txId = doc.id;
         const data = doc.data();
         try {
@@ -316,13 +315,13 @@ exports.autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRun(asy
             await distributeEscrowFunds(txId, data);
             // 3. Optional: Send notification to buyer and seller
             // (System notes are added via addEscrowNote if needed, but here we just log)
-            results.push({ id: txId, status: 'success' });
+            return { id: txId, status: 'success' };
         }
         catch (error) {
             console.error(`Error auto-releasing transaction ${txId}:`, error);
-            results.push({ id: txId, status: 'error', message: error.message });
+            return { id: txId, status: 'error', message: error.message };
         }
-    }
+    }));
     return results;
 });
 /**
