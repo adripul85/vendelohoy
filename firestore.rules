@@ -122,7 +122,7 @@ service cloud.firestore {
     // REGLAS PARA PRODUCTOS (ITEMS)
     match /items/{itemId} {
       allow read: if true;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.sellerId == request.auth.uid;
       allow update: if (request.auth != null && (resource.data.sellerId == request.auth.uid || isAdmin())) || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']));
       allow delete: if request.auth != null && (resource.data.sellerId == request.auth.uid || isAdmin());
       
