@@ -35,9 +35,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // ==== SIMULADOR (SANDBOX) UBER / CABIFY ====
-        // En producción, aquí haríamos POST a Uber Direct API usando las credenciales seguras
-        // const response = await fetch('https://api.uber.com/v1/deliveries', { headers: { Authorization: `Bearer ${process.env.UBER_CLIENT_SECRET}` } })
-        
         const provider = 'UBER_DIRECT_SANDBOX';
         const mockTrackingId = `UBER-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
         const mockTrackingUrl = `https://vendelohoy.com/track/${mockTrackingId}`; 
