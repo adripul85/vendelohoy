@@ -11,6 +11,7 @@ import { uploadImages } from '../../lib/storage';
 import { optimizeImages } from '../../lib/imageOptimizer';
 import { Editor } from '@tinymce/tinymce-react';
 import { GoogleGenAI } from '@google/genai';
+import { decodeHtmlEntities } from '../../lib/textUtils';
 
 const StepContainer = ({ children }: { children: React.ReactNode }) => (
     <div className="animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
@@ -99,12 +100,12 @@ export default function Publish() {
                     const promoPrice = hasPromo ? Math.min(item.price, item.oldPrice) : null;
 
                     setForm({
-                        title: item.title || '',
+                        title: decodeHtmlEntities(item.title || ''),
                         price: regularPrice ? regularPrice.toLocaleString('es-AR') : '',
                         oldPrice: promoPrice ? promoPrice.toLocaleString('es-AR') : '',
                         cost: item.cost ? item.cost.toLocaleString('es-AR') : '',
                         showPriceInStore: item.showPriceInStore !== undefined ? item.showPriceInStore : true,
-                        description: item.description || '',
+                        description: decodeHtmlEntities(item.description || ''),
                         masterCategory: item.masterCategory || CATEGORIES[0].name,
                         category: item.category || CATEGORIES[0].categories[0].name,
                         subcategory: item.subcategory || '',

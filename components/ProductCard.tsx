@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../lib/auth';
 import { useNotification } from '../context/NotificationContext';
 import { FavoriteButton } from './FavoriteButton';
+import { decodeHtmlEntities } from '../lib/textUtils';
 interface ProductCardProps {
     product: ItemData & { id: string };
     location?: string;
@@ -127,7 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                             {product.category || 'Selección'}
                         </span>
                         <h3 className={`text-sm font-black font-display line-clamp-1 transition-colors leading-tight ${isSold ? 'text-primary/20' : 'text-primary'}`}>
-                            {product.title}
+                            {decodeHtmlEntities(product.title)}
                         </h3>
                     </div>
 

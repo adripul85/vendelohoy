@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminDb } from '../lib/firebase-admin.js';
+import { FieldValue } from 'firebase-admin/firestore';
 import crypto from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -122,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         const sellerRef = db.collection('users').doc(sellerId);
                         
                         t.update(sellerRef, {
-                            "wallet.inEscrow": adminDb.FieldValue ? adminDb.FieldValue.increment(amountProduct) : amountProduct
+                            "wallet.inEscrow": FieldValue.increment(amountProduct)
                         });
                         
                         // Log del movimiento

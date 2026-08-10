@@ -33,6 +33,7 @@ import ReportModal from '../../components/product/ReportModal';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
 import { getItems, getEffectivePrice } from '../../lib/items';
+import { decodeHtmlEntities, stripHtmlAndDecode } from '../../lib/textUtils';
 
 const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [guideTab, setGuideTab] = useState<'ropa' | 'calzado' | 'bebe' | 'pantalones'>('ropa');
@@ -560,7 +561,10 @@ const ProductDetail = () => {
 
             {/* Short Description */}
             <p className="text-sm text-on-surface-variant leading-relaxed mb-8">
-              {product.description.replace(/<[^>]+>/g, '').substring(0, 150)}{product.description.replace(/<[^>]+>/g, '').length > 150 ? '...' : ''}
+              {(() => {
+                const text = stripHtmlAndDecode(product.description || '');
+                return text.substring(0, 150) + (text.length > 150 ? '...' : '');
+              })()}
             </p>
 
             {/* Conditional Variants (Only if size or color exist) */}
@@ -729,7 +733,7 @@ const ProductDetail = () => {
               className="prose prose-slate max-w-none text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap [&>p]:mb-4 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>h3]:mt-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h2]:mt-5"
               dangerouslySetInnerHTML={{ 
                 __html: DOMPurify.sanitize(
-                  (product.description || '')
+                  decodeHtmlEntities(product.description || '')
                     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                     .replace(/_([^_]+)_/g, '<em>$1</em>')
                     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
