@@ -223,7 +223,7 @@ service cloud.firestore {
       allow write: if request.auth != null && isAdmin();
     }
     match /store_events/{document=**} {
-      allow create: if true;
+      allow create: if request.auth != null;
       allow read: if request.auth != null && isAdmin();
       allow delete: if isAdmin();
     }
