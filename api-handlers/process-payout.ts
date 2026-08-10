@@ -47,8 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // ==========================================
         // SIMULATED BANKING API INTEGRATION (PAYOUT)
         // ==========================================
-        // In a real scenario, here you would call MercadoPago Transfer API or Bind:
-        // const bankResponse = await fetch('https://api.mercadopago.com/v1/transfers', { ... })
+        // In a real scenario, here you would call MercadoPago Transfer API or Bind.
         // We simulate network delay and a successful response
         
         await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate 1.5s bank latency
