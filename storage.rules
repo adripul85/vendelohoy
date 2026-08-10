@@ -13,7 +13,7 @@ service firebase.storage {
     }
 
     function isImage() {
-      return request.resource.contentType.matches('image/.*');
+      return request.resource.contentType.matches('^image/(png|jpeg|jpg|gif|webp)$');
     }
 
     function isLessThan5MB() {
@@ -25,12 +25,14 @@ service firebase.storage {
     // Solo el dueño puede crear/editar/eliminar su propio avatar (y debe ser una imagen menor a 5MB)
     match /avatars/{userId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
     
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     // --- Artículos (Items) ---
@@ -39,13 +41,16 @@ service firebase.storage {
     // La app sube así: `items/${user.uid}/${Date.now()}_${file.name}`
     match /items/{userId}/{imageId} {
       allow read: if true;
-      allow write: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
     
     // --- Chats ---
     // Las imágenes se suben a `chats/${selectedChat.id}`
     match /chats/{chatId}/{imageId=**} {
-      allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated();
     }
 
     // --- Escrow / Disputas ---
@@ -55,32 +60,38 @@ service firebase.storage {
       // Como storage rules nativas no leen firestore sin un custom token, la mejor mitigación es
       // validar el login (ya está) y en el front generar nombres de archivo impredecibles.
       // Al menos evitamos acceso público no autenticado.
-      allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated();
     }
 
     // --- Marketing (Heros y Banners) ---
     // Solo admins (verificados via custom claim) pueden modificar marketing
     match /marketing/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && request.auth.token.admin == true && isImage() && isLessThan5MB();
+      allow create, update: if isAuthenticated() && request.auth.token.admin == true && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && request.auth.token.admin == true;
     }
 
     // --- Perfiles y Portadas ---
     match /profiles/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     // --- Tiendas (Fondos y personalización) ---
     match /shops/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     // --- Verificación (KYC / DNI) ---
     match /kyc/{userId}/{allPaths=**} {
       allow read: if isAuthenticated() && isOwner(userId); // Privado
-      allow write: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow create, update: if isAuthenticated() && isOwner(userId) && isImage() && isLessThan5MB();
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     // Default: denegar todo acceso a cualquier otra cosa no especificada arriba.
