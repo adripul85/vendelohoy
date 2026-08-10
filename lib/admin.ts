@@ -674,8 +674,21 @@ export const runSecuritySync = async () => {
         const userIds = new Set(usersSnap.docs.map(d => d.id));
 
         const itemsSnap = await getDocs(collection(db, "items"));
+
+        // Optimize: Group items by sellerId to avoid N+1 queries later
+        const itemsBySeller = new Map<string, typeof itemsSnap.docs>();
+
         for (const itemDoc of itemsSnap.docs) {
             const item = itemDoc.data();
+
+            // Grouping logic
+            if (item.sellerId) {
+                if (!itemsBySeller.has(item.sellerId)) {
+                    itemsBySeller.set(item.sellerId, []);
+                }
+                itemsBySeller.get(item.sellerId)!.push(itemDoc);
+            }
+
             if (item.sellerId && !userIds.has(item.sellerId)) {
                 issues.push(`Item ${itemDoc.id.slice(0, 8)}: vendedor ${item.sellerId.slice(0, 8)} no existe`);
                 // Auto-delete orphaned items
@@ -705,11 +718,11 @@ export const runSecuritySync = async () => {
         for (const userDoc of usersSnap.docs) {
             const u = userDoc.data();
             if (u.deleted) {
-                const userItemsSnap = await getDocs(query(collection(db, "items"), where("sellerId", "==", userDoc.id)));
-                if (userItemsSnap.size > 0) {
-                    issues.push(`User eliminado ${userDoc.id.slice(0, 8)} tiene ${userItemsSnap.size} items activos`);
-                    for (const item of userItemsSnap.docs) {
-                        await deleteDoc(item.ref);
+                const userItems = itemsBySeller.get(userDoc.id) || [];
+                if (userItems.length > 0) {
+                    issues.push(`User eliminado ${userDoc.id.slice(0, 8)} tiene ${userItems.length} items activos`);
+                    for (const itemDoc of userItems) {
+                        await deleteDoc(itemDoc.ref);
                         fixed++;
                     }
                 }
