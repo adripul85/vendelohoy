@@ -106,44 +106,44 @@ export const deleteUserByAdmin = async (uid: string) => {
 
         // 1. Delete user's items
         const itemsSnap = await getDocs(query(collection(db, "items"), where("sellerId", "==", uid)));
-        for (const d of itemsSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(itemsSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 2. Delete user's wallet movements
         const movSnap = await getDocs(query(collection(db, "wallet_movements"), where("userId", "==", uid)));
-        for (const d of movSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(movSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 3. Delete user's reviews (given)
         const revSnap = await getDocs(query(collection(db, "reviews"), where("reviewerId", "==", uid)));
-        for (const d of revSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(revSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 4. Delete user's questions
         const qSnap = await getDocs(query(collection(db, "questions"), where("userId", "==", uid)));
-        for (const d of qSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(qSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 5. Delete user's reports
         const repSnap = await getDocs(query(collection(db, "reports"), where("reporterId", "==", uid)));
-        for (const d of repSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(repSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 6. Delete user's withdrawals
         const wSnap = await getDocs(query(collection(db, "withdrawals"), where("uid", "==", uid)));
-        for (const d of wSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(wSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 7. Delete user's chats
         const chatSnap = await getDocs(query(collection(db, "chats"), where("participants", "array-contains", uid)));
-        for (const chatDoc of chatSnap.docs) {
+        await Promise.all(chatSnap.docs.map(async (chatDoc) => {
             // Delete messages subcollection
             const msgsSnap = await getDocs(collection(db, "chats", chatDoc.id, "messages"));
-            for (const m of msgsSnap.docs) await deleteDoc(m.ref);
+            await Promise.all(msgsSnap.docs.map(m => deleteDoc(m.ref)));
             await deleteDoc(chatDoc.ref);
-        }
+        }));
 
         // 8. Delete user's notifications subcollection
         const notiSnap = await getDocs(collection(db, "users", uid, "notifications"));
-        for (const d of notiSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(notiSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 9. Delete user's reviews subcollection
         const userRevSnap = await getDocs(collection(db, "users", uid, "reviews"));
-        for (const d of userRevSnap.docs) await deleteDoc(d.ref);
+        await Promise.all(userRevSnap.docs.map(d => deleteDoc(d.ref)));
 
         // 10. Wipe user doc but KEEP email — use updateDoc (NOT setDoc) 
         // because Firestore treats setDoc without merge as a "create" operation,
