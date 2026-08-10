@@ -101,12 +101,18 @@ export default function Dashboard() {
       // Check for reviews for these purchases
       const checkReviews = async () => {
         const reviewed = new Set<string>();
-        for (const tx of compras) {
-          if (tx.status === 'COMPLETED') {
-            const review = await getReviewForTransaction(tx.id);
-            if (review) reviewed.add(tx.id);
-          }
-        }
+        const completedTxs = compras.filter(tx => tx.status === 'COMPLETED');
+
+        const reviewPromises = completedTxs.map(async tx => {
+          const review = await getReviewForTransaction(tx.id);
+          return { id: tx.id, hasReview: !!review };
+        });
+
+        const results = await Promise.all(reviewPromises);
+        results.forEach(({ id, hasReview }) => {
+          if (hasReview) reviewed.add(id);
+        });
+
         setReviewedTransactions(prev => {
           const next = new Set(prev);
           reviewed.forEach(id => next.add(id));
