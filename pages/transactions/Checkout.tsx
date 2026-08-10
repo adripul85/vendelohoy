@@ -87,7 +87,7 @@ export default function Checkout() {
     // Only subscribe to product updates if it's a real single product, not a virtual cart ID or resuming
     if (productId && !productId.startsWith('cart-') && !isResuming) {
       // Subscribe to real-time updates
-      const unsubscribePromise = subscribeToProduct(productId, (item) => {
+      const unsub = subscribeToProduct(productId, (item) => {
         if (!item) {
           // If item returns null, it has been deleted
           setIsDeleted(true);
@@ -141,7 +141,13 @@ export default function Checkout() {
           });
       });
 
-      return () => { unsubscribePromise.then(unsub => unsub()); };
+      return () => {
+        if (typeof unsub === 'function') {
+          unsub();
+        } else if (unsub && typeof (unsub as any).then === 'function') {
+          (unsub as any).then((fn: any) => typeof fn === 'function' && fn());
+        }
+      };
     }
   }, [productId, navigate, notify, isResuming, deliveryMethod, deliveryAddress.zipCode, shippingPaymentMethod]);
 
@@ -326,7 +332,7 @@ export default function Checkout() {
           })
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({ error: 'Error de respuesta del servidor de pagos' }));
 
         if (!response.ok) {
            throw new Error(data.error || 'Error al conectar con Mercado Pago');
