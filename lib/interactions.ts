@@ -374,8 +374,8 @@ export const getFollowedSellers = async (userId: string): Promise<FollowedSeller
     try {
         const followRef = collection(db, "users", userId, "following");
         const snapshot = await getDocs(followRef);
-        const sellers: FollowedSeller[] = [];
-        for (const docSnap of snapshot.docs) {
+
+        const sellerPromises = snapshot.docs.map(async (docSnap) => {
             const data = docSnap.data();
             let name = data.name;
             let avatar = data.avatar;
@@ -396,9 +396,10 @@ export const getFollowedSellers = async (userId: string): Promise<FollowedSeller
                     name = 'Vendedor';
                 }
             }
-            sellers.push({ followedId: docSnap.id, name, avatar, slug, reputation, followedAt: data.followedAt });
-        }
-        return sellers;
+            return { followedId: docSnap.id, name, avatar, slug, reputation, followedAt: data.followedAt };
+        });
+
+        return await Promise.all(sellerPromises);
     } catch (error) {
         console.error("Error fetching followed sellers:", error);
         return [];
