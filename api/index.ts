@@ -12,6 +12,7 @@ import processPayout from '../api-handlers/process-payout';
 import releaseFunds from '../api-handlers/release-funds';
 import shippingQuote from '../api-handlers/shipping-quote';
 import sitemap from '../api-handlers/sitemap';
+import publicProfile from '../api-handlers/public-profile';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const endpoint = req.query.endpoint as string;
@@ -29,6 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'release-funds': return releaseFunds(req, res);
         case 'shipping-quote': return shippingQuote(req, res);
         case 'sitemap': return sitemap(req, res);
+        case 'public-profile': return publicProfile(req, res);
         default: return res.status(404).json({ error: 'Endpoint not found: ' + endpoint });
     }
 }

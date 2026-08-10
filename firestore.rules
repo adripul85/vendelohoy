@@ -105,7 +105,7 @@ service cloud.firestore {
     
     // REGLAS PARA USUARIOS
     match /users/{userId} {
-      allow read: if true; // Permitir que visitantes y compradores vean el perfil y nombre del vendedor
+      allow read: if request.auth != null; // Permitir que visitantes y compradores vean el perfil y nombre del vendedor
       allow create: if request.auth != null && request.auth.uid == userId;
       allow delete: if isAdmin();
       
