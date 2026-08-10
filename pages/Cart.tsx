@@ -61,7 +61,7 @@ const Cart = () => {
 
     // Default values if settings are not loaded yet
     const escrowFeePercentage = settings?.escrowFeePercentage ?? 0.05;
-    const gatewayFeePercentage = settings?.paymentProcessingFeePercentage ?? 0.06;
+    const gatewayFeePercentage = settings?.paymentProcessingFeePercentage ?? 0.08;
 
     // Calculations
     const escrowFee = settings?.useFixedEscrowFee

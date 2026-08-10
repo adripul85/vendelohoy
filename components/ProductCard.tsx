@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ItemData } from '../lib/items';
+import { ItemData, getEffectivePrice } from '../lib/items';
 import CountdownTimer from './product/CountdownTimer';
 import { triggerHaptic } from '../lib/haptics';
 import SellerBadge from './seller/SellerBadge';
@@ -23,6 +23,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
     const { user } = useAuth();
     const { notify } = useNotification();
 
+    const effectivePrice = getEffectivePrice(product);
+
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -34,7 +36,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
         addToCart({
             id: product.id,
             title: product.title,
-            price: product.price,
+            price: effectivePrice,
             image: product.images?.[0] || '',
             sellerId: product.seller?.id || product.sellerId || '',
             sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
@@ -88,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                         <FavoriteButton product={{
                             id: product.id,
                             title: product.title,
-                            price: product.price,
+                            price: effectivePrice,
                             image: product.images?.[0] || '',
                             sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
                         }} />

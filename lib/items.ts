@@ -597,3 +597,16 @@ export const getTrendingItems = async (limitCount: number = 3): Promise<(ItemDat
         return [];
     }
 };
+
+/**
+ * Calculates the real effective price considering promotional / discount prices
+ */
+export const getEffectivePrice = (item: { price: number; oldPrice?: number; promoPrice?: number }): number => {
+    if (item.promoPrice && item.promoPrice > 0 && item.promoPrice < item.price) {
+        return item.promoPrice;
+    }
+    if (item.oldPrice && item.oldPrice > 0 && item.oldPrice !== item.price) {
+        return Math.min(item.price, item.oldPrice);
+    }
+    return item.price;
+};

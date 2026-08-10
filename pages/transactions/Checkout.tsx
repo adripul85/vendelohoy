@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../lib/auth';
 import { createTransaction, PaymentMethod } from '../../lib/transactions';
-import { subscribeToProduct } from '../../lib/items';
+import { subscribeToProduct, getEffectivePrice } from '../../lib/items';
 import { httpsCallable } from 'firebase/functions'; // Use Firebase Cloud Functions
 import { db } from '../../lib/firebase';
 import { getUserProfile, updateUserProfile } from '../../lib/users';
@@ -31,6 +31,7 @@ export default function Checkout() {
   const [discountInfo, setDiscountInfo] = useState<{ id: string, amount: number, code: string } | null>(null);
   const [shippingCost, setShippingCost] = useState(0);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [fetchedItemPrice, setFetchedItemPrice] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState({
       street: userProfile?.location?.address || '',
       number: '',
@@ -52,7 +53,7 @@ export default function Checkout() {
 
   const productId = state.productId || (isCartMode ? `cart-${Date.now()}` : resumedTxData?.itemId || null);
   const productTitle = state.productTitle || (isCartMode ? cart.map(i => `${i.quantity}x ${i.title}`).join(' + ') : resumedTxData?.itemTitle || '');
-  const productPrice = state.productPrice || (isCartMode ? cartTotal : resumedTxData?.amount || 0);
+  const productPrice = state.productPrice || fetchedItemPrice || (isCartMode ? cartTotal : resumedTxData?.amount || 0);
   const sellerId = state.sellerId || (isCartMode ? cart[0]?.sellerId : resumedTxData?.sellerId || '');
   const sellerName = state.sellerName || (isCartMode ? cart[0]?.sellerName : resumedTxData?.sellerName || '');
   const productQuantity = state.productQuantity || (isCartMode ? cart.length : 1);
@@ -93,6 +94,7 @@ export default function Checkout() {
           notify({ type: 'error', title: 'Producto No Disponible', message: 'El vendedor ha eliminado este producto o pausado la venta.', icon: 'production_quantity_limits' });
           setTimeout(() => navigate('/'), 2000);
         } else {
+          setFetchedItemPrice(getEffectivePrice(item));
           if (item.deliveryMethods) {
             setProductDeliveryMethods(item.deliveryMethods);
             // If the currently selected method is no longer available, default to the first available one
@@ -151,7 +153,7 @@ export default function Checkout() {
             <span className="material-symbols-outlined text-5xl text-outline-variant font-black">shopping_cart_off</span>
           </div>
           <h3 className="text-2xl font-black text-on-surface mb-2 uppercase tracking-tight">Carrito Vacío</h3>
-          <p className="text-sm font-bold text-on-surface-variant mb-10">No se detectaron activos para adquisición.</p>
+          <p className="text-sm font-bold text-on-surface-variant mb-10">No se encontraron productos para realizar la compra.</p>
           <button onClick={() => navigate('/')} className="btn-primary">
             Explorar el Mercado
           </button>
@@ -180,7 +182,7 @@ export default function Checkout() {
 
   // NEW MODEL: Dynamic Fees from Settings
   const escrowFeePercentage = platformSettings?.escrowFeePercentage ?? 0.05;
-  const gatewayFeePercentage = platformSettings?.paymentProcessingFeePercentage ?? 0.06;
+  const gatewayFeePercentage = platformSettings?.paymentProcessingFeePercentage ?? 0.08;
 
   // El Pago Protegido solo aplica a medios digitales (MP)
   const isDigitalPayment = selectedMethod === 'MERCADO_PAGO';
@@ -279,7 +281,7 @@ export default function Checkout() {
       });
 
       if (!result.success || !result.id) {
-        notify({ type: 'error', title: 'Error Fatal', message: 'No se pudo inicializar el libro contable seguro.', icon: 'error' });
+        notify({ type: 'error', title: 'Error Fatal', message: 'No se pudo inicializar la transacción.', icon: 'error' });
         setLoading(false);
         return;
       }
@@ -327,7 +329,7 @@ export default function Checkout() {
         const data = await response.json();
 
         if (!response.ok) {
-           throw new Error(data.error || 'Error al conectar con Mercado Pago (Split Payment)');
+           throw new Error(data.error || 'Error al conectar con Mercado Pago');
         }
 
         if (data.id) {
@@ -348,7 +350,7 @@ export default function Checkout() {
           return;
         }
 
-        const backendMessage = error.message || 'Error de protocolo desconocido';
+        const backendMessage = error.message || 'Error de procesamiento desconocido';
         notify({ type: 'error', title: 'Excepción de Pago', message: backendMessage, icon: 'cloud_off' });
         setLoading(false);
         return;
@@ -373,7 +375,7 @@ export default function Checkout() {
             </div>
             <div>
               <h1 className="text-xl font-black text-on-surface uppercase tracking-tight">Finalizar Compra</h1>
-              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Protocolo de custodia segura activado</p>
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Sistema de Pago Protegido Activado</p>
             </div>
           </div>
 
@@ -396,7 +398,7 @@ export default function Checkout() {
                   </div>
 
                   <div className="relative z-10">
-                    <p className="text-primary text-[9px] uppercase font-black tracking-[0.4em] mb-2">Protocolo de Adquisición</p>
+                    <p className="text-primary text-[9px] uppercase font-black tracking-[0.4em] mb-2">Resumen del Producto</p>
                     <h2 className="text-2xl font-black tracking-tight capitalize line-clamp-2 leading-tight">{productTitle}</h2>
                     {(state.selectedColor || state.selectedSize) && (
                         <div className="flex gap-2 text-[10px] font-bold text-white/80 uppercase mt-2">
@@ -415,18 +417,18 @@ export default function Checkout() {
                       <div className="flex items-center gap-4 py-4 border-b border-outline-variant/30/50">
                         <div className="flex-grow">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-black text-on-surface uppercase tracking-tight">Estado del Activo</span>
+                            <span className="text-[10px] font-black text-on-surface uppercase tracking-tight">Estado del Producto</span>
                             <span className="size-1 bg-gray-300 rounded-full"></span>
                             <span className="text-[10px] font-bold text-on-surface-variant capitalize">{state.condition === 'new' ? 'Nuevo' : state.condition === 'like_new' ? 'Excelente' : 'Usado'}</span>
                           </div>
-                          <p className="text-[11px] font-bold text-on-surface-variant leading-tight">Verificado bajo protocolo de inspección estándar.</p>
+                          <p className="text-[11px] font-bold text-on-surface-variant leading-tight">Producto verificado con garantía de reembolso.</p>
                         </div>
                       </div>
                     )}
 
                     <div className="flex justify-between items-center px-2 py-2">
                       <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
-                        Valor del Producto
+                        Precio del Producto
                       </span>
                       <span className="text-xs font-black text-on-surface">$ {productPrice.toLocaleString()}</span>
                     </div>
@@ -479,7 +481,7 @@ export default function Checkout() {
                             )}
                           </span>
                           <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest leading-none">
-                            {isDigitalPayment ? 'Safe Deal Fee' : 'No aplica en trato directo'}
+                            {isDigitalPayment ? 'Tarifa de Protección' : 'No aplica en trato directo'}
                           </span>
                         </div>
                       </div>
@@ -538,7 +540,7 @@ export default function Checkout() {
               </div>
               <div className="flex items-center justify-center gap-2 opacity-20 grayscale px-4 md:px-10">
                 <span className="material-symbols-outlined text-xs">enhanced_encryption</span>
-                <p className="text-[8px] font-black uppercase tracking-[0.3em]">Hardware Encrypted Transaction Layer</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em]">Transacción Protegida con Cifrado SSL</p>
               </div>
             </div>
 
@@ -548,7 +550,7 @@ export default function Checkout() {
               <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/50 shadow-sm animate-in fade-in slide-in-from-right-5 duration-700">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-6 flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">local_shipping</span>
-                  Protocolo de Logística
+                  Opciones de Envío y Entrega
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                   {[

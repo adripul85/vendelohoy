@@ -32,7 +32,7 @@ import { trackProductView } from '../../lib/users';
 import ReportModal from '../../components/product/ReportModal';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
-import { getItems } from '../../lib/items';
+import { getItems, getEffectivePrice } from '../../lib/items';
 
 const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [guideTab, setGuideTab] = useState<'ropa' | 'calzado' | 'bebe' | 'pantalones'>('ropa');
@@ -379,12 +379,14 @@ const ProductDetail = () => {
       return;
     }
 
+    const effectivePrice = getEffectivePrice(product);
+
     // Redirigir al Checkout con la información del producto
     navigate('/checkout', {
       state: {
         productId: product.id,
         productTitle: product.title,
-        productPrice: product.price,
+        productPrice: effectivePrice,
         productImage: product.images?.[0],
         sellerId: product.seller.id,
         sellerName: product.seller.displayName || product.seller.name,
@@ -411,10 +413,12 @@ const ProductDetail = () => {
       return;
     }
 
+    const effectivePrice = getEffectivePrice(product);
+
     addToCart({
       id: product.id,
       title: product.title,
-      price: product.price,
+      price: effectivePrice,
       image: product.images?.[0],
       quantity: quantity,
       sellerId: product.seller.id,
