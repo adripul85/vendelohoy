@@ -30,7 +30,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
                             <span className="material-symbols-outlined font-black">menu</span>
                         </button>
                         
-                        <h1 className="text-xl font-black text-on-surface tracking-tighter font-headline flex gap-1 items-center">
+                        <h1 
+                            onClick={() => navigate('/')}
+                            className="text-xl font-black text-on-surface tracking-tighter font-headline flex gap-1 items-center cursor-pointer"
+                        >
                             Vendelo <span className="text-secondary">Hoy</span>
                         </h1>
                         
@@ -50,7 +53,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
                             <span className="material-symbols-outlined font-black">arrow_back</span>
                         </button>
                         
-                        <h1 className="text-xl font-black text-on-surface tracking-tighter font-headline flex gap-1 items-center">
+                        <h1 
+                            onClick={() => navigate('/')}
+                            className="text-xl font-black text-on-surface tracking-tighter font-headline flex gap-1 items-center cursor-pointer"
+                        >
                             Vendelo <span className="text-secondary">Hoy</span>
                         </h1>
                         

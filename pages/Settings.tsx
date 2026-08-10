@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { updateUserProfile, deleteUserAccount, submitVerification, approveVerification, rejectVerification, ReputationLog, addReputationPoints, checkStoreIdentifierAvailability } from '../lib/users';
+import { GAMIFICATION_LEVELS, getGamificationLevel, getNextGamificationLevel, QUESTS } from '../lib/gamification';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { autoVerifyIdentity, VerificationStep } from '../lib/verification';
@@ -1710,16 +1711,8 @@ export default function Settings() {
                                     
                                     {(() => {
                                         const xp = userProfile.reputationPoints || 0;
-                                        const levels = [
-                                            { name: 'Bronce', min: 0, max: 999, icon: 'military_tech', color: 'text-amber-600', bg: 'bg-amber-600/20' },
-                                            { name: 'Plata', min: 1000, max: 2499, icon: 'military_tech', color: 'text-slate-400', bg: 'bg-slate-400/20' },
-                                            { name: 'Oro', min: 2500, max: 4999, icon: 'workspace_premium', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
-                                            { name: 'Diamante', min: 5000, max: Infinity, icon: 'diamond', color: 'text-cyan-400', bg: 'bg-cyan-400/20' }
-                                        ];
-                                        const currentLvl = levels.find(l => xp >= l.min && xp <= l.max) || levels[0];
-                                        const nextLvlIndex = levels.findIndex(l => l.name === currentLvl.name) + 1;
-                                        const nextLvl = levels[nextLvlIndex < levels.length ? nextLvlIndex : levels.length - 1];
-                                        const progress = xp >= 5000 ? 100 : ((xp - currentLvl.min) / (currentLvl.max - currentLvl.min)) * 100;
+                                        const currentLvl = getGamificationLevel(xp);
+                                        const { nextLevel, xpNeeded, progress } = getNextGamificationLevel(xp);
 
                                         return (
                                             <>
@@ -1730,18 +1723,18 @@ export default function Settings() {
                                                         </span>
                                                     </div>
                                                     <h3 className="text-4xl font-black tracking-tight mb-2 flex items-center gap-3">
-                                                        {xp} <span className="text-xl text-slate-400">XP</span>
+                                                        {xp.toLocaleString()} <span className="text-xl text-slate-400">XP</span>
                                                     </h3>
                                                     <p className="text-slate-400 font-medium mb-6">Nivel actual: <strong className={currentLvl.color}>{currentLvl.name}</strong></p>
                                                     
                                                     {/* Progress Bar */}
                                                     <div className="space-y-2">
                                                         <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                                            <span>Progreso</span>
-                                                            <span>{xp >= 5000 ? 'NIVEL MÁXIMO' : `${nextLvl.min - xp} XP para ${nextLvl.name}`}</span>
+                                                            <span>PROGRESO</span>
+                                                            <span>{!nextLevel ? 'NIVEL MÁXIMO' : `${xpNeeded.toLocaleString()} XP PARA ${nextLevel.name.toUpperCase()}`}</span>
                                                         </div>
-                                                        <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden">
-                                                            <div className="bg-gradient-to-r from-primary to-primary-vibrant h-full rounded-full transition-all duration-1000 relative" style={{ width: `${progress}%` }}>
+                                                        <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden p-0.5 border border-slate-700/50">
+                                                            <div className="bg-gradient-to-r from-primary to-primary-vibrant h-full rounded-full transition-all duration-1000 relative shadow-inner" style={{ width: `${progress}%` }}>
                                                                 <div className="absolute top-0 right-0 bottom-0 w-8 bg-white/20 blur-md translate-x-1/2"></div>
                                                             </div>
                                                         </div>
@@ -1764,66 +1757,76 @@ export default function Settings() {
                                         <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-6">Misiones Disponibles</h4>
                                         <div className="space-y-4">
                                             {/* Mission 1: DNI */}
-                                            <div className="p-4 rounded-2xl border-2 border-slate-100 flex items-start gap-4">
-                                                <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${userProfile.dni ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-400'}`}>
-                                                    <span className="material-symbols-outlined font-black">{userProfile.dni ? 'check' : 'badge'}</span>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <p className={`text-sm font-bold ${userProfile.dni ? 'text-slate-900 line-through opacity-50' : 'text-slate-900'}`}>Verificar Identidad (DNI)</p>
-                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+500 XP</span>
+                                            {(() => {
+                                                const isDniDone = !!userProfile.dni || !!userProfile.verificationBadges?.identityVerified;
+                                                return (
+                                                    <div className={`p-4 rounded-2xl border-2 transition-all ${isDniDone ? 'border-emerald-100 bg-emerald-50/30' : 'border-slate-100 bg-white'} flex items-start gap-4`}>
+                                                        <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${isDniDone ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <span className="material-symbols-outlined font-black">{isDniDone ? 'check' : 'badge'}</span>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start mb-1">
+                                                                <p className={`text-sm font-bold ${isDniDone ? 'text-slate-900 line-through opacity-50' : 'text-slate-900'}`}>Verificar Identidad (DNI)</p>
+                                                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${isDniDone ? 'bg-emerald-100 text-emerald-700' : 'bg-primary-50 text-primary-600'}`}>+500 XP</span>
+                                                            </div>
+                                                            <p className="text-xs font-medium text-slate-500">Obligatorio para nivel Plata. Verifica tu cuenta al 100%.</p>
+                                                            {!isDniDone && (
+                                                                <button type="button" onClick={() => setActiveTab('safety')} className="text-[10px] font-black text-primary-vibrant mt-3 uppercase tracking-widest hover:underline flex items-center gap-1">
+                                                                    Ir a Seguridad <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs font-medium text-slate-500">Obligatorio para nivel Plata. Verifica tu cuenta al 100%.</p>
-                                                    {!userProfile.dni && (
-                                                        <button type="button" onClick={() => setActiveTab('safety')} className="text-[10px] font-black text-primary-vibrant mt-3 uppercase tracking-widest hover:underline flex items-center gap-1">
-                                                            Ir a Seguridad <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                );
+                                            })()}
 
                                             {/* Mission 2: CBU */}
-                                            <div className="p-4 rounded-2xl border-2 border-slate-100 flex items-start gap-4">
-                                                <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-400'}`}>
-                                                    <span className="material-symbols-outlined font-black">{(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) ? 'check' : 'account_balance'}</span>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <p className={`text-sm font-bold ${(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) ? 'text-slate-900 line-through opacity-50' : 'text-slate-900'}`}>Vincular Cuenta de Cobro</p>
-                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+50 XP</span>
+                                            {(() => {
+                                                const isBankDone = !!(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth);
+                                                return (
+                                                    <div className={`p-4 rounded-2xl border-2 transition-all ${isBankDone ? 'border-emerald-100 bg-emerald-50/30' : 'border-slate-100 bg-white'} flex items-start gap-4`}>
+                                                        <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${isBankDone ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <span className="material-symbols-outlined font-black">{isBankDone ? 'check' : 'account_balance'}</span>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start mb-1">
+                                                                <p className={`text-sm font-bold ${isBankDone ? 'text-slate-900 line-through opacity-50' : 'text-slate-900'}`}>Vincular Cuenta de Cobro</p>
+                                                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest ${isBankDone ? 'bg-emerald-100 text-emerald-700' : 'bg-primary-50 text-primary-600'}`}>+50 XP</span>
+                                                            </div>
+                                                            <p className="text-xs font-medium text-slate-500">Obligatorio para nivel Oro. Agrega CBU o CVU.</p>
+                                                            {!isBankDone && (
+                                                                <button type="button" onClick={() => setActiveTab('billing')} className="text-[10px] font-black text-primary-vibrant mt-3 uppercase tracking-widest hover:underline flex items-center gap-1">
+                                                                    Ir a Facturación <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs font-medium text-slate-500">Obligatorio para nivel Oro. Agrega CBU o CVU.</p>
-                                                    {!(userProfile.bankDetails?.cbu || userProfile.bankDetails?.alias || userProfile.mercadoPagoOAuth) && (
-                                                        <button type="button" onClick={() => setActiveTab('billing')} className="text-[10px] font-black text-primary-vibrant mt-3 uppercase tracking-widest hover:underline flex items-center gap-1">
-                                                            Ir a Facturación <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                );
+                                            })()}
 
                                             {/* Mission 3: Sale */}
-                                            <div className="p-4 rounded-2xl border-2 border-slate-100 flex items-start gap-4">
-                                                <div className="size-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                                            <div className="p-4 rounded-2xl border-2 border-slate-100 bg-white flex items-start gap-4">
+                                                <div className="size-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
                                                     <span className="material-symbols-outlined font-black">sell</span>
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-1">
                                                         <p className="text-sm font-bold text-slate-900">Completar una Venta Exitosa</p>
-                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+25 XP</span>
+                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2.5 py-1 rounded-md uppercase tracking-widest">+25 XP</span>
                                                     </div>
                                                     <p className="text-xs font-medium text-slate-500">Por cada venta sin reclamos ni disputas.</p>
                                                 </div>
                                             </div>
                                             
                                             {/* Mission 4: Recommendation */}
-                                            <div className="p-4 rounded-2xl border-2 border-slate-100 flex items-start gap-4">
-                                                <div className="size-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                                            <div className="p-4 rounded-2xl border-2 border-slate-100 bg-white flex items-start gap-4">
+                                                <div className="size-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
                                                     <span className="material-symbols-outlined font-black">thumb_up</span>
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-1">
                                                         <p className="text-sm font-bold text-slate-900">Recibir recomendación (5★)</p>
-                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2 py-1 rounded-md uppercase tracking-widest">+5 XP</span>
+                                                        <span className="text-[10px] font-black bg-primary-50 text-primary-600 px-2.5 py-1 rounded-md uppercase tracking-widest">+5 XP</span>
                                                     </div>
                                                     <p className="text-xs font-medium text-slate-500">Por cada recomendación positiva de compradores.</p>
                                                 </div>
@@ -1835,17 +1838,32 @@ export default function Settings() {
                                         {/* Benefits */}
                                         <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-200">
                                             <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-6">Beneficios por Nivel</h4>
-                                            <ul className="space-y-4">
-                                                <li className="flex items-center gap-4 text-sm font-bold text-slate-700">
-                                                    <span className="material-symbols-outlined text-slate-400">check_circle</span>
-                                                    Badge de Verificado (Nivel Plata o superior)
-                                                </li>
-                                                <li className="flex items-center gap-4 text-sm font-bold text-slate-700">
-                                                    <span className="material-symbols-outlined text-primary-vibrant">auto_awesome</span>
-                                                    Publicaciones Destacadas Gratis (Nivel Oro o superior)
-                                                </li>
+                                            {(() => {
+                                                const xp = userProfile.reputationPoints || 0;
+                                                const isPlataPlus = xp >= 1500;
+                                                const isOroPlus = xp >= 5000;
 
-                                            </ul>
+                                                return (
+                                                    <ul className="space-y-4">
+                                                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800">
+                                                            <span className={`material-symbols-outlined text-xl ${isPlataPlus ? 'text-emerald-500 font-black' : 'text-slate-300'}`}>
+                                                                {isPlataPlus ? 'check_circle' : 'lock'}
+                                                            </span>
+                                                            <span className={isPlataPlus ? 'text-slate-900' : 'text-slate-500'}>
+                                                                Badge de Verificado (Nivel Plata o superior)
+                                                            </span>
+                                                        </li>
+                                                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800">
+                                                            <span className={`material-symbols-outlined text-xl ${isOroPlus ? 'text-yellow-500 font-black' : 'text-slate-300'}`}>
+                                                                {isOroPlus ? 'auto_awesome' : 'lock'}
+                                                            </span>
+                                                            <span className={isOroPlus ? 'text-slate-900' : 'text-slate-500'}>
+                                                                Publicaciones Destacadas Gratis (Nivel Oro o superior)
+                                                            </span>
+                                                        </li>
+                                                    </ul>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Logs */}
@@ -1859,17 +1877,17 @@ export default function Settings() {
                                             ) : (
                                                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
                                                     {reputationLogs.map(log => (
-                                                        <div key={log.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                                                        <div key={log.id} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`size-8 rounded-lg flex items-center justify-center ${log.points > 0 ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>
+                                                                <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${log.points > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                                                                     <span className="material-symbols-outlined text-sm font-black">{log.points > 0 ? 'add' : 'remove'}</span>
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-sm font-bold text-slate-900">{log.reason}</p>
-                                                                    <p className="text-[10px] font-medium text-slate-400">{log.timestamp?.toDate ? log.timestamp.toDate().toLocaleDateString() : 'Reciente'}</p>
+                                                                    <p className="text-[10px] font-medium text-slate-400">{log.timestamp?.toDate ? log.timestamp.toDate().toLocaleDateString('es-AR') : 'Reciente'}</p>
                                                                 </div>
                                                             </div>
-                                                            <span className={`text-xs font-black uppercase ${log.points > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                            <span className={`text-xs font-black uppercase tracking-wider ${log.points > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                 {log.points > 0 ? '+' : ''}{log.points} XP
                                                             </span>
                                                         </div>

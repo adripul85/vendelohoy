@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
 // Definimos qué forma tiene un Producto

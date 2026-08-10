@@ -133,8 +133,8 @@ export default function Checkout() {
         }
       });
       
-      import('../../lib/items').then(({ getItem }) => {
-          getItem(productId).then(item => {
+      import('../../lib/items').then(({ getProduct }) => {
+          getProduct(productId).then(item => {
               if (item) {
                   trackEvent(item.sellerId, 'checkout_start', { productId: item.id, productTitle: item.title });
               }

@@ -10,7 +10,7 @@ export default function GamificationRules() {
     ];
 
     const actions = [
-        { action: 'Verificar Identidad (DNI)', points: '+100 XP', frequency: 'Única vez' },
+        { action: 'Verificar Identidad (DNI)', points: '+500 XP', frequency: 'Única vez' },
         { action: 'Vincular Cuenta de Cobro (CBU)', points: '+50 XP', frequency: 'Única vez' },
         { action: 'Completar Perfil (Foto, Bio)', points: '+50 XP', frequency: 'Única vez' },
         { action: 'Venta Exitosa (Sin reclamos)', points: '+10 XP', frequency: 'Ilimitado' },

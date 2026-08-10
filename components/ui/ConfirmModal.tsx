@@ -78,9 +78,9 @@ export default function ConfirmModal({
 
                 {/* Body */}
                 <div className="p-6">
-                    <p className="text-slate-600 text-sm leading-relaxed">
+                    <div className="text-slate-600 text-sm leading-relaxed">
                         {description}
-                    </p>
+                    </div>
                 </div>
 
                 {/* Footer */}

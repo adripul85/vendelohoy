@@ -174,7 +174,7 @@ export const updateTransactionStatus = async (id: string, status: TransactionSta
                 },
                 body: JSON.stringify({ transactionId: id })
             });
-            const result = await response.json();
+            const result = await response.json().catch(() => ({ error: 'Error del servidor al confirmar recepción' }));
             if (!response.ok) throw new Error(result.error || 'Error al confirmar recepción');
             return { success: true };
         }
@@ -336,7 +336,7 @@ export const cancelTransaction = async (id: string, cancelledByUid: string) => {
             body: JSON.stringify({ transactionId: id })
         });
         
-        const result = await response.json();
+        const result = await response.json().catch(() => ({ error: 'Error del servidor al cancelar la transacción' }));
         if (!response.ok) {
             console.error("API Error cancelling transaction:", result);
             return { success: false, error: result.error || 'Error al cancelar' };

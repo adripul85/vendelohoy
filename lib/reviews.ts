@@ -21,22 +21,44 @@ export const createReview = async (data: Omit<ReviewData, 'createdAt'>) => {
             return { success: false, error: 'Datos de transacción inválidos.' };
         }
 
-        // Check if review already exists for this transaction
-        const existing = await getReviewForTransaction(data.transactionId);
-        if (existing) {
-            return { success: false, error: 'Ya has calificado esta transacción' };
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) return { success: false, error: 'No autorizado' };
+        
+        let idToken = '';
+        try {
+            idToken = await auth.currentUser.getIdToken();
+        } catch (e) {}
+
+        // 1. Try serverless API endpoint
+        if (idToken) {
+            try {
+                const response = await fetch('/api/submit-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    return { success: true, id: result.id };
+                }
+
+                console.warn(`API /api/submit-review returned status ${response.status}. Using direct Firestore fallback...`);
+            } catch (apiErr) {
+                console.warn("API /api/submit-review call failed. Using direct Firestore fallback...", apiErr);
+            }
         }
 
-        // Validate rating
-        if (data.rating < 1 || data.rating > 5) {
-            return { success: false, error: 'La calificación debe ser entre 1 y 5 estrellas' };
-        }
-
+        // 2. Fallback: Save directly to Firestore
         const cleanData: any = {
             transactionId: data.transactionId || "",
             itemId: data.itemId || "",
             sellerId: data.sellerId || "",
-            buyerId: data.buyerId || "",
+            buyerId: data.buyerId || auth.currentUser.uid,
+            reviewerId: auth.currentUser.uid,
             buyerName: data.buyerName || "Usuario",
             buyerAvatar: data.buyerAvatar || "",
             rating: data.rating || 5,
@@ -46,17 +68,10 @@ export const createReview = async (data: Omit<ReviewData, 'createdAt'>) => {
             cleanData.comment = data.comment.trim();
         }
 
-        // Create review
         const docRef = await addDoc(collection(db, "reviews"), cleanData);
 
-        // Update seller's reputation
-        await updateSellerReputation(data.sellerId);
-
-        // If rating is 4 or 5, award XP
-        if (data.rating >= 4) {
-            const { addReputationPoints } = await import('./users');
-            await addReputationPoints(data.sellerId, 5, `Recibiste una calificación de ${data.rating} estrellas por una venta.`);
-        }
+        // Background update seller reputation if allowed
+        updateSellerReputation(data.sellerId).catch(() => {});
 
         return { success: true, id: docRef.id };
     } catch (error: any) {
