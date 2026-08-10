@@ -204,13 +204,23 @@ export const createUserProfile = async (uid: string, data: Partial<UserProfile>)
 // Get user profile
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
     try {
-        const userRef = doc(db, "users", uid);
-        const userSnap = await getDoc(userRef);
+        if (auth.currentUser) {
+            const userRef = doc(db, "users", uid);
+            const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-            return { uid: userSnap.id, ...userSnap.data() } as UserProfile;
+            if (userSnap.exists()) {
+                return { uid: userSnap.id, ...userSnap.data() } as UserProfile;
+            }
+            return null;
+        } else {
+            // Unauthenticated: fetch via public API
+            const res = await fetch(`/api/public-profile?uid=${uid}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data as UserProfile;
+            }
+            return null;
         }
-        return null;
     } catch (error) {
         console.error("Error fetching user profile:", error);
         return null;
@@ -781,15 +791,24 @@ export const claimDailyLoginXp = async (uid: string): Promise<boolean> => {
 
 export const getStoreBySlug = async (slug: string): Promise<UserProfile | null> => {
     try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("store.slug", "==", slug), where("store.isActive", "==", true));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const docSnap = querySnapshot.docs[0];
-            return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
+        if (auth.currentUser) {
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("store.slug", "==", slug), where("store.isActive", "==", true));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
+            }
+            return null;
+        } else {
+            const res = await fetch(`/api/public-profile?slug=${slug}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data as UserProfile;
+            }
+            return null;
         }
-        return null;
     } catch (error) {
         console.error("Error fetching store by slug:", error);
         return null;
