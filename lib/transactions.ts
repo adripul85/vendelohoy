@@ -413,17 +413,17 @@ export const subscribeToUserTransactions = (userId: string, callback: (data: { c
     const unsubBuy = onSnapshot(qBuy, (snap) => {
         data.compras = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         update();
-    });
+    }, (err) => console.warn("unsubBuy error:", err));
 
     const unsubSell = onSnapshot(qSell, (snap) => {
         data.ventas = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         update();
-    });
+    }, (err) => console.warn("unsubSell error:", err));
 
     const unsubWithdrawals = onSnapshot(qWithdrawals, (snap) => {
         data.retiros = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         update();
-    });
+    }, (err) => console.warn("unsubWithdrawals error:", err));
 
     return () => {
         unsubBuy();
@@ -439,7 +439,7 @@ export const subscribeToTransaction = (id: string, callback: (data: any) => void
         if (doc.exists()) {
             callback({ id: doc.id, ...doc.data() });
         }
-    });
+    }, (err) => console.warn("subscribeToTransaction error:", err));
 };
 
 /**
@@ -453,7 +453,7 @@ export const subscribeToEscrowMessages = (transactionId: string, callback: (mess
     return onSnapshot(q, (snapshot) => {
         const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as EscrowMessage[];
         callback(messages);
-    });
+    }, (err) => console.warn("subscribeToEscrowMessages error:", err));
 };
 
 /**
@@ -467,7 +467,7 @@ export const subscribeToEvidence = (transactionId: string, callback: (evidence: 
     return onSnapshot(q, (snapshot) => {
         const evidence = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as EscrowEvidence[];
         callback(evidence);
-    });
+    }, (err) => console.warn("subscribeToEvidence error:", err));
 };
 
 /**

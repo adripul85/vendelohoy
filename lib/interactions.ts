@@ -284,10 +284,12 @@ export interface FollowedSeller {
 export const toggleFollow = async (followerId: string, followedId: string, followerName: string = 'Alguien', sellerInfo?: Partial<FollowedSeller>) => {
     try {
         const followRef = doc(db, "users", followerId, "following", followedId);
+        const followerRef = doc(db, "users", followedId, "followers", followerId);
         const docSnap = await getDoc(followRef);
 
         if (docSnap.exists()) {
             await deleteDoc(followRef);
+            await deleteDoc(followerRef).catch(() => {});
             return { isFollowing: false };
         } else {
             // If sellerInfo not provided, try fetching profile
@@ -315,6 +317,11 @@ export const toggleFollow = async (followerId: string, followedId: string, follo
                 followedAt: serverTimestamp()
             });
 
+            await setDoc(followerRef, {
+                followerId,
+                followedAt: serverTimestamp()
+            }).catch(() => {});
+
             // Send notification to the followed user
             await sendNotification(followedId, {
                 title: 'Nuevo Seguidor',
@@ -328,6 +335,27 @@ export const toggleFollow = async (followerId: string, followedId: string, follo
     } catch (error) {
         console.error("Error toggling follow:", error);
         throw error;
+    }
+};
+
+export const notifyFollowersNewProduct = async (sellerId: string, sellerName: string, productId: string, productTitle: string) => {
+    try {
+        const followersRef = collection(db, "users", sellerId, "followers");
+        const snapshot = await getDocs(followersRef);
+        
+        const notifications = snapshot.docs.map(docSnap => {
+            const followerUid = docSnap.id;
+            return sendNotification(followerUid, {
+                title: '¡Nuevo producto publicado!',
+                message: `${sellerName} ha publicado: "${productTitle}"`,
+                type: 'info',
+                link: `/product/${productId}`
+            });
+        });
+
+        await Promise.all(notifications);
+    } catch (error) {
+        console.error("Error notifying followers of new product:", error);
     }
 };
 

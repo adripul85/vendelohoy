@@ -1000,13 +1000,31 @@ export default function Dashboard() {
                                 <div className="flex-1">
                                   <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">{item.category}</p>
                                   <h3 className="text-xl font-black text-on-surface tracking-tight group-hover:text-red-600 transition-colors line-clamp-1">{item.title}</h3>
-                                  <div className="flex items-baseline gap-2 pt-1">
-                                    <p className="text-2xl font-black text-on-surface">${item.price.toLocaleString()}</p>
-                                    {item.oldPrice && item.oldPrice > item.price && (
-                                      <p className="text-sm font-bold text-on-surface-variant line-through opacity-70">
-                                        ${item.oldPrice.toLocaleString()}
-                                      </p>
-                                    )}
+                                  <div className="flex items-baseline gap-2.5 pt-1 flex-wrap">
+                                    {(() => {
+                                      const hasPromo = item.oldPrice && item.oldPrice > 0 && item.oldPrice !== item.price;
+                                      const displayPrice = item.price;
+                                      const displayOldPrice = hasPromo ? item.oldPrice : null;
+                                      const discountPct = hasPromo && displayOldPrice ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100) : 0;
+
+                                      return (
+                                        <>
+                                          <p className="text-2xl font-black text-on-surface">${displayPrice.toLocaleString('es-AR')}</p>
+                                          {hasPromo && displayOldPrice && (
+                                            <>
+                                              <p className="text-sm font-bold text-on-surface-variant line-through opacity-70">
+                                                ${displayOldPrice.toLocaleString('es-AR')}
+                                              </p>
+                                              {discountPct !== 0 && (
+                                                <span className={`text-[10px] font-black text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm ${discountPct > 0 ? 'bg-secondary' : 'bg-emerald-500'}`}>
+                                                  {discountPct > 0 ? `${discountPct}% OFF` : `${Math.abs(discountPct)}% MAS`}
+                                                </span>
+                                              )}
+                                            </>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                   <div className="flex items-center gap-2 mt-2">
                                     {isPaused ? (

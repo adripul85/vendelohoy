@@ -37,6 +37,7 @@ const SellerSection: React.FC<Props> = ({ seller, onContactSeller }) => {
     const { user } = useAuth(); // Assuming useAuth is available/imported
     const { notify } = useNotification(); // Assuming useNotification is available/imported
     const [isFollowing, setIsFollowing] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
 
     const isVerified = seller.verificationBadges?.identityVerified;
@@ -97,16 +98,26 @@ const SellerSection: React.FC<Props> = ({ seller, onContactSeller }) => {
                 {user && user.uid !== seller.uid && (
                     <button
                         onClick={handleFollow}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
                         disabled={loading}
-                        className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${isFollowing
-                            ? 'bg-surface-container-high text-on-surface hover:bg-error/10 hover:text-error'
+                        className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${isFollowing
+                            ? isHovered
+                                ? 'bg-red-50 text-red-600 border border-red-200'
+                                : 'bg-surface-container-high text-on-surface hover:bg-error/10 hover:text-error'
                             : 'bg-primary text-on-primary hover:bg-primary/90 shadow-sm'
                             }`}
                     >
                         {loading ? '...' : isFollowing ? (
-                            <>
-                                <span className="material-symbols-outlined text-[14px]">check</span> Siguiendo
-                            </>
+                            isHovered ? (
+                                <>
+                                    <span className="material-symbols-outlined text-[14px]">person_remove</span> Dejar de seguir
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined text-[14px]">check</span> Siguiendo
+                                </>
+                            )
                         ) : (
                             <>
                                 <span className="material-symbols-outlined text-[14px]">person_add</span> Seguir Vendedor

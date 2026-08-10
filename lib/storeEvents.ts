@@ -17,12 +17,14 @@ const getVisitorId = async () => {
     if (vid) return vid;
 
     try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        // Generamos un hash simple o usamos la IP con un prefijo
-        vid = 'ip_' + data.ip.replace(/\./g, '_').replace(/:/g, '_'); 
-        sessionStorage.setItem('visitor_ip_hash', vid);
-        return vid;
+        const response = await fetch('https://api.ipify.org?format=json').catch(() => null);
+        if (response && response.ok) {
+            const data = await response.json();
+            vid = 'ip_' + data.ip.replace(/\./g, '_').replace(/:/g, '_'); 
+            sessionStorage.setItem('visitor_ip_hash', vid);
+            return vid;
+        }
+        throw new Error('ipify unavailable');
     } catch {
         let fallback = localStorage.getItem('visitor_id');
         if (!fallback) {

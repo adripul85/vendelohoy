@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getItemsBySeller, ItemData } from '../../lib/items';
 import { getUserProfile, getStoreBySlug, UserProfile } from '../../lib/users';
 import ProductCard from '../../components/ProductCard';
@@ -21,6 +21,7 @@ const Shop = () => {
     const [products, setProducts] = useState<(ItemData & { id: string })[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowHovered, setIsFollowHovered] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [showPoliciesModal, setShowPoliciesModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -241,23 +242,29 @@ const Shop = () => {
                     <div className={`flex flex-col gap-4 ${layoutTemplate === 'minimalist' ? 'items-start flex-1' : layoutTemplate === 'modern' ? 'items-start md:w-1/2 z-10' : 'items-center'}`}>
                         {/* Store Logo */}
                         {store?.logo && (
-                            <div className={`${layoutTemplate === 'minimalist' ? 'size-20 rounded-2xl' : layoutTemplate === 'modern' ? 'size-28 rounded-[2rem]' : 'size-24 rounded-3xl'} bg-white/10 backdrop-blur-md border-2 border-white/20 shadow-2xl shadow-black/30 overflow-hidden flex items-center justify-center`}>
+                            <Link 
+                                to={`/profile/${seller.uid}`} 
+                                title={`Ver perfil de ${seller.displayName || store?.name}`}
+                                className={`${layoutTemplate === 'minimalist' ? 'size-20 rounded-2xl' : layoutTemplate === 'modern' ? 'size-28 rounded-[2rem]' : 'size-24 rounded-3xl'} bg-white/10 backdrop-blur-md border-2 border-white/20 shadow-2xl shadow-black/30 overflow-hidden flex items-center justify-center hover:scale-105 transition-transform group cursor-pointer`}
+                            >
                                 <img 
                                     src={store.logo} 
                                     alt={store.name || 'Logo'} 
-                                    className="w-full h-full object-contain p-2"
+                                    className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300"
                                 />
-                            </div>
+                            </Link>
                         )}
 
                         {/* Store Name */}
                         {store?.name && (
-                            <h1 className={`${layoutTemplate === 'minimalist' ? 'text-2xl sm:text-3xl' : layoutTemplate === 'bold' ? 'text-5xl sm:text-6xl tracking-tighter' : 'text-3xl sm:text-4xl'} font-black text-white drop-shadow-lg flex items-center gap-3`}>
-                                {store.name}
-                                {store.paidOfficialTick && (
-                                    <span className="material-symbols-outlined text-sky-400 text-2xl drop-shadow-md" title="Tienda Verificada">verified</span>
-                                )}
-                            </h1>
+                            <Link to={`/profile/${seller.uid}`} title={`Ver perfil de ${seller.displayName || store?.name}`} className="group cursor-pointer">
+                                <h1 className={`${layoutTemplate === 'minimalist' ? 'text-2xl sm:text-3xl' : layoutTemplate === 'bold' ? 'text-5xl sm:text-6xl tracking-tighter' : 'text-3xl sm:text-4xl'} font-black text-white drop-shadow-lg flex items-center gap-3 group-hover:text-rose-200 transition-colors`}>
+                                    {store.name}
+                                    {store.paidOfficialTick && (
+                                        <span className="material-symbols-outlined text-sky-400 text-2xl drop-shadow-md" title="Tienda Verificada">verified</span>
+                                    )}
+                                </h1>
+                            </Link>
                         )}
 
                         {/* Tagline */}
@@ -535,14 +542,31 @@ const Shop = () => {
                         <div className="flex flex-col gap-4">
                             <button
                                 onClick={handleFollow}
+                                onMouseEnter={() => setIsFollowHovered(true)}
+                                onMouseLeave={() => setIsFollowHovered(false)}
                                 style={!isFollowing ? { backgroundColor: theme.accentColor || '#e11d48' } : {}}
-                                className={`w-full py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl ${isFollowing
-                                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                    : 'text-white hover:scale-[1.02] active:scale-[0.98]'
+                                className={`w-full py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer ${
+                                    isFollowing
+                                        ? isFollowHovered
+                                            ? 'bg-red-50 text-red-600 border border-red-200 shadow-red-100/50'
+                                            : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                                        : 'text-white hover:scale-[1.02] active:scale-[0.98]'
                                     }`}
                             >
-                                {isFollowing ? 'Siguiendo Vendedor' : 'Seguir Vendedor'}
+                                <span className="material-symbols-outlined text-base">
+                                    {isFollowing ? (isFollowHovered ? 'person_remove' : 'check') : 'person_add'}
+                                </span>
+                                {isFollowing ? (isFollowHovered ? 'Dejar de seguir' : 'Siguiendo Vendedor') : 'Seguir Vendedor'}
                             </button>
+
+                            <Link
+                                to={`/profile/${seller.uid}`}
+                                className="w-full py-4 bg-slate-50 text-slate-700 rounded-[24px] flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] transition-all font-bold text-xs uppercase tracking-widest shadow-sm cursor-pointer group"
+                            >
+                                <span className="material-symbols-outlined text-lg text-rose-500 group-hover:scale-125 transition-transform">account_circle</span>
+                                Ver Perfil de Vendedor
+                            </Link>
+
                             <button
                                 onClick={() => setShowShareModal(true)}
                                 className="w-full py-4 bg-slate-50 text-slate-700 rounded-[24px] flex items-center justify-center gap-2 border border-slate-200 hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] transition-all font-bold text-xs uppercase tracking-widest shadow-sm cursor-pointer group"

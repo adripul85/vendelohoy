@@ -134,6 +134,16 @@ export const publishItem = async (data: ItemData) => {
         });
         const docRef = await addDoc(collection(db, "items"), cleanPayload);
 
+        // Notify followers asynchronously
+        import('./interactions').then(({ notifyFollowersNewProduct }) => {
+            notifyFollowersNewProduct(
+                auth.currentUser!.uid,
+                data.sellerName || 'Vendedor',
+                docRef.id,
+                data.title
+            ).catch(err => console.error("Error notifying followers:", err));
+        });
+
         return { success: true, id: docRef.id };
     } catch (error) {
         console.error("Error al publicar:", error);

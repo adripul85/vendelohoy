@@ -31,6 +31,8 @@ import { toggleFavorite, checkIsFavorite, toggleProductAlert, checkHasAlert, rep
 import { trackProductView } from '../../lib/users';
 import ReportModal from '../../components/product/ReportModal';
 import { useCart } from '../../context/CartContext';
+import ProductCard from '../../components/ProductCard';
+import { getItems } from '../../lib/items';
 
 const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [guideTab, setGuideTab] = useState<'ropa' | 'calzado' | 'bebe' | 'pantalones'>('ropa');
@@ -227,6 +229,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'shipping'>('specs');
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   // Check initial state & Track View
   useEffect(() => {
@@ -242,6 +245,24 @@ const ProductDetail = () => {
     
     if (product.id && product.sellerId) {
       trackEvent(product.sellerId, 'page_view', { productId: product.id, productTitle: product.title });
+    }
+
+    if (product.id) {
+      getItems().then(all => {
+        const filtered = all
+          .filter((item: any) => item.id !== product.id && (item.status === 'AVAILABLE' || !item.status))
+          .filter((item: any) => !product.category || item.category === product.category)
+          .slice(0, 4);
+
+        if (filtered.length < 4) {
+          const fallback = all
+            .filter((item: any) => item.id !== product.id && !filtered.some((f: any) => f.id === item.id) && (item.status === 'AVAILABLE' || !item.status))
+            .slice(0, 4 - filtered.length);
+          setRelatedProducts([...filtered, ...fallback]);
+        } else {
+          setRelatedProducts(filtered);
+        }
+      }).catch(err => console.error("Error loading related products:", err));
     }
   }, [user, product.id, product.category, product.sellerId, product.title]);
 
@@ -863,10 +884,21 @@ const ProductDetail = () => {
 
       {/* YOU MAY ALSO LIKE */}
       <div className="mt-16 lg:mt-24 border-t border-outline-variant/30 pt-12">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2">Recomendados para vos</h4>
-        <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter mb-8">Te podría interesar</h2>
+        <div className="mb-8">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2">Recomendados para vos</h4>
+          <h2 className="text-2xl lg:text-3xl font-black text-primary font-headline tracking-tighter">Te podría interesar</h2>
+        </div>
         
-        {/* We use QuestionsSection here temporarily or replace it entirely. Let's keep it clean */}
+        {/* Related Product Cards Grid */}
+        {relatedProducts.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {relatedProducts.map((relProduct: any) => (
+              <ProductCard key={relProduct.id} product={relProduct} />
+            ))}
+          </div>
+        )}
+        
+        {/* Questions & Answers Section */}
         <div className="max-w-4xl mx-auto px-4 md:px-0">
           <QuestionsSection itemId={product.id} sellerId={product.seller.id} itemTitle={product.title} />
         </div>
