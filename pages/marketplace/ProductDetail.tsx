@@ -197,6 +197,7 @@ const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
 const ProductDetail = () => {
   const {
     product,
+    loading,
     activeImg,
     setActiveImg,
     isHovered,
@@ -468,6 +469,29 @@ const ProductDetail = () => {
       }
     };
   };
+
+  if (loading) {
+    return (
+      <main className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8 bg-background min-h-screen">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 animate-pulse">
+          <div className="lg:col-span-7 xl:col-span-7 space-y-6 lg:space-y-8">
+            <div className="w-full bg-surface-container-low rounded-[2rem] aspect-square md:aspect-[4/3] lg:aspect-square relative overflow-hidden"></div>
+            <div className="flex gap-2 mt-4">
+              {[1, 2, 3, 4].map(i => <div key={i} className="size-16 md:size-20 bg-surface-container-low rounded-2xl"></div>)}
+            </div>
+          </div>
+          <div className="lg:col-span-5 xl:col-span-5 space-y-6 mt-4 lg:mt-0">
+            <div className="w-24 h-4 bg-surface-container-low rounded-full mb-4"></div>
+            <div className="w-3/4 h-8 bg-surface-container-low rounded-xl mb-4"></div>
+            <div className="w-1/2 h-10 bg-surface-container-low rounded-xl mb-6"></div>
+            <div className="w-full h-32 bg-surface-container-low rounded-2xl mb-6"></div>
+            <div className="w-full h-14 bg-surface-container-low rounded-2xl mb-4"></div>
+            <div className="w-full h-14 bg-surface-container-low rounded-2xl"></div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8 bg-background min-h-screen font-body relative pb-24 md:pb-6">

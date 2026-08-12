@@ -1047,7 +1047,7 @@ export default function Dashboard() {
                                 </div>
                               </div>
                               <div className="flex gap-3 mt-8">
-                                <button onClick={() => navigate(`/product/${item.id}`)} className="flex-1 py-3 bg-surface-container-lowest text-on-surface rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container transition-all">Ver Publicación</button>
+                                <button onClick={() => navigate(`/product/${item.slug || item.id}`)} className="flex-1 py-3 bg-surface-container-lowest text-on-surface rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container transition-all">Ver Publicación</button>
                                 <button
                                   onClick={() => handleToggleFeatured(item)}
                                   className={`py-3 px-4 border rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${item.isFeatured

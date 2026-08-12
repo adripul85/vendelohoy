@@ -169,8 +169,8 @@ const Search = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 min-h-screen bg-background font-body">
       <SEO 
-        title={q ? `Resultados para "${q}"` : "Buscar productos"} 
-        description={`Explora los mejores productos${q ? ` relacionados con ${q}` : ''} en De Oportunidades.`}
+        title={query ? `Resultados para "${query}"` : "Buscar productos"} 
+        description={`Explora los mejores productos${query ? ` relacionados con ${query}` : ''} en Vendelo Hoy.`}
       />
       {/* Header & Search Bar */}
       <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-surface p-8 rounded-3xl border border-outline-variant/30 shadow-sm">

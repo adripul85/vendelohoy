@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
-import { getProduct, ItemData } from '../lib/items';
+import { getProduct, getProductBySlug, ItemData } from '../lib/items';
 import { getUserProfile } from '../lib/users';
 import { db } from '../lib/firebase';
 
@@ -24,7 +24,10 @@ export const useProduct = () => {
         const fetchProduct = async () => {
             if (!id) return;
             setLoading(true);
-            const data = await getProduct(id);
+            let data = await getProductBySlug(id);
+            if (!data) {
+                data = await getProduct(id);
+            }
             if (data) {
                 const sellerData = await getUserProfile(data.sellerId);
                 const fallbackName = data.sellerName || 'Vendedor de Oportunidades';

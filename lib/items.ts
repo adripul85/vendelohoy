@@ -44,6 +44,7 @@ export interface ItemData {
     tags?: string[];
     seoTitle?: string;
     seoDescription?: string;
+    slug?: string;
     flashSaleFeeApplied?: number;
     flashSaleExpiresAt?: any;
     createdAt?: any;
@@ -342,6 +343,21 @@ export const getFlashSaleItems = async (userLocation?: string) => {
 
 
 // Fetch single item by ID
+export const getProductBySlug = async (slug: string) => {
+    try {
+        const q = query(collection(db, "items"), where("slug", "==", slug), limit(1));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            return { id: doc.id, ...doc.data() } as (ItemData & { id: string });
+        }
+        return null;
+    } catch (error) {
+        console.error("Error al obtener producto por slug:", error);
+        return null;
+    }
+};
+
 export const getProduct = async (id: string) => {
     try {
         const docRef = doc(db, "items", id);

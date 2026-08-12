@@ -78,6 +78,7 @@ export default function Publish() {
         tags: '',
         seoTitle: '',
         seoDescription: '',
+        slug: '',
         shippingAvailable: true,
         deliveryMethods: ['en_mano'] as string[],
         isFeatured: false,
@@ -134,6 +135,7 @@ export default function Publish() {
                         tags: (item.tags || []).join(', '),
                         seoTitle: item.seoTitle || '',
                         seoDescription: item.seoDescription || '',
+                        slug: item.slug || '',
                         shippingAvailable: item.shippingAvailable !== undefined ? item.shippingAvailable : true,
                         deliveryMethods: item.deliveryMethods || ['en_mano'],
                         isFeatured: item.isFeatured || false,
@@ -317,6 +319,7 @@ export default function Publish() {
                 tags: tagsArray,
                 seoTitle: form.seoTitle,
                 seoDescription: form.seoDescription,
+                slug: form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
                 ...(prodDims && Object.keys(prodDims).length > 0 && { productDimensions: prodDims }),
                 shippingAvailable: form.deliveryMethods.some(m => ['correo_argentino', 'domicilio'].includes(m)),
                 deliveryMethods: form.deliveryMethods,
@@ -906,8 +909,9 @@ export default function Publish() {
                                             <div>
                                                 <label className="block text-[11px] font-bold text-slate-500 mb-1">URL del producto (Identificador URL)</label>
                                                 <input 
-                                                    name="seoTitle" type="text" value={form.seoTitle} onChange={handleChange} placeholder="Ejemplo: remera-negra-estampada"
+                                                    name="slug" type="text" value={form.slug} onChange={handleChange} placeholder="Ejemplo: remera-negra-estampada"
                                                     className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" 
+
                                                 />
                                                 <p className="text-[10px] text-slate-400 mt-1">En caso de que no la definas, usaremos una basada en el título.</p>
                                             </div>
@@ -967,8 +971,8 @@ export default function Publish() {
                                         </div>
 
                                         <label className="block text-sm font-bold text-slate-800 mb-1">Link para video externo</label>
-                                        <p className="text-xs text-slate-500 mb-3">Pegá un link de Youtube o de Vimeo sobre tu producto</p>
-                                        <input name="videoUrl" value={form.videoUrl} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                        <p className="text-xs text-slate-500 mb-3">Pegá un link de cualquier video online (Youtube, Vimeo, Instagram, TikTok, etc.) sobre tu producto</p>
+                                        <input name="videoUrl" value={form.videoUrl} onChange={handleChange} placeholder="Ejemplo: https://youtube.com/watch?v=..." className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                                     </div>
                                 </div>
                             </Card>

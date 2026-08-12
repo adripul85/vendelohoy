@@ -73,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
             className={`group bg-surface-container-lowest rounded-2xl shadow-premium hover:shadow-2xl transition-all flex flex-col h-full w-full relative overflow-hidden ${isSold ? 'opacity-60 grayscale-[0.3]' : ''}`}
         >
             <Link
-                to={`/product/${product.id}`}
+                to={`/product/${product.slug || product.id}`}
                 onClick={() => !isSold && triggerHaptic('light')}
                 className={`flex flex-col h-full ${isSold ? 'cursor-default' : ''}`}
                 onPointerDown={(e) => isSold && e.preventDefault()}
