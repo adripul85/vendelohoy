@@ -1,0 +1,5 @@
+## 2024-08-12 - [Sentinel initialization]
+## 2025-02-28 - [Insecure Vercel API Endpoint Auth]
+**Vulnerability:** The courier dispatch Vercel API endpoint (`api-handlers/dispatch-courier.ts`) simply checked for the presence of a 'Bearer' token in headers without genuinely validating it using `adminAuth.verifyIdToken(token)`. Furthermore, there was no authorization check to enforce that the caller was the transaction's seller or an admin.
+**Learning:** Checking for the presence of a token is not authentication. Without verifying the ID token and cross-checking the decoded UID against the resource owner, attackers could bypass security by passing a fake token or a token belonging to an unrelated user to perform actions they shouldn't (Insecure Direct Object Reference / Broken Access Control).
+**Prevention:** In Vercel API endpoints that handle sensitive operations, always validate the Bearer token explicitly with `adminAuth.verifyIdToken(token)`. Then, implement authorization by ensuring the decoded `uid` is permitted to perform the requested action (e.g., verifying ownership or admin status).
