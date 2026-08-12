@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminDb } from '../lib/firebase-admin.js';
+import { adminDb, adminAuth } from '../lib/firebase-admin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -10,13 +10,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { transactionId } = req.body;
         
-        // Basic auth check via headers (simplified for this sandbox)
+        // Basic auth check via headers
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'No autorizado' });
         }
         const token = authHeader.split('Bearer ')[1];
-        // En prod validaríamos el token con Firebase Admin: adminAuth.verifyIdToken(token)
+
+        let decodedToken;
+        try {
+            decodedToken = await adminAuth.verifyIdToken(token);
+        } catch (err) {
+            console.error("Token verification failed:", err);
+            return res.status(401).json({ error: 'No autorizado' });
+        }
 
         const txRef = adminDb.collection('transactions').doc(transactionId);
         const txSnap = await txRef.get();
@@ -26,6 +33,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const txData = txSnap.data() as any;
+
+        // Authorization check
+        if (decodedToken.uid !== txData.sellerId && !decodedToken.admin) {
+             return res.status(403).json({ error: 'Prohibido: No tienes permisos sobre esta transacción' });
+        }
 
         if (txData.deliveryMethod !== "domicilio") {
             return res.status(400).json({ error: 'El método de entrega no es apto para vehículos On-Demand.' });
