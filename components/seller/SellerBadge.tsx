@@ -26,7 +26,7 @@ export default function SellerBadge({ seller, showName = true, compact = false }
     }
 
     return (
-        <div className="flex items-center gap-2 bg-slate-50/50 px-3 py-2 rounded-2xl border border-slate-100/50 backdrop-blur-sm">
+        <div className="flex items-center gap-2 bg-surface-container/50 px-3 py-2 rounded-2xl border border-slate-100/50 backdrop-blur-sm">
             <div className="relative">
                 <div className="size-8 rounded-full bg-slate-200 overflow-hidden border border-white shadow-sm">
                     <img

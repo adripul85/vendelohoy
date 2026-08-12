@@ -101,7 +101,7 @@ export const MarketingBannerManager: React.FC<Props> = ({ banners, onUpdate }) =
                                     <h5 className="text-white text-xl font-black uppercase tracking-tight drop-shadow-lg">{banner.title}</h5>
                                 </div>
                             </div>
-                            <div className="p-6 flex items-center justify-between border-t border-slate-100 bg-slate-50/30">
+                            <div className="p-6 flex items-center justify-between border-t border-slate-100 bg-surface-container/30">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100">
                                         <span className="material-symbols-outlined text-lg text-primary-vibrant">{cat?.icon || 'category'}</span>

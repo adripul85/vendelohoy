@@ -113,7 +113,7 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
             className={`relative px-3 md:px-5 py-3.5 font-bold text-[11px] md:text-xs uppercase tracking-wide transition-colors duration-200 shrink-0 ${
                 activeTab === id 
                 ? 'text-primary bg-primary/5' 
-                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-surface-container'
             } whitespace-nowrap`}
         >
             {label}
@@ -163,7 +163,7 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
                 {customizationSlot && renderTabButton("customization", "Diseño")}
             </div>
 
-            <div className="p-6 md:p-10 bg-slate-50/50 min-h-[600px]">
+            <div className="p-6 md:p-10 bg-surface-container/50 min-h-[600px]">
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-fit">
@@ -314,7 +314,7 @@ export default function ERPDashboard({ sales, items, storeId, customizationSlot,
                                         realtimeEvents.slice(0, 5).map((ev, i) => {
                                             const details = getEventDetails(ev.type, ev);
                                             return (
-                                                <div key={i} className="flex gap-5 items-center p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                                                <div key={i} className="flex gap-5 items-center p-4 rounded-2xl border border-slate-100 hover:bg-surface-container transition-colors">
                                                     <div className={`size-10 rounded-xl flex items-center justify-center ${details.color}`}>
                                                         <span className="material-symbols-outlined text-[20px]">{details.icon}</span>
                                                     </div>

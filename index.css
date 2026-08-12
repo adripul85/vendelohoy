@@ -61,7 +61,7 @@
   }
 
   body {
-    @apply bg-surface text-on-surface antialiased transition-colors duration-500;
+    @apply bg-surface-bright text-on-surface antialiased transition-colors duration-500;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
@@ -109,7 +109,7 @@
   }
 
   .card-gallery {
-    @apply bg-surface border border-slate-100 rounded-2xl shadow-sm transition-all duration-300 overflow-hidden;
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-300 overflow-hidden;
   }
 
   .card-gallery:hover {

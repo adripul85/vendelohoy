@@ -72,7 +72,7 @@ export default function StockHistoryModal({ itemId, itemTitle, isOpen, onClose }
                         <h3 className="font-black text-slate-900">Historial de Stock</h3>
                         <p className="text-xs text-slate-500 font-medium mt-1 truncate max-w-md">{itemTitle}</p>
                     </div>
-                    <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 size-8 rounded-full flex items-center justify-center transition-colors">
+                    <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-surface-container hover:bg-slate-100 size-8 rounded-full flex items-center justify-center transition-colors">
                         <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
@@ -85,7 +85,7 @@ export default function StockHistoryModal({ itemId, itemTitle, isOpen, onClose }
                         </div>
                     ) : history.length === 0 ? (
                         <div className="text-center py-12">
-                            <div className="size-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <div className="size-16 bg-surface-container rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <span className="material-symbols-outlined text-slate-300 text-3xl">history</span>
                             </div>
                             <p className="text-sm font-bold text-slate-500">No hay movimientos registrados.</p>
@@ -95,7 +95,7 @@ export default function StockHistoryModal({ itemId, itemTitle, isOpen, onClose }
                             {history.map(entry => {
                                 const typeInfo = getTypeLabel(entry.type);
                                 return (
-                                    <div key={entry.id} className="flex gap-4 p-4 rounded-xl border border-slate-100 hover:border-indigo-100 transition-colors bg-slate-50/50 group">
+                                    <div key={entry.id} className="flex gap-4 p-4 rounded-xl border border-slate-100 hover:border-indigo-100 transition-colors bg-surface-container/50 group">
                                         <div className="mt-1">
                                             <div className={`size-10 rounded-xl flex items-center justify-center ${typeInfo.color}`}>
                                                 <span className="material-symbols-outlined text-[20px]">

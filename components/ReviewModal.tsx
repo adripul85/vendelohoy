@@ -168,7 +168,7 @@ export default function ReviewModal({
                             type="button"
                             onClick={handleClose}
                             disabled={submitting}
-                            className="flex-1 px-8 py-5 rounded-3xl border-2 border-slate-200 text-slate-500 font-black hover:bg-slate-50 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                            className="flex-1 px-8 py-5 rounded-3xl border-2 border-slate-200 text-slate-500 font-black hover:bg-surface-container transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
                         >
                             Cancelar
                         </button>

@@ -125,7 +125,7 @@ export default function AdvancedSalesStats({ sales }: AdvancedSalesStatsProps) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[500px]">
                         <thead>
-                            <tr className="bg-slate-50 border-b border-slate-100 text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                            <tr className="bg-surface-container border-b border-slate-100 text-[11px] uppercase tracking-wider font-bold text-slate-500">
                                 <th className="p-4 pl-8">Cliente (ID)</th>
                                 <th className="p-4 text-center">Compras</th>
                                 <th className="p-4 text-right pr-8">Facturación Total</th>
@@ -133,7 +133,7 @@ export default function AdvancedSalesStats({ sales }: AdvancedSalesStatsProps) {
                         </thead>
                         <tbody className="text-sm">
                             {topClients.map((client) => (
-                                <tr key={client.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                <tr key={client.id} className="border-b border-slate-50 hover:bg-surface-container/50 transition-colors">
                                     <td className="p-4 pl-8 font-medium text-slate-700">{client.id}</td>
                                     <td className="p-4 text-center font-bold text-emerald-600">{client.count}</td>
                                     <td className="p-4 text-right pr-8 font-black text-slate-800">${client.total.toLocaleString()}</td>

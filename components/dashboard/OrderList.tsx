@@ -107,7 +107,7 @@ export default function OrderList({ sales, items }: OrderListProps) {
                         placeholder="Buscar por ID o cliente..." 
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-4 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        className="w-full bg-surface-container border border-slate-200 rounded-xl py-2.5 pl-11 pr-4 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                     />
                 </div>
                 
@@ -119,7 +119,7 @@ export default function OrderList({ sales, items }: OrderListProps) {
                     <FilterTab label="Por retirar" count={counts.POR_RETIRAR} active={filter === 'POR_RETIRAR'} onClick={() => setFilter('POR_RETIRAR')} />
                     <FilterTab label="Por archivar" count={counts.ARCHIVADO} active={filter === 'ARCHIVADO'} onClick={() => setFilter('ARCHIVADO')} />
                     
-                    <button className="flex items-center justify-center size-[38px] rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 ml-2 transition-colors shrink-0">
+                    <button className="flex items-center justify-center size-[38px] rounded-xl border border-slate-200 text-slate-500 hover:bg-surface-container ml-2 transition-colors shrink-0">
                         <span className="material-symbols-outlined text-[20px]">filter_list</span>
                     </button>
                 </div>
@@ -143,7 +143,7 @@ export default function OrderList({ sales, items }: OrderListProps) {
                     </thead>
                     <tbody className="text-sm">
                         {filteredSales.length > 0 ? filteredSales.map((sale) => (
-                            <tr key={sale.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group">
+                            <tr key={sale.id} className="border-b border-slate-50 hover:bg-surface-container/80 transition-colors group">
                                 <td className="p-4 text-center">
                                     <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
                                 </td>
@@ -205,7 +205,7 @@ export default function OrderList({ sales, items }: OrderListProps) {
                 </table>
             </div>
 
-            <div className="bg-slate-50 p-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
+            <div className="bg-surface-container p-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
                 <p>Mostrando {Math.min(filteredSales.length, 1)}-{filteredSales.length} ventas de {filteredSales.length}</p>
                 <button className="flex items-center gap-1 text-emerald-600 font-bold hover:underline">
                     <span className="material-symbols-outlined text-[16px]">help</span> Más sobre ventas
@@ -229,7 +229,7 @@ function FilterTab({ label, count, active, onClick }: { label: string, count: nu
         <button 
             onClick={onClick}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors shrink-0 ${
-                active ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent'
+                active ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-slate-600 hover:bg-surface-container border border-transparent'
             }`}
         >
             {label}

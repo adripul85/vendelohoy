@@ -69,16 +69,16 @@ export const MarketingBroadcastManager: React.FC<Props> = ({ broadcast, onUpdate
                     <div className="md:col-span-8 space-y-8">
                          <div>
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">Mensaje Dinámico</label>
-                            <input type="text" value={msg} onChange={e => setMsg(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-bold text-sm transition-all" placeholder="EJ: ¡Envío Gratis este fin de semana!" />
+                            <input type="text" value={msg} onChange={e => setMsg(e.target.value)} className="w-full bg-surface-container border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-bold text-sm transition-all" placeholder="EJ: ¡Envío Gratis este fin de semana!" />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">CTA (Call to Action)</label>
-                                <input type="text" value={btnText} onChange={e => setBtnText(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-black text-[10px] uppercase tracking-widest transition-all" />
+                                <input type="text" value={btnText} onChange={e => setBtnText(e.target.value)} className="w-full bg-surface-container border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-black text-[10px] uppercase tracking-widest transition-all" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">Punto de Anclaje (URL/PATH)</label>
-                                <input type="text" value={btnLink} onChange={e => setBtnLink(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-bold text-xs transition-all" />
+                                <input type="text" value={btnLink} onChange={e => setBtnLink(e.target.value)} className="w-full bg-surface-container border-2 border-transparent focus:border-primary-vibrant/20 focus:bg-white rounded-2xl p-5 font-bold text-xs transition-all" />
                             </div>
                         </div>
                     </div>
@@ -95,7 +95,7 @@ export const MarketingBroadcastManager: React.FC<Props> = ({ broadcast, onUpdate
                                     <button
                                         key={t.id}
                                         onClick={() => setType(t.id as any)}
-                                        className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all group/btn ${type === t.id ? 'border-primary-vibrant bg-indigo-50/30' : 'border-slate-100 bg-slate-50 shadow-sm hover:border-slate-200'}`}
+                                        className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all group/btn ${type === t.id ? 'border-primary-vibrant bg-indigo-50/30' : 'border-slate-100 bg-surface-container shadow-sm hover:border-slate-200'}`}
                                     >
                                         <div className={`size-5 rounded-lg shadow-md ${t.color} group-hover/btn:scale-110 transition-transform`}></div>
                                         <span className={`text-[10px] font-black uppercase tracking-widest ${type === t.id ? 'text-primary-vibrant' : 'text-slate-500'}`}>{t.label}</span>

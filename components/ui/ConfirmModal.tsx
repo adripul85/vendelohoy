@@ -84,7 +84,7 @@ export default function ConfirmModal({
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <div className="p-6 bg-surface-container border-t border-slate-100 flex items-center justify-end gap-3">
                     <button
                         onClick={onClose}
                         disabled={isLoading}

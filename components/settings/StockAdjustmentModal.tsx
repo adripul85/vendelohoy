@@ -177,12 +177,12 @@ export default function StockAdjustmentModal({ item, isOpen, onClose, onSave }: 
                 </div>
 
                 {/* Footer buttons */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <div className="p-4 border-t border-slate-100 bg-surface-container flex justify-end gap-3">
                     <button 
                         type="button"
                         onClick={onClose}
                         disabled={isSaving}
-                        className="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>

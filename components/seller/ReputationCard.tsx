@@ -75,7 +75,7 @@ export default function ReputationCard({ seller, onViewShop }: Props) {
             </div>
 
             {/* Card de Estrellas y Botón */}
-            <div className="bg-slate-50/80 rounded-[40px] p-6 mb-6 relative border border-slate-100/50 shadow-inner group/card">
+            <div className="bg-surface-container/80 rounded-[40px] p-6 mb-6 relative border border-slate-100/50 shadow-inner group/card">
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex gap-0.5 mb-2">

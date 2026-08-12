@@ -133,6 +133,11 @@ service cloud.firestore {
           get(/databases/$(database)/documents/items/$(itemId)).data.sellerId == request.auth.uid || isAdmin()
         );
       }
+      
+      // Subcolección: Seguimiento de vistas (para evitar duplicados por IP/UID)
+      match /viewers/{visitorId} {
+        allow read, write: if true;
+      }
     }
     
     // REGLAS PARA CHATS

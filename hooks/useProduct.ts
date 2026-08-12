@@ -26,11 +26,6 @@ export const useProduct = () => {
             setLoading(true);
             const data = await getProduct(id);
             if (data) {
-                // Increment views
-                import("firebase/firestore").then(({ updateDoc, doc, increment }) => {
-                    updateDoc(doc(db, "items", id), { views: increment(1) });
-                });
-
                 const sellerData = await getUserProfile(data.sellerId);
                 const fallbackName = data.sellerName || 'Vendedor de Oportunidades';
                 setProduct({

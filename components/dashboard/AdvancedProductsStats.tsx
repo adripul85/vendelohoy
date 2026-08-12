@@ -228,7 +228,7 @@ export default function AdvancedProductsStats({ items, sales }: AdvancedProducts
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                            <tr className="bg-surface-container/80 border-b border-slate-100 text-[11px] uppercase tracking-wider font-bold text-slate-500">
                                 <th className="p-4 pl-6">Producto</th>
                                 <th className="p-4">Variante</th>
                                 <th className="p-4 text-center">Pedidos</th>
@@ -239,7 +239,7 @@ export default function AdvancedProductsStats({ items, sales }: AdvancedProducts
                         </thead>
                         <tbody className="text-sm">
                             {detailsTableData.slice(0, 15).map((row) => (
-                                <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                <tr key={row.id} className="border-b border-slate-50 hover:bg-surface-container/50 transition-colors">
                                     <td className="p-4 pl-6 font-medium text-slate-700 max-w-[200px] truncate">{row.title}</td>
                                     <td className="p-4 text-slate-500 text-xs">{row.variant}</td>
                                     <td className="p-4 text-center font-bold text-blue-600">{row.pedidos}</td>
@@ -287,7 +287,7 @@ export default function AdvancedProductsStats({ items, sales }: AdvancedProducts
                     </div>
                     <div className="max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                         {top50Data.length > 0 ? top50Data.map((product, idx) => (
-                            <div key={product.id} className="flex items-center gap-3 px-6 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                            <div key={product.id} className="flex items-center gap-3 px-6 py-3 border-b border-slate-50 last:border-0 hover:bg-surface-container/50 transition-colors">
                                 <span className="text-[10px] font-black text-slate-400 w-6 text-right shrink-0">{idx + 1}</span>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-slate-700 truncate">{product.title}</p>

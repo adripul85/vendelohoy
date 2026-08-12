@@ -28,7 +28,7 @@ export default function CustomerDetailModal({ isOpen, onClose, buyer, transactio
 
     return (
         <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-50 w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="bg-surface-container w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="bg-white p-6 md:p-8 flex items-center justify-between border-b border-slate-100">
                     <div>
@@ -37,7 +37,7 @@ export default function CustomerDetailModal({ isOpen, onClose, buyer, transactio
                         <p className="text-sm text-slate-500 font-medium mt-1">Primera interacción el {formattedDate}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <button className="hidden sm:flex px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors items-center gap-2">
+                        <button className="hidden sm:flex px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-surface-container transition-colors items-center gap-2">
                             <span className="material-symbols-outlined text-[18px]">more_vert</span>
                             Más opciones
                         </button>
@@ -57,7 +57,7 @@ export default function CustomerDetailModal({ isOpen, onClose, buyer, transactio
                     <div className="flex-1 bg-white rounded-[24px] border border-slate-200 p-6 shadow-sm">
                         <h4 className="text-xl font-black text-slate-800 tracking-tight mb-6">1 Venta</h4>
                         
-                        <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex flex-col gap-2 p-4 bg-surface-container rounded-2xl border border-slate-100">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-emerald-600 font-bold text-sm">#{transaction.id.slice(0, 8)}</p>

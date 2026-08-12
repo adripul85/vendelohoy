@@ -100,14 +100,14 @@ const VoiceSearchModal = ({ isOpen, onClose, onResult }: { isOpen: boolean, onCl
                     <span className="material-symbols-outlined font-black">close</span>
                 </button>
 
-                <div className="size-32 bg-slate-50 rounded-full mx-auto mb-10 flex items-center justify-center relative">
+                <div className="size-32 bg-surface-container rounded-full mx-auto mb-10 flex items-center justify-center relative">
                     <div className="absolute inset-0 bg-primary-100 rounded-full animate-ping opacity-20"></div>
                     <span className="material-symbols-outlined text-5xl text-primary-600 font-black animate-pulse">mic</span>
                 </div>
 
                 <h3 className="text-3xl font-black text-slate-900 mb-4 font-display">Escuchando...</h3>
 
-                <div className="min-h-[140px] flex items-center justify-center p-8 bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 mb-10">
+                <div className="min-h-[140px] flex items-center justify-center p-8 bg-surface-container rounded-[32px] border-2 border-dashed border-slate-200 mb-10">
                     <p className="text-xl font-bold text-slate-900 leading-tight italic opacity-60">
                         {transcription || 'Hable ahora...'}
                     </p>
@@ -245,6 +245,7 @@ const Header = () => {
                     }}>Inicio</Link>
                     <Link to="/search" className="text-on-surface-variant hover:text-primary transition-colors">Explorar Market</Link>
                     <Link to="/deals" className="text-on-surface-variant hover:text-primary transition-colors">Ofertas Relámpago</Link>
+                    <Link to="/ayuda" className="text-on-surface-variant hover:text-primary transition-colors">Centro de Ayuda</Link>
                 </nav>
 
                 {/* BUSCADOR */}
@@ -325,7 +326,7 @@ const Header = () => {
                                         </div>
                                     ) : favoriteItems.length === 0 ? (
                                         <div className="text-center py-8 text-slate-400">
-                                            <div className="size-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                                            <div className="size-12 bg-surface-container text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-2">
                                                 <span className="material-symbols-outlined text-2xl">heart_broken</span>
                                             </div>
                                             <p className="text-xs font-bold text-slate-500">Aún no tienes favoritos</p>
@@ -337,7 +338,7 @@ const Header = () => {
                                                 key={item.productId}
                                                 to={`/product/${item.productId}`}
                                                 onClick={() => setIsFavMenuOpen(false)}
-                                                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group"
+                                                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-surface-container border border-transparent hover:border-slate-100 transition-all group"
                                             >
                                                 <img
                                                     src={item.image || 'https://picsum.photos/100/100'}
@@ -540,7 +541,7 @@ const Header = () => {
                                             exit="exit"
                                             className="absolute top-14 right-0 w-64 bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-premium p-2 z-[100] origin-top-right"
                                         >
-                                            <div className="p-3 bg-slate-50/50 rounded-xl mb-1 flex items-center gap-3">
+                                            <div className="p-3 bg-surface-container/50 rounded-xl mb-1 flex items-center gap-3">
                                             <div className="min-w-0">
                                                 <p className="font-bold text-slate-900 text-sm truncate">{userProfile?.displayName || user.displayName}</p>
                                                 <p className="text-[10px] font-medium text-slate-500 truncate">{user.email}</p>

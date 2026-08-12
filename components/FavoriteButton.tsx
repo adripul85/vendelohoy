@@ -259,7 +259,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ product, classNa
                                     value={newListName}
                                     onChange={(e) => setNewListName(e.target.value)}
                                     placeholder="Ej: Regalos, Para mi PC, etc."
-                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-rose-500 focus:bg-white transition-colors"
+                                    className="flex-1 bg-surface-container border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-rose-500 focus:bg-white transition-colors"
                                     disabled={loading}
                                 />
                                 <button

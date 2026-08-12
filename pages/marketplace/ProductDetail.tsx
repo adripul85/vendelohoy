@@ -234,19 +234,31 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   // Check initial state & Track View
+  const hasTrackedPopularity = React.useRef(false);
+  const hasTrackedPersonalization = React.useRef(false);
+  
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // 1. Popularity & Analytics: Track immediately (works for both anonymous and logged in)
+    if (product.id && !hasTrackedPopularity.current) {
+      hasTrackedPopularity.current = true;
+      incrementProductViews(product.id, user?.uid);
+      
+      if (product.sellerId) {
+        trackEvent(product.sellerId, 'page_view', { productId: product.id, productTitle: product.title });
+      }
+    }
+
+    // 2. Personalization: Wait for user object to populate, then track once
+    if (user?.uid && product.id && !hasTrackedPersonalization.current) {
+      hasTrackedPersonalization.current = true;
+      trackProductView(user.uid, product.id, product.category);
+    }
+
     if (user && product.id) {
       checkIsFavorite(user.uid, product.id).then(setIsSaved);
       checkHasAlert(user.uid, product.id).then(setHasAlert);
-
-      // Track behavior (personalization + popularity)
-      trackProductView(user.uid, product.id, product.category);
-      incrementProductViews(product.id);
-    }
-    
-    if (product.id && product.sellerId) {
-      trackEvent(product.sellerId, 'page_view', { productId: product.id, productTitle: product.title });
     }
 
     if (product.id) {
@@ -266,7 +278,7 @@ const ProductDetail = () => {
         }
       }).catch(err => console.error("Error loading related products:", err));
     }
-  }, [user, product.id, product.category, product.sellerId, product.title]);
+  }, [user?.uid, product.id, product.category, product.sellerId, product.title]);
 
   const handleAction = async (action: string) => {
     if (!user) {
@@ -502,6 +514,7 @@ const ProductDetail = () => {
         <div className="lg:col-span-7 xl:col-span-7 order-1 flex flex-col gap-2">
           <ProductMedia
             images={product.images}
+            videoUrl={product.videoUrl}
             activeImg={activeImg}
             setActiveImg={setActiveImg}
             isHovered={isHovered}

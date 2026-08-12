@@ -59,6 +59,7 @@ const GamificationRules = lazy(() => import('./pages/GamificationRules'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 
 const PageFallback = () => (
   <div className="w-full min-h-[60vh] flex flex-col items-center justify-center py-20">
@@ -151,7 +152,8 @@ const Footer = () => (
         <div>
           <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Ayuda</h4>
           <ul className="space-y-4">
-            <li><Link to="/resolution-center" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Ayuda</Link></li>
+            <li><Link to="/ayuda" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Ayuda</Link></li>
+            <li><Link to="/resolution-center" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Resolución</Link></li>
             <li><Link to="/escrow-info" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">¿Cómo funciona?</Link></li>
             <li><Link to="/security" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Consejos de Seguridad</Link></li>
             <li><Link to="/reputacion" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Sistema de Puntos</Link></li>
@@ -289,6 +291,7 @@ function App() {
                       <Route path="/security" element={<SecurityInfo />} />
                       <Route path="/reputacion" element={<GamificationRules />} />
                       <Route path="/resolution-center" element={<RequireProfile><ResolutionCenter /></RequireProfile>} />
+                      <Route path="/ayuda" element={<HelpCenter />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

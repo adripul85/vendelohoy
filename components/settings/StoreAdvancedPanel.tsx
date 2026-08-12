@@ -47,7 +47,7 @@ const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, 
                         </div>
                         
                         <div className="space-y-3">
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <div className="bg-surface-container p-4 rounded-2xl border border-slate-100">
                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">local_shipping</span> Entrega</h4>
                                 <p className="text-xs font-bold text-slate-700 capitalize">{transaction.deliveryMethod?.replace('_', ' ') || 'No especificado'}</p>
                                 {transaction.deliveryAddress && (
@@ -98,7 +98,7 @@ const BuyerCell = ({ buyerId, transaction, onStatusChange }: { buyerId: string, 
                                 {transaction.trackingNumber && <p className="text-[10px] text-slate-500 font-medium mt-1">Tracking: {transaction.trackingNumber}</p>}
                             </div>
                             {buyer?.email && (
-                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div className="bg-surface-container p-4 rounded-2xl border border-slate-100">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">badge</span> Datos Personales</h4>
                                     <p className="text-xs font-bold text-slate-700">{buyer.email}</p>
                                     {buyer.dni && <p className="text-xs font-bold text-slate-700 mt-1">DNI: {buyer.dni}</p>}
@@ -512,7 +512,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center justify-between mb-6">
                     <h4 className="font-black text-slate-900">Rendimiento de Ventas</h4>
-                    <select className="text-[11px] font-bold text-slate-500 bg-slate-50 border-none rounded-lg px-3 py-1.5 outline-none cursor-pointer">
+                    <select className="text-[11px] font-bold text-slate-500 bg-surface-container border-none rounded-lg px-3 py-1.5 outline-none cursor-pointer">
                         <option>Últimos 15 días</option>
                     </select>
                 </div>
@@ -561,7 +561,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50">
+                            <tr className="bg-surface-container/50">
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Producto</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Fecha</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Comprador</th>
@@ -583,7 +583,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                     const netAmount = sale.amount * (1 - feeRate);
 
                                     return (
-                                        <tr key={sale.id} className="hover:bg-slate-50 transition-colors">
+                                        <tr key={sale.id} className="hover:bg-surface-container transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
                                                     <div className="size-10 rounded-lg bg-slate-100 overflow-hidden shrink-0">
@@ -637,7 +637,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                     </div>
                     <div className="flex-1 overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-[800px]">
-                            <thead className="bg-slate-50 border-b border-slate-100">
+                            <thead className="bg-surface-container border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[40%]">Producto</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-600 uppercase tracking-widest w-[15%]">Stock</th>
@@ -648,7 +648,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {items.map(item => (
-                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr key={item.id} className="hover:bg-surface-container/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="size-14 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
@@ -671,7 +671,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                                             <button 
                                                                 type="button"
                                                                 onClick={() => setSelectedPriceItem(item)}
-                                                                className="size-5 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
+                                                                className="size-5 rounded bg-surface-container border border-slate-200 hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
                                                                 title="Modificar precio"
                                                             >
                                                                 <span className="material-symbols-outlined text-[12px]">edit</span>
@@ -708,7 +708,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                             <button 
                                                 type="button"
                                                 onClick={() => setSelectedHistoryItem(item)}
-                                                className="size-8 rounded-full bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-400 hover:text-indigo-600 mx-auto flex items-center justify-center transition-colors"
+                                                className="size-8 rounded-full bg-surface-container hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-400 hover:text-indigo-600 mx-auto flex items-center justify-center transition-colors"
                                                 title="Ver historial de stock"
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">history</span>
@@ -751,20 +751,20 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                 placeholder="CÓDIGO"
                                 value={newCoupon.code}
                                 onChange={e => setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})}
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none uppercase"
+                                className="flex-1 bg-surface-container border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none uppercase"
                             />
                             <div className="relative w-20">
                                 <input 
                                     type="number"
                                     value={newCoupon.discountPercentage}
                                     onChange={e => setNewCoupon({...newCoupon, discountPercentage: Number(e.target.value)})}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none pr-6 text-right"
+                                    className="w-full bg-surface-container border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none pr-6 text-right"
                                 />
                                 <span className="absolute right-2 top-1.5 text-xs font-bold text-slate-400">%</span>
                             </div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                            <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                            <div className="flex-1 flex items-center gap-2 bg-surface-container border border-slate-200 rounded-lg px-3 py-1.5">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Usos:</span>
                                 <input 
                                     type="number"
@@ -787,7 +787,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                 <p className="text-xs text-center text-slate-400 font-medium py-4">Sin cupones activos.</p>
                             ) : (
                                 coupons.map(coupon => (
-                                    <div key={coupon.id} className={`flex items-center justify-between p-2 rounded-lg border ${coupon.active ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-50 border-slate-100'}`}>
+                                    <div key={coupon.id} className={`flex items-center justify-between p-2 rounded-lg border ${coupon.active ? 'bg-indigo-50 border-indigo-100' : 'bg-surface-container border-slate-100'}`}>
                                         <div>
                                             <p className={`text-xs font-black ${coupon.active ? 'text-indigo-700' : 'text-slate-500'}`}>{coupon.code}</p>
                                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{coupon.discountPercentage}% OFF • {coupon.uses}/{coupon.maxUses} usos</p>
@@ -837,7 +837,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                                     const otherUser = chat.participantsData?.[chat.participants.find(p => p !== user.uid) || ''] || { displayName: 'Usuario' };
                                     const unreadCount = chat.unreadCount?.[user.uid] || 0;
                                     return (
-                                        <div key={chat.id} className="flex gap-3 items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                        <div key={chat.id} className="flex gap-3 items-center p-2 rounded-lg hover:bg-surface-container transition-colors">
                                             <div className="size-8 rounded-full bg-slate-100 overflow-hidden shrink-0">
                                                 {otherUser.photoURL ? (
                                                     <img src={otherUser.photoURL} alt="" className="w-full h-full object-cover" />
@@ -860,7 +860,7 @@ const StoreAdvancedPanel: React.FC<StoreAdvancedPanelProps> = ({ user, customiza
                             )}
                         </div>
                         
-                        <Link to="/messages" className="w-full py-2 bg-slate-50 text-emerald-600 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <Link to="/messages" className="w-full py-2 bg-surface-container text-emerald-600 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                             Ir a Bandeja
                             <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                         </Link>

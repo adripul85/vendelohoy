@@ -16,7 +16,7 @@ const TermsAndCosts = () => {
                 <h1 className="text-4xl font-black text-dark-800 tracking-tighter mb-4">Costos y Tarifas</h1>
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-12">Transparencia total en operación de mercado seguro</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-20">
+                <div className="max-w-3xl mx-auto mb-20">
 
                     {/* SELLING FEES */}
                     <div className="bg-white p-4 md:p-10 rounded-[40px] border border-light-200 shadow-premium group hover:shadow-premium-lg transition-all">
@@ -43,30 +43,6 @@ const TermsAndCosts = () => {
                         </ul>
                     </div>
 
-                    {/* CANCELLATION PENALTY */}
-                    <div className="bg-dark-800 p-4 md:p-10 rounded-[40px] border border-dark-900 shadow-premium relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none"></div>
-
-                        <div className="relative z-10">
-                            <div className="mb-8 size-20 rounded-[32px] bg-white/10 text-white flex items-center justify-center border border-white/5">
-                                <span className="material-symbols-outlined text-4xl">cancel_presentation</span>
-                            </div>
-                            <h2 className="text-2xl font-black text-white mb-4 tracking-tight">Penalización por Cancelación</h2>
-                            <div className="flex items-baseline gap-2 mb-6">
-                                <span className="text-6xl font-black text-white tracking-tighter">3%</span>
-                                <span className="text-xs font-black text-white/40 uppercase tracking-widest">del total</span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-400 leading-relaxed mb-8">
-                                Aplicable al vendedor si cancela una orden ya pagada sin causa justificada. Esto compensa los costos operativos y la mala experiencia del comprador.
-                            </p>
-                            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3">
-                                <span className="material-symbols-outlined text-red-500">warning</span>
-                                <p className="text-[10px] text-red-400 font-bold leading-relaxed">
-                                    Si tu saldo es insuficiente, el monto quedará registrado como deuda en tu cuenta.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
 

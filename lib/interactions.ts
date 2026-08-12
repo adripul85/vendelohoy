@@ -407,21 +407,75 @@ export const getFollowedSellers = async (userId: string): Promise<FollowedSeller
 
 // --- INTERACTION TRACKING ---
 
-export const trackProductView = async (productId: string) => {
+// Cache the IP for the session to avoid repeated API calls
+let _cachedIp: string | null = null;
+
+const getVisitorIp = async (): Promise<string> => {
+    if (_cachedIp) return _cachedIp;
     try {
-        const VIEW_KEY = 'viewed_products';
-        const viewedProducts = JSON.parse(localStorage.getItem(VIEW_KEY) || '[]');
-        
-        if (!viewedProducts.includes(productId)) {
+        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) });
+        const data = await res.json();
+        _cachedIp = data.ip;
+        return data.ip;
+    } catch {
+        // Fallback: generate a fingerprint from available browser data
+        const fp = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset().toString()
+        ].join('|');
+        // Simple hash
+        let hash = 0;
+        for (let i = 0; i < fp.length; i++) {
+            const char = fp.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0;
+        }
+        _cachedIp = `fp_${Math.abs(hash).toString(36)}`;
+        return _cachedIp;
+    }
+};
+
+// In-memory lock to prevent race conditions (multiple calls before first write resolves)
+const _pendingViews = new Set<string>();
+
+export const trackProductView = async (productId: string, userId?: string) => {
+    try {
+        // Determine unique visitor ID: prefer UID for logged-in, IP for anonymous
+        let visitorId: string;
+        if (userId) {
+            visitorId = `uid_${userId}`;
+        } else {
+            const ip = await getVisitorIp();
+            visitorId = `ip_${ip.replace(/[.:/]/g, '_')}`;
+        }
+
+        // In-memory guard: if we're already processing this exact view, skip
+        const lockKey = `${productId}_${visitorId}`;
+        if (_pendingViews.has(lockKey)) return;
+        _pendingViews.add(lockKey);
+
+        // Check if this unique visitor already viewed this product (Firestore-backed)
+        const viewerRef = doc(db, "items", productId, "viewers", visitorId);
+        const viewerSnap = await getDoc(viewerRef);
+
+        if (!viewerSnap.exists()) {
+            // First time this visitor sees this product — count it
             const { increment, updateDoc } = await import("firebase/firestore");
-            const productRef = doc(db, "items", productId);
-            await updateDoc(productRef, {
+
+            await setDoc(viewerRef, {
+                viewedAt: serverTimestamp(),
+                type: userId ? 'user' : 'ip'
+            });
+
+            await updateDoc(doc(db, "items", productId), {
                 views: increment(1)
             });
-            viewedProducts.push(productId);
-            localStorage.setItem(VIEW_KEY, JSON.stringify(viewedProducts));
         }
+        // Keep in _pendingViews forever (for this session) — intentional, prevents any re-counting
     } catch (error) {
         console.error("Error tracking product view:", error);
     }
 };
+

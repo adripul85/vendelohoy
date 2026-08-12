@@ -214,7 +214,7 @@ const BulkUpload: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {/* PREVIEW */}
             {pendingProducts.length > 0 && (
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                <div className="bg-surface-container rounded-2xl p-4 border border-slate-200">
                     <div className="flex items-center justify-between mb-4">
                         <h4 className="font-black text-slate-800">Vista Previa ({pendingProducts.length} productos)</h4>
                         {totalMissing > 0 && (

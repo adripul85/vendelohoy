@@ -43,14 +43,14 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
     return (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-surface-container/50">
                     <div>
                         <h2 className="text-lg font-black text-slate-800">Modificar Precio</h2>
                         <p className="text-xs text-slate-500 font-medium mt-1 truncate max-w-[200px]">{item.title}</p>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="size-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 flex items-center justify-center transition-colors"
+                        className="size-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-surface-container flex items-center justify-center transition-colors"
                     >
                         <span className="material-symbols-outlined text-xl">close</span>
                     </button>
@@ -78,7 +78,7 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                                         }
                                     }
                                 }}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-4 font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-lg"
+                                className="w-full bg-surface-container border border-slate-200 rounded-xl py-3 pl-8 pr-4 font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-lg"
                                 placeholder="0"
                                 required
                                 min="0"
@@ -103,7 +103,7 @@ export default function PriceAdjustmentModal({ item, isOpen, onClose, onSave }: 
                                         }
                                     }
                                 }}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-4 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                className="w-full bg-surface-container border border-slate-200 rounded-xl py-3 pl-8 pr-4 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                                 placeholder="0"
                                 min="0"
                                 step="1"
