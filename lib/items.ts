@@ -160,9 +160,15 @@ export const publishItemsBatch = async (items: ItemData[]) => {
         const batch = writeBatch(db);
         const collectionRef = collection(db, "items");
         
+        let firstDocId: string | null = null;
+        
         items.forEach(item => {
             if (item.price > 0) {
                 const docRef = doc(collectionRef);
+                if (!firstDocId) {
+                    firstDocId = docRef.id;
+                }
+                
                 const cleanPayload = cleanUndefined({
                     ...item,
                     sellerId: auth.currentUser!.uid,
@@ -177,6 +183,20 @@ export const publishItemsBatch = async (items: ItemData[]) => {
         });
         
         await batch.commit();
+        
+        if (firstDocId && items.length > 0) {
+            // Notify followers asynchronously
+            import('./interactions').then(({ notifyFollowersNewProduct }) => {
+                const sellerName = auth.currentUser?.displayName || 'Vendedor';
+                notifyFollowersNewProduct(
+                    auth.currentUser!.uid,
+                    sellerName,
+                    firstDocId!,
+                    `${items.length} productos nuevos`
+                ).catch(err => console.error("Error notifying followers:", err));
+            });
+        }
+        
         return { success: true, count: items.length };
     } catch (error) {
         console.error("Error al publicar lote:", error);

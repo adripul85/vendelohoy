@@ -3,46 +3,53 @@
 @tailwind utilities;
 @layer base {
   :root {
-    /* PREMIUM MARKETPLACE — BLUE-GREEN + LIME PALETTE */
-    --surface: #F0EADC; 
-    --surface-bright: #F0EADC;
-    --surface-dim: #E8E0D0; /* Slightly darker shade for dim */
-    --surface-container-lowest: #F0EADC;
-    --surface-container-low: #F8F4EB; /* Slightly lighter shade for low */
-    --surface-container: #F1F5F9;
-    --surface-container-high: #E2E8F0;
-    --surface-container-highest: #CBD5E1;
-    
-    --on-surface: #1E293B; 
-    --on-surface-variant: #64748B; 
-    
-    --primary: #0369A1; 
-    --on-primary: #ffffff;
-    --primary-container: #E0F2FE; 
-    --on-primary-container: #0C4A6E; 
-    
-    --primary-vibrant: #075985;
-    
-    --secondary: #65A30D; 
-    --on-secondary: #ffffff;
-    --secondary-container: #ECFCCB; 
-    --on-secondary-container: #4D7C0F; 
-    
-    --error: #DC2626; 
-    --on-error: #ffffff;
-    --error-container: #FEE2E2; 
-    --on-error-container: #991B1B; 
-    
-    --outline: #94A3B8; 
-    --outline-variant: #E2E8F0; 
-    
-    --inverse-surface: #0F172A; 
-    --inverse-on-surface: #F8FAFC; 
-    --inverse-primary: #7DD3FC; 
+    /* PREMIUM MARKETPLACE — SKY + LIME PALETTE (unified cold neutrals) */
+
+    /* Neutros — familia slate unificada (sin mezcla cálido/frío) */
+    --surface: #F8FAFC;                /* slate-50 */
+    --surface-bright: #F0F8FF;         /* Alice Blue */
+    --surface-dim: #F1F5F9;            /* slate-100 */
+    --surface-container-lowest: #FFFFFF;
+    --surface-container-low: #F8FAFC;  /* slate-50 */
+    --surface-container: #F1F5F9;      /* slate-100 */
+    --surface-container-high: #E2E8F0; /* slate-200 */
+    --surface-container-highest: #CBD5E1; /* slate-300 */
+
+    /* Texto — más contraste para mobile con luz solar */
+    --on-surface: #0F172A;             /* slate-900 */
+    --on-surface-variant: #475569;     /* slate-600 (sube desde #64748B) */
+
+    /* Primario — sky, más vívido */
+    --primary: #0284C7;                /* sky-600 */
+    --on-primary: #FFFFFF;
+    --primary-container: #E0F2FE;      /* sky-100 */
+    --on-primary-container: #075985;   /* sky-800 */
+    --primary-vibrant: #0EA5E9;        /* sky-500, para hovers/highlights */
+
+    /* Secundario/Acento — lima (sin cambios, ya funciona bien) */
+    --secondary: #65A30D;              /* lime-600 */
+    --on-secondary: #FFFFFF;
+    --secondary-container: #ECFCCB;    /* lime-100 */
+    --on-secondary-container: #3F6212; /* lime-800, más contraste */
+
+    /* Error */
+    --error: #DC2626;
+    --on-error: #FFFFFF;
+    --error-container: #FEE2E2;
+    --on-error-container: #991B1B;
+
+    /* Outline */
+    --outline: #94A3B8;                /* slate-400 */
+    --outline-variant: #E2E8F0;        /* slate-200 */
+
+    /* Inverse */
+    --inverse-surface: #0F172A;
+    --inverse-on-surface: #F8FAFC;
+    --inverse-primary: #7DD3FC;
 
     /* Accent — Lima */
     --accent: #65A30D;
-    --accent-hover: #84CC16;
+    --accent-hover: #84CC16;           /* lime-500 */
     --accent-container: #ECFCCB;
 
     /* Warning */
