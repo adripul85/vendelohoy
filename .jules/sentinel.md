@@ -1,0 +1,4 @@
+## 2026-08-14 - [Missing JWT Verification and IDOR in Dispatch Courier API]
+**Vulnerability:** The `api-handlers/dispatch-courier.ts` endpoint was missing actual verification of the authorization token (relying on a commented-out sandbox mock) and was missing an authorization check to ensure the caller was the seller of the transaction, leading to an Insecure Direct Object Reference (IDOR) vulnerability.
+**Learning:** Never trust client-provided IDs without verifying ownership against the authenticated token in serverless handlers. Even in sandbox/mock endpoints, authentication validation must be strictly enforced.
+**Prevention:** Always use `adminAuth.verifyIdToken(token)` to validate the JWT and explicitly check `decodedToken.uid` against document owner IDs before performing sensitive actions.
