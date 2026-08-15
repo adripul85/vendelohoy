@@ -336,19 +336,21 @@ const Header = () => {
                                         favoriteItems.slice(0, 6).map(item => (
                                             <Link
                                                 key={item.productId}
-                                                to={`/product/${item.productId}`}
+                                                to={`/product/${item.slug || item.productId}`}
                                                 onClick={() => setIsFavMenuOpen(false)}
-                                                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-surface-container border border-transparent hover:border-slate-100 transition-all group"
+                                                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-surface-container border border-transparent hover:border-slate-100 transition-all group relative"
                                             >
-                                                <img
-                                                    src={item.image || 'https://picsum.photos/100/100'}
-                                                    alt={item.title}
-                                                    className="size-14 rounded-xl object-cover bg-slate-100 shrink-0 shadow-sm"
-                                                />
+                                                <div className="relative shrink-0">
+                                                    <img
+                                                        src={item.image || 'https://picsum.photos/100/100'}
+                                                        alt={item.title}
+                                                        className="size-14 rounded-xl object-cover bg-slate-100 shadow-sm"
+                                                    />
+                                                </div>
                                                 <div className="min-w-0 flex-1">
                                                     <h5 className="text-xs font-black text-slate-800 truncate group-hover:text-sky-700 transition-colors mb-0.5">{item.title}</h5>
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <span className="text-xs font-black text-emerald-600">${item.price?.toLocaleString() || '0'}</span>
+                                                        <span className="text-xs font-black text-emerald-600">${(item.currentPrice || item.price)?.toLocaleString() || '0'}</span>
                                                         <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md truncate max-w-[100px]">{item.sellerName || 'Vendedor'}</span>
                                                     </div>
                                                 </div>

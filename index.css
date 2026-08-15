@@ -217,4 +217,36 @@
 }
 
 .text-dark-800 { color: #1e293b; }
-.bg-dark-800 { background-color: #1e293b; }
+.bg-dark-800 { background-color: #1e293b; }
+
+/* --- BONEYARD SKELETON SHIMMER --- */
+@keyframes bone-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.bone-skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f8fafc 50%,
+    #e2e8f0 100%
+  );
+  background-size: 200% 100%;
+  animation: bone-shimmer 1.5s ease-in-out infinite;
+}
+
+.bone-skeleton-dark {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.6) 0%,
+    rgba(51, 65, 85, 0.8) 50%,
+    rgba(30, 41, 59, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: bone-shimmer 1.5s ease-in-out infinite;
+}

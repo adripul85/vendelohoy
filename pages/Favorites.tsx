@@ -14,6 +14,7 @@ import {
     FavoriteItem,
     FollowedSeller
 } from '../lib/interactions';
+import { getProduct } from '../lib/items';
 
 export const Favorites: React.FC = () => {
     const { user } = useAuth();
@@ -40,7 +41,30 @@ export const Favorites: React.FC = () => {
                 getFavoriteLists(user.uid),
                 getFollowedSellers(user.uid)
             ]);
-            setFavorites(favsData);
+
+            // Enrich favorites with live product info (slug, live price, stock, status)
+            const enrichedFavs = await Promise.all(favsData.map(async (fav) => {
+                try {
+                    const prod = await getProduct(fav.productId);
+                    if (prod) {
+                        return {
+                            ...fav,
+                            slug: prod.slug || fav.slug,
+                            title: prod.title || fav.title,
+                            image: prod.images?.[0] || fav.image,
+                            currentPrice: prod.price,
+                            oldPrice: prod.oldPrice,
+                            currentQuantity: prod.hasInfiniteStock ? 99 : (prod.quantity ?? 1),
+                            currentStatus: prod.status || 'AVAILABLE'
+                        };
+                    }
+                } catch (e) {
+                    console.warn("Could not load live product data for favorite", fav.productId);
+                }
+                return fav;
+            }));
+
+            setFavorites(enrichedFavs);
             setLists(listsData);
             if (!listsData.includes(selectedList) && listsData.length > 0) {
                 setSelectedList(listsData[0]);
@@ -256,18 +280,47 @@ export const Favorites: React.FC = () => {
                         {/* Products Grid */}
                         {filteredFavorites.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {filteredFavorites.map((item) => (
+                                {filteredFavorites.map((item) => {
+                                    const productUrl = `/product/${item.slug || item.productId}`;
+                                    const isSold = item.currentStatus === 'SOLD';
+                                    const isLowStock = !isSold && item.currentQuantity !== undefined && item.currentQuantity <= 2 && item.currentQuantity > 0;
+                                    const hasPriceDrop = item.currentPrice !== undefined && item.price !== undefined && item.currentPrice < item.price;
+                                    const displayPrice = item.currentPrice ?? item.price;
+
+                                    return (
                                     <div
                                         key={item.productId}
                                         className="bg-white rounded-[32px] p-4 border border-slate-100 shadow-sm hover:shadow-xl transition-all flex flex-col group relative overflow-hidden"
                                     >
-                                        {/* Image */}
-                                        <Link to={`/product/${item.productId}`} className="aspect-square rounded-2xl overflow-hidden bg-slate-100 relative mb-4 block">
+                                        {/* Image & Badges */}
+                                        <Link to={productUrl} className="aspect-square rounded-2xl overflow-hidden bg-slate-100 relative mb-4 block">
                                             <img
                                                 src={item.image || 'https://picsum.photos/400/400?tech'}
                                                 alt={item.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSold ? 'grayscale opacity-70' : ''}`}
                                             />
+
+                                            {/* Dynamic Live Badges */}
+                                            <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+                                                {isSold && (
+                                                    <span className="bg-slate-900/90 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm">
+                                                        Agotado
+                                                    </span>
+                                                )}
+                                                {isLowStock && (
+                                                    <span className="bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 animate-pulse">
+                                                        <span className="material-symbols-outlined text-[12px] leading-none">bolt</span>
+                                                        ¡Últimas {item.currentQuantity}!
+                                                    </span>
+                                                )}
+                                                {hasPriceDrop && (
+                                                    <span className="bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[12px] leading-none">trending_down</span>
+                                                        ¡Bajó de precio!
+                                                    </span>
+                                                )}
+                                            </div>
+
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
                                                 <span className="text-white text-[10px] font-black uppercase tracking-widest bg-black/50 backdrop-blur-md px-3 py-1 rounded-lg">
                                                     Ver Producto
@@ -281,15 +334,22 @@ export const Favorites: React.FC = () => {
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
                                                     {item.sellerName || 'Vendedor'}
                                                 </p>
-                                                <Link to={`/product/${item.productId}`} className="font-bold text-slate-800 text-sm hover:text-rose-600 transition-colors line-clamp-2 leading-snug mb-2">
+                                                <Link to={productUrl} className="font-bold text-slate-800 text-sm hover:text-rose-600 transition-colors line-clamp-2 leading-snug mb-2">
                                                     {item.title}
                                                 </Link>
                                             </div>
 
                                             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                                <span className="text-lg font-black text-slate-900">
-                                                    ${item.price?.toLocaleString()}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    {hasPriceDrop && (
+                                                        <span className="text-[11px] font-bold text-slate-400 line-through leading-none">
+                                                            ${item.price?.toLocaleString()}
+                                                        </span>
+                                                    )}
+                                                    <span className={`text-lg font-black ${hasPriceDrop ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                        ${displayPrice?.toLocaleString()}
+                                                    </span>
+                                                </div>
 
                                                 <div className="flex items-center gap-1">
                                                     {/* Move list dropdown / button */}
@@ -334,7 +394,8 @@ export const Favorites: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center py-20 bg-white rounded-[40px] border border-slate-100 shadow-sm p-8">

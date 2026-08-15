@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db, auth } from "./firebase";
+import { notifyFavoriteFollowers } from "./interactions";
 
 // Definimos qué forma tiene un Producto
 export interface ItemData {
@@ -404,8 +405,48 @@ export const updateItem = async (id: string, data: Partial<ItemData>) => {
             }
         }
 
+        // Check price & stock changes to notify followers
+        const priceChanged = data.price !== undefined && data.price !== currentData.price;
+        const isPriceDrop = priceChanged && (data.price! < currentData.price);
+        const newQuantity = data.quantity !== undefined ? data.quantity : currentData.quantity;
+        const oldQuantity = currentData.quantity;
+        const hasInfiniteStock = data.hasInfiniteStock !== undefined ? data.hasInfiniteStock : currentData.hasInfiniteStock;
+        const isLowStock = !hasInfiniteStock && newQuantity !== undefined && newQuantity > 0 && newQuantity <= 2 && (oldQuantity === undefined || oldQuantity > 2 || oldQuantity !== newQuantity);
+
         const cleanPayload = cleanUndefined({ ...data });
         await import("firebase/firestore").then(({ updateDoc }) => updateDoc(docRef, cleanPayload));
+
+        // Fire notifications asynchronously in background
+        if (isPriceDrop) {
+            notifyFavoriteFollowers(id, {
+                type: 'price_drop',
+                oldPrice: currentData.price,
+                newPrice: data.price,
+                productTitle: data.title || currentData.title,
+                productSlug: data.slug || currentData.slug,
+                sellerId: currentData.sellerId
+            }).catch(err => console.error("Error triggering price drop notification:", err));
+        } else if (priceChanged) {
+            notifyFavoriteFollowers(id, {
+                type: 'price_change',
+                oldPrice: currentData.price,
+                newPrice: data.price,
+                productTitle: data.title || currentData.title,
+                productSlug: data.slug || currentData.slug,
+                sellerId: currentData.sellerId
+            }).catch(err => console.error("Error triggering price change notification:", err));
+        }
+
+        if (isLowStock) {
+            notifyFavoriteFollowers(id, {
+                type: 'low_stock',
+                quantity: newQuantity,
+                productTitle: data.title || currentData.title,
+                productSlug: data.slug || currentData.slug,
+                sellerId: currentData.sellerId
+            }).catch(err => console.error("Error triggering low stock notification:", err));
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error al actualizar ítem:", error);

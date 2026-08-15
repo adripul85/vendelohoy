@@ -39,6 +39,7 @@ export default function Publish() {
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>([]);
+    const [customMargin, setCustomMargin] = useState<string>('');
     const [imageUrlInput, setImageUrlInput] = useState('');
     const [isHtmlMode, setIsHtmlMode] = useState(false);
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -143,6 +144,10 @@ export default function Publish() {
                     });
                     setExistingImages(item.images || []);
                     setPreviews(item.images || []);
+
+                    if (item.cost && regularPrice && item.cost > 0) {
+                        setCustomMargin((((regularPrice - item.cost) / item.cost) * 100).toFixed(2));
+                    }
                 }
                 setLoading(false);
             });
@@ -426,10 +431,68 @@ export default function Publish() {
 
 
 
-    // Calcular margen de ganancia
-    const p = parsePrice(form.price) || 0;
-    const c = parsePrice(form.cost) || 0;
-    const profitMargin = (p > 0 && c > 0) ? (((p - c) / c) * 100).toFixed(2) : '--';
+    const formatNumberToString = (num: number) => {
+        return Math.round(num).toLocaleString('es-AR');
+    };
+
+    const handleCostChange = (val: string) => {
+        const rawValue = val.replace(/[^0-9,]/g, '');
+        if ((rawValue.match(/,/g) || []).length > 1) return;
+        const parts = rawValue.split(',');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const formattedCost = parts.join(',');
+
+        const costNum = parsePrice(formattedCost);
+        const marginNum = parseFloat(customMargin.replace(',', '.'));
+
+        if (costNum && !isNaN(marginNum) && marginNum >= 0) {
+            const calculatedPrice = Math.round(costNum * (1 + marginNum / 100));
+            setForm(prev => ({
+                ...prev,
+                cost: formattedCost,
+                price: formatNumberToString(calculatedPrice)
+            }));
+        } else {
+            setForm(prev => ({ ...prev, cost: formattedCost }));
+            if (costNum && form.price) {
+                const priceNum = parsePrice(form.price);
+                if (priceNum && costNum > 0) {
+                    setCustomMargin((((priceNum - costNum) / costNum) * 100).toFixed(2));
+                }
+            }
+        }
+    };
+
+    const handlePriceChange = (val: string) => {
+        const rawValue = val.replace(/[^0-9,]/g, '');
+        if ((rawValue.match(/,/g) || []).length > 1) return;
+        const parts = rawValue.split(',');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const formattedPrice = parts.join(',');
+
+        const priceNum = parsePrice(formattedPrice);
+        const costNum = parsePrice(form.cost);
+
+        setForm(prev => ({ ...prev, price: formattedPrice }));
+        if (priceNum && costNum && costNum > 0) {
+            setCustomMargin((((priceNum - costNum) / costNum) * 100).toFixed(2));
+        }
+    };
+
+    const handleMarginChange = (val: string) => {
+        const rawMargin = val.replace(/[^0-9.,]/g, '');
+        setCustomMargin(rawMargin);
+        const marginNum = parseFloat(rawMargin.replace(',', '.'));
+        const costNum = parsePrice(form.cost);
+
+        if (costNum && !isNaN(marginNum) && marginNum >= 0) {
+            const calculatedPrice = Math.round(costNum * (1 + marginNum / 100));
+            setForm(prev => ({
+                ...prev,
+                price: formatNumberToString(calculatedPrice)
+            }));
+        }
+    };
 
     const handleGenerateDescriptionAI = async () => {
         if (!form.title) {
@@ -990,13 +1053,7 @@ export default function Publish() {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                                 <input
                                                     type="text" value={form.price}
-                                                    onChange={(e) => {
-                                                        const rawValue = e.target.value.replace(/[^0-9,]/g, '');
-                                                        if ((rawValue.match(/,/g) || []).length > 1) return;
-                                                        const parts = rawValue.split(',');
-                                                        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                                        setForm(prev => ({ ...prev, price: parts.join(',') }));
-                                                    }}
+                                                    onChange={(e) => handlePriceChange(e.target.value)}
                                                     placeholder="0.00"
                                                     className="w-full bg-white border border-slate-300 rounded-xl py-3 pl-8 pr-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                                 />
@@ -1038,13 +1095,7 @@ export default function Publish() {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                                 <input
                                                     type="text" value={form.cost}
-                                                    onChange={(e) => {
-                                                        const rawValue = e.target.value.replace(/[^0-9,]/g, '');
-                                                        if ((rawValue.match(/,/g) || []).length > 1) return;
-                                                        const parts = rawValue.split(',');
-                                                        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                                        setForm(prev => ({ ...prev, cost: parts.join(',') }));
-                                                    }}
+                                                    onChange={(e) => handleCostChange(e.target.value)}
                                                     placeholder="0.00"
                                                     className="w-full bg-white border border-slate-300 rounded-xl py-3 pl-8 pr-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                                 />
@@ -1052,10 +1103,23 @@ export default function Publish() {
                                             <span className="text-[10px] text-slate-500 mt-2 block">Es de uso interno, tus clientes no lo verán en la tienda.</span>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-2">Margen de ganancia</label>
-                                            <div className="w-full bg-slate-100 border border-slate-200 rounded-xl py-3 px-4 font-medium text-slate-500">
-                                                {profitMargin !== '--' ? `${profitMargin}%` : '--'}
+                                            <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center justify-between">
+                                                <span>Margen de ganancia</span>
+                                                <span className="text-[10px] text-indigo-600 font-bold">Calcula el precio de venta</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={customMargin}
+                                                    onChange={(e) => handleMarginChange(e.target.value)}
+                                                    placeholder="Ej: 50"
+                                                    className="w-full bg-white border border-slate-300 rounded-xl py-3 pl-4 pr-8 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                                />
+                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
                                             </div>
+                                            <span className="text-[10px] text-slate-500 mt-2 block">
+                                                Ingresá el margen deseado para calcular el precio automáticamente a partir del costo.
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

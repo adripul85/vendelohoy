@@ -73,7 +73,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ product, classNa
                     title: product.title,
                     price: product.price,
                     image: product.image || '',
-                    sellerName: product.sellerName || 'Vendedor'
+                    sellerName: product.sellerName || 'Vendedor',
+                    slug: (product as any).slug || ''
                 }, 'General');
                 setIsFav(res.isFavorite);
                 setSelectedLists(res.lists);

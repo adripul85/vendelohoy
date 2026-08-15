@@ -12,7 +12,8 @@ import {
     query,
     where,
     getDocs,
-    orderBy
+    orderBy,
+    collectionGroup
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { getUserProfile } from "./users";
@@ -27,6 +28,11 @@ export interface FavoriteItem {
     sellerName?: string;
     lists: string[];
     addedAt?: any;
+    slug?: string;
+    currentPrice?: number;
+    oldPrice?: number;
+    currentQuantity?: number;
+    currentStatus?: string;
 }
 
 export const toggleFavorite = async (userId: string, productId: string, productData?: Partial<FavoriteItem>, listName: string = 'General') => {
@@ -62,6 +68,7 @@ export const toggleFavorite = async (userId: string, productId: string, productD
                 price: productData?.price || 0,
                 image: productData?.image || '',
                 sellerName: productData?.sellerName || 'Vendedor',
+                slug: productData?.slug || '',
                 lists: [listName],
                 addedAt: serverTimestamp()
             });
@@ -267,6 +274,81 @@ export const sendNotification = async (userId: string, notification: { title: st
         });
     } catch (error) {
         console.error("Error sending notification:", error);
+    }
+};
+
+export type ProductChangeAlert = {
+    type: 'price_drop' | 'price_change' | 'low_stock' | 'restock';
+    oldPrice?: number;
+    newPrice?: number;
+    quantity?: number;
+    productTitle: string;
+    productSlug?: string;
+    sellerId?: string;
+};
+
+export const notifyFavoriteFollowers = async (productId: string, alert: ProductChangeAlert) => {
+    try {
+        const favsQuery = query(collectionGroup(db, "favorites"), where("productId", "==", productId));
+        const favsSnap = await getDocs(favsQuery);
+
+        const alertsQuery = query(collectionGroup(db, "alerts"), where("productId", "==", productId));
+        const alertsSnap = await getDocs(alertsQuery).catch(() => ({ docs: [] }));
+
+        const targetUserIds = new Set<string>();
+
+        favsSnap.docs.forEach(docSnap => {
+            const userId = docSnap.ref.parent.parent?.id;
+            if (userId && userId !== alert.sellerId) {
+                targetUserIds.add(userId);
+            }
+        });
+
+        alertsSnap.docs.forEach((docSnap: any) => {
+            const userId = docSnap.ref.parent.parent?.id;
+            if (userId && userId !== alert.sellerId) {
+                targetUserIds.add(userId);
+            }
+        });
+
+        if (targetUserIds.size === 0) return;
+
+        let title = '';
+        let message = '';
+        let notifType: 'info' | 'success' | 'warning' | 'error' = 'info';
+
+        const productLink = `/product/${alert.productSlug || productId}`;
+
+        if (alert.type === 'price_drop') {
+            title = '📉 ¡Bajó de precio!';
+            message = `"${alert.productTitle}" en tus favoritos bajó a $${alert.newPrice?.toLocaleString()} ${alert.oldPrice ? `(antes $${alert.oldPrice.toLocaleString()})` : ''}. ¡Aprovechá la oferta!`;
+            notifType = 'success';
+        } else if (alert.type === 'price_change') {
+            title = '🏷️ Cambio de precio';
+            message = `"${alert.productTitle}" en tus favoritos cambió de precio a $${alert.newPrice?.toLocaleString()}.`;
+            notifType = 'info';
+        } else if (alert.type === 'low_stock') {
+            title = '⚡ ¡Se está por agotar!';
+            message = `¡Quedan solo ${alert.quantity} ${alert.quantity === 1 ? 'unidad disponible' : 'unidades disponibles'} de "${alert.productTitle}" en tus favoritos!`;
+            notifType = 'warning';
+        } else if (alert.type === 'restock') {
+            title = '📦 ¡Hay stock disponible!';
+            message = `"${alert.productTitle}" vuelve a tener ${alert.quantity} unidades disponibles.`;
+            notifType = 'info';
+        }
+
+        const promises = Array.from(targetUserIds).map(userId => 
+            sendNotification(userId, {
+                title,
+                message,
+                type: notifType,
+                link: productLink
+            })
+        );
+
+        await Promise.allSettled(promises);
+    } catch (error) {
+        console.error("Error sending favorite followers notifications:", error);
     }
 };
 
