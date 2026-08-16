@@ -250,11 +250,11 @@ const Shop = () => {
             <div 
                 className={`relative overflow-hidden transition-colors duration-1000 
                 ${layoutTemplate === 'bold' || (!theme.backgroundColor && theme.backgroundType !== 'image' && theme.backgroundType !== 'gradient') ? 'bg-dark-950' : ''}
-                ${layoutTemplate === 'brutalist' ? 'bg-yellow-400 border-b-8 border-black shadow-[0_10px_0_0_rgba(0,0,0,1)]' : ''}
-                ${layoutTemplate === 'glassmorphism' ? 'bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-[40px] border-b border-white/20 shadow-2xl shadow-black/20' : ''}
-                ${layoutTemplate === 'neumorphic' ? 'bg-[#e0e5ec] shadow-[inset_0_-10px_20px_rgba(255,255,255,0.7),inset_0_10px_20px_rgba(163,177,198,0.3)]' : ''}
+                ${layoutTemplate === 'brutalist' && !store?.banner ? 'bg-yellow-400 border-b-8 border-black shadow-[0_10px_0_0_rgba(0,0,0,1)]' : layoutTemplate === 'brutalist' ? 'border-b-8 border-black shadow-[0_10px_0_0_rgba(0,0,0,1)]' : ''}
+                ${layoutTemplate === 'glassmorphism' && !store?.banner ? 'bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-[40px] border-b border-white/20 shadow-2xl shadow-black/20' : layoutTemplate === 'glassmorphism' ? 'border-b border-white/20 shadow-2xl shadow-black/20' : ''}
+                ${layoutTemplate === 'neumorphic' && !store?.banner ? 'bg-[#e0e5ec] shadow-[inset_0_-10px_20px_rgba(255,255,255,0.7),inset_0_10px_20px_rgba(163,177,198,0.3)]' : layoutTemplate === 'neumorphic' ? 'shadow-[inset_0_-10px_20px_rgba(255,255,255,0.7),inset_0_10px_20px_rgba(163,177,198,0.3)]' : ''}
                 `}
-                style={store?.banner && layoutTemplate !== 'minimalist' && layoutTemplate !== 'brutalist' && layoutTemplate !== 'neumorphic' && layoutTemplate !== 'glassmorphism' ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : layoutTemplate === 'brutalist' || layoutTemplate === 'neumorphic' || layoutTemplate === 'glassmorphism' ? undefined : headerStyle}
+                style={store?.banner && layoutTemplate !== 'minimalist' ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : headerStyle}
             >
                 {/* Background Effects Overlay */}
                 <motion.div 
@@ -264,7 +264,9 @@ const Shop = () => {
                     className="absolute inset-0 z-0"
                 >
                     {store?.banner && layoutTemplate !== 'minimalist' ? (
-                        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
+                        <>
+                            <div className={`absolute inset-0 ${layoutTemplate === 'neumorphic' ? 'bg-[#e0e5ec]/80 backdrop-blur-sm' : layoutTemplate === 'glassmorphism' ? 'bg-black/40 backdrop-blur-md' : layoutTemplate === 'brutalist' ? 'bg-yellow-400/60 mix-blend-multiply' : 'bg-black/50 backdrop-blur-[1px]'}`} />
+                        </>
                     ) : (
                         <>
                             {theme.backgroundType === 'gradient' && !seller.coverImage && (
