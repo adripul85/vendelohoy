@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { sendEmailVerification } from 'firebase/auth';
 import { MobileHeader } from './ui/MobileHeader';
+import { SparkleBurst } from './cart/FlyingCartOverlay';
 
 const dropdownMotion = {
     initial: { opacity: 0, y: -15, scale: 0.88, filter: 'blur(8px)' },
@@ -143,7 +144,7 @@ const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { notify } = useNotification();
-    const { cart } = useCart();
+    const { cart, isCartBouncing } = useCart();
     const prevUnreadCountRef = useRef(0);
 
     useEffect(() => {
@@ -383,13 +384,30 @@ const Header = () => {
                     </div>
                     <Link
                         to="/cart"
+                        id="header-cart-btn"
                         className="hidden md:flex relative size-12 rounded-xl bg-surface-container-low items-center justify-center text-primary/60 hover:bg-surface-container-high transition-all group"
                     >
-                        <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">shopping_cart</span>
+                        <motion.div
+                            animate={isCartBouncing ? {
+                                scale: [1, 1.4, 0.85, 1.2, 0.95, 1],
+                                rotate: [0, -14, 12, -6, 2, 0],
+                                color: ['#10b981', '#10b981', '#1e293b']
+                            } : { scale: 1, rotate: 0 }}
+                            transition={{ duration: 0.55 }}
+                            className="flex items-center justify-center relative"
+                        >
+                            <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">shopping_cart</span>
+                            <SparkleBurst active={isCartBouncing} />
+                        </motion.div>
                         {cart.length > 0 && (
-                            <div className="absolute -top-1 -right-1 size-5 bg-secondary-container text-on-surface text-[10px] font-black rounded-lg flex items-center justify-center shadow-lg border-2 border-surface-bright">
+                            <motion.div
+                                key={cart.length}
+                                initial={{ scale: 0.6, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute -top-1 -right-1 size-5 bg-secondary-container text-on-surface text-[10px] font-black rounded-lg flex items-center justify-center shadow-lg border-2 border-surface-bright"
+                            >
                                 {cart.length}
-                            </div>
+                            </motion.div>
                         )}
                     </Link>
 

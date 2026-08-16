@@ -125,7 +125,7 @@ export default function Settings() {
             taxCondition: 'Monotributo' as 'Monotributo' | 'Responsable Inscripto' | 'Consumidor Final' | 'Exento',
         },
         shopTheme: {
-            layoutTemplate: 'classic' as 'classic' | 'minimalist' | 'modern' | 'bold',
+            layoutTemplate: 'classic' as 'classic' | 'minimalist' | 'modern' | 'bold' | 'spatial' | 'cinematic' | 'magnetic' | 'neumorphic' | 'brutalist' | 'glassmorphism',
             backgroundType: 'gradient' as 'color' | 'image' | 'gradient',
             primaryColor: '#0369a1',
             secondaryColor: '#65a30d',
@@ -1088,6 +1088,9 @@ export default function Settings() {
                                             { id: 'spatial', label: 'Spatial 3D', desc: 'Tarjetas de cristal con efecto de rotación y tilt 3D ultra premium.', icon: '3d_rotation' },
                                             { id: 'cinematic', label: 'Cinemática', desc: 'Efectos parallax profundos y elementos atados al scroll de la página.', icon: 'movie_filter' },
                                             { id: 'magnetic', label: 'Magnética', desc: 'Botones y tarjetas fluidas con morphing y físicas de atracción.', icon: 'animation' },
+                                            { id: 'neumorphic', label: 'Neumórfica', desc: 'Sombras suaves y elementos extruidos del fondo (Soft UI).', icon: 'blur_on' },
+                                            { id: 'brutalist', label: 'Brutalista', desc: 'Alto contraste, bordes duros y estilo retro/urbano.', icon: 'format_shapes' },
+                                            { id: 'glassmorphism', label: 'Glassmorfismo', desc: 'Fondos translúcidos, cristal esmerilado ultra premium.', icon: 'filter_b_and_w' },
                                         ].map(tpl => (
                                             <button
                                                 key={tpl.id}

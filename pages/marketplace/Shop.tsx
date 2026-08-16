@@ -9,7 +9,52 @@ import { useNotification } from '../../context/NotificationContext';
 import { checkIsFollowing, toggleFollow } from '../../lib/interactions';
 import { useAuth } from '../../lib/auth';
 import { FaWhatsapp, FaInstagram, FaTiktok, FaGlobe, FaXTwitter, FaFacebook, FaYoutube } from 'react-icons/fa6';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
+
+const TiltCardWrapper = ({ children, isSpatial, layout }: { children: React.ReactNode, isSpatial: boolean, layout?: boolean }) => {
+    if (!isSpatial) return <>{children}</>;
+
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+
+    const mouseXSpring = useSpring(x, { stiffness: 300, damping: 20 });
+    const mouseYSpring = useSpring(y, { stiffness: 300, damping: 20 });
+
+    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const xPct = mouseX / width - 0.5;
+        const yPct = mouseY / height - 0.5;
+        x.set(xPct);
+        y.set(yPct);
+    };
+
+    const handleMouseLeave = () => {
+        x.set(0);
+        y.set(0);
+    };
+
+    return (
+        <motion.div
+            layout={layout}
+            style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            whileHover={{ scale: 1.03, z: 20 }}
+            className="w-full h-full relative"
+        >
+            <div style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d", width: '100%', height: '100%' }}>
+                {children}
+            </div>
+        </motion.div>
+    );
+};
 
 const Shop = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -201,8 +246,13 @@ const Shop = () => {
 
             {/* SHOP HEADER */}
             <div 
-                className={`relative overflow-hidden transition-colors duration-1000 ${layoutTemplate === 'bold' || (!theme.backgroundColor && theme.backgroundType !== 'image' && theme.backgroundType !== 'gradient') ? 'bg-dark-950' : ''}`}
-                style={store?.banner && layoutTemplate !== 'minimalist' ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : headerStyle}
+                className={`relative overflow-hidden transition-colors duration-1000 
+                ${layoutTemplate === 'bold' || (!theme.backgroundColor && theme.backgroundType !== 'image' && theme.backgroundType !== 'gradient') ? 'bg-dark-950' : ''}
+                ${layoutTemplate === 'brutalist' ? 'bg-yellow-400 border-b-8 border-black shadow-[0_10px_0_0_rgba(0,0,0,1)]' : ''}
+                ${layoutTemplate === 'glassmorphism' ? 'bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-[40px] border-b border-white/20 shadow-2xl shadow-black/20' : ''}
+                ${layoutTemplate === 'neumorphic' ? 'bg-[#e0e5ec] shadow-[inset_0_-10px_20px_rgba(255,255,255,0.7),inset_0_10px_20px_rgba(163,177,198,0.3)]' : ''}
+                `}
+                style={store?.banner && layoutTemplate !== 'minimalist' && layoutTemplate !== 'brutalist' && layoutTemplate !== 'neumorphic' && layoutTemplate !== 'glassmorphism' ? { backgroundImage: `url(${store.banner})`, backgroundSize: 'cover', backgroundPosition: 'center' } : layoutTemplate === 'brutalist' || layoutTemplate === 'neumorphic' || layoutTemplate === 'glassmorphism' ? undefined : headerStyle}
             >
                 {/* Background Effects Overlay */}
                 <motion.div 
@@ -258,7 +308,14 @@ const Shop = () => {
                         {/* Store Name */}
                         {store?.name && (
                             <Link to={`/profile/${seller.uid}`} title={`Ver perfil de ${seller.displayName || store?.name}`} className="group cursor-pointer">
-                                <h1 className={`${layoutTemplate === 'minimalist' ? 'text-2xl sm:text-3xl' : layoutTemplate === 'bold' ? 'text-5xl sm:text-6xl tracking-tighter' : 'text-3xl sm:text-4xl'} font-black text-white drop-shadow-lg flex items-center gap-3 group-hover:text-rose-200 transition-colors`}>
+                                <h1 className={`
+                                    ${layoutTemplate === 'minimalist' ? 'text-2xl sm:text-3xl' : 
+                                      layoutTemplate === 'bold' ? 'text-5xl sm:text-6xl tracking-tighter' : 
+                                      layoutTemplate === 'brutalist' ? 'text-5xl sm:text-7xl font-black uppercase tracking-tighter text-black drop-shadow-[4px_4px_0_rgba(255,255,255,1)] stroke-black' : 
+                                      layoutTemplate === 'glassmorphism' ? 'text-4xl sm:text-5xl font-extralight tracking-wide text-white drop-shadow-md' :
+                                      layoutTemplate === 'neumorphic' ? 'text-4xl sm:text-5xl font-bold text-[#4d5b6b] drop-shadow-[2px_2px_4px_rgba(255,255,255,0.8)]' :
+                                      'text-3xl sm:text-4xl'} 
+                                    font-black ${layoutTemplate !== 'brutalist' && layoutTemplate !== 'neumorphic' ? 'text-white' : ''} flex items-center gap-3 transition-colors group-hover:scale-105`}>
                                     {store.name}
                                     {store.paidOfficialTick && (
                                         <span className="material-symbols-outlined text-sky-400 text-2xl drop-shadow-md" title="Tienda Verificada">verified</span>
@@ -269,25 +326,29 @@ const Shop = () => {
 
                         {/* Tagline */}
                         {store?.tagline && (
-                            <p className={`text-white/70 ${layoutTemplate === 'bold' ? 'text-lg font-bold uppercase tracking-widest' : 'text-sm font-bold tracking-wide italic'} max-w-2xl mx-auto`}>
+                            <p className={`
+                                ${layoutTemplate === 'bold' ? 'text-lg font-bold uppercase tracking-widest' : 
+                                  layoutTemplate === 'brutalist' ? 'text-lg font-black uppercase tracking-widest text-black bg-white px-2 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]' :
+                                  layoutTemplate === 'neumorphic' ? 'text-sm font-bold tracking-wide italic text-[#6f7e8c]' :
+                                  'text-sm font-bold tracking-wide italic text-white/70'} max-w-2xl mx-auto`}>
                                 "{store.tagline}"
                             </p>
                         )}
 
                         {/* Quick Stats */}
                         <div className={`flex flex-wrap items-center gap-6 mt-2 ${layoutTemplate === 'minimalist' || layoutTemplate === 'modern' ? 'justify-start' : 'justify-center'}`}>
-                            <div className="flex items-center gap-1.5 text-white/60">
+                            <div className={`flex items-center gap-1.5 ${layoutTemplate === 'brutalist' || layoutTemplate === 'neumorphic' ? 'text-black/70' : 'text-white/60'}`}>
                                 <span className="material-symbols-outlined text-sm">inventory_2</span>
                                 <span className="text-[10px] font-black uppercase tracking-widest">{products.length} productos</span>
                             </div>
                             {rating > 0 && (
-                                <div className="flex items-center gap-1.5 text-yellow-400/80">
+                                <div className={`flex items-center gap-1.5 ${layoutTemplate === 'brutalist' || layoutTemplate === 'neumorphic' ? 'text-yellow-600' : 'text-yellow-400/80'}`}>
                                     <span className="material-symbols-outlined text-sm">star</span>
                                     <span className="text-[10px] font-black uppercase tracking-widest">{rating.toFixed(1)} reputación</span>
                                 </div>
                             )}
                             {seller.location?.city && (
-                                <div className="flex items-center gap-1.5 text-white/60">
+                                <div className={`flex items-center gap-1.5 ${layoutTemplate === 'brutalist' || layoutTemplate === 'neumorphic' ? 'text-black/70' : 'text-white/60'}`}>
                                     <span className="material-symbols-outlined text-sm">location_on</span>
                                     <span className="text-[10px] font-black uppercase tracking-widest">{seller.location.city}</span>
                                 </div>
@@ -334,14 +395,14 @@ const Shop = () => {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                            {vipProducts.map(p => <ProductCard key={`vip-${p.id}`} product={p} />)}
+                            {vipProducts.map(p => <ProductCard key={`vip-${p.id}`} product={p} layoutTemplate={layoutTemplate} />)}
                         </div>
                     </div>
                 </div>
             )}
 
             {/* PRODUCT GRID SECTION */}
-            <main className={`max-w-7xl mx-auto px-6 py-12 flex flex-col ${layoutTemplate === 'modern' ? 'lg:flex-row-reverse' : layoutTemplate === 'bold' ? 'lg:flex-col' : 'lg:flex-row'} gap-6 md:gap-12 relative z-10 ${layoutTemplate === 'bold' ? 'bg-dark-900 rounded-[32px] mt-6 p-8 shadow-2xl' : ''}`}>
+            <main className={`max-w-7xl mx-auto px-6 py-12 flex flex-col ${layoutTemplate === 'modern' ? 'lg:flex-row-reverse' : layoutTemplate === 'bold' ? 'lg:flex-col' : 'lg:flex-row'} gap-6 md:gap-12 relative z-10 ${layoutTemplate === 'bold' ? 'bg-dark-900 rounded-[32px] mt-6 p-8 shadow-2xl' : layoutTemplate === 'brutalist' ? 'bg-white border-8 border-black rounded-none mt-8 p-8 shadow-[16px_16px_0_0_rgba(0,0,0,1)]' : layoutTemplate === 'neumorphic' ? 'bg-[#e0e5ec] rounded-[40px] mt-6 p-8 shadow-[10px_10px_20px_#a3b1c6,-10px_-10px_20px_#ffffff]' : layoutTemplate === 'glassmorphism' ? 'bg-white/5 backdrop-blur-xl rounded-[32px] border border-white/10 mt-6 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.1)]' : ''}`}>
                 {/* Main Column */}
                 <div className="flex-1">
                     <div className="flex items-end justify-between mb-8 border-b border-outline-variant/30 pb-8">
@@ -480,11 +541,12 @@ const Shop = () => {
                                         whileInView={layoutTemplate === 'cinematic' ? { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } } : undefined}
                                         viewport={layoutTemplate === 'cinematic' ? { once: false, margin: "-50px" } : undefined}
                                         exit={layoutTemplate === 'magnetic' ? { opacity: 0, scale: 0.5, transition: { duration: 0.2 } } : undefined}
-                                        whileHover={layoutTemplate === 'spatial' ? { rotateX: 5, rotateY: -5, scale: 1.03, z: 20 } : layoutTemplate === 'magnetic' ? { scale: 1.02, y: -5 } : undefined}
+                                        whileHover={layoutTemplate === 'magnetic' ? { scale: 1.02, y: -5 } : undefined}
                                         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                                        style={layoutTemplate === 'spatial' ? { transformStyle: 'preserve-3d' } : undefined}
                                     >
-                                        <ProductCard product={p} />
+                                        <TiltCardWrapper isSpatial={layoutTemplate === 'spatial'} layout={layoutTemplate === 'magnetic'}>
+                                            <ProductCard product={p} layoutTemplate={layoutTemplate} />
+                                        </TiltCardWrapper>
                                     </motion.div>
                                 ))}
                             </AnimatePresence>

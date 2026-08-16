@@ -420,7 +420,7 @@ const ProductDetail = () => {
     });
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e?: React.MouseEvent) => {
     if (user && product.seller?.id === user.uid) {
       notify({ type: 'error', title: 'Operación inválida', message: 'No podés agregar tu propio producto al carrito.', icon: 'block' });
       return;
@@ -446,7 +446,7 @@ const ProductDetail = () => {
       sellerName: product.seller.displayName || product.seller.name,
       selectedColor: selectedColor !== null ? (Array.isArray(product.color) ? product.color[selectedColor] : product.color) : null,
       selectedSize: selectedSize
-    });
+    }, e);
   };
 
   // JSON-LD schema for rich search results
@@ -725,7 +725,7 @@ const ProductDetail = () => {
                   <button
                     onClick={handleBuyNow}
                     disabled={isMatingPayment || product.status !== 'AVAILABLE'}
-                    className="flex-1 bg-primary text-white py-4 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-primary text-white py-4 rounded-xl font-bold text-sm hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
                     <span className="material-symbols-outlined text-lg">{isMatingPayment ? 'sync' : 'bolt'}</span>
                     {isMatingPayment ? 'Procesando...' : product.status !== 'AVAILABLE' ? 'No disponible' : 'Comprar Ya'}
@@ -743,16 +743,16 @@ const ProductDetail = () => {
                 />
               </div>
               <button
-                onClick={handleAddToCart}
+                onClick={(e) => handleAddToCart(e)}
                 disabled={product.status !== 'AVAILABLE'}
-                className="w-full bg-surface-container-low border border-outline-variant/30 text-on-surface py-4 rounded-xl font-bold text-sm hover:bg-surface-container transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-surface-container-low border border-outline-variant/30 text-on-surface py-4 rounded-xl font-bold text-sm hover:bg-primary hover:text-white hover:border-primary hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-surface-container-low disabled:hover:text-on-surface disabled:hover:border-outline-variant/30 disabled:hover:shadow-none"
               >
                 <span className="material-symbols-outlined text-lg">shopping_bag</span>
                 Agregar al Carrito
               </button>
               <button
                 onClick={handleContactSeller}
-                className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-95 mt-1"
+                className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm hover:bg-emerald-500 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm mt-1"
               >
                 <span className="material-symbols-outlined text-lg">chat</span>
                 Preguntar / Hablar con el Vendedor
@@ -966,7 +966,7 @@ const ProductDetail = () => {
             <span className="material-symbols-outlined text-xl">chat_bubble</span>
           </button>
           <button
-            onClick={handleAddToCart}
+            onClick={(e) => handleAddToCart(e)}
             disabled={product.status !== 'AVAILABLE'}
             className="flex-1 bg-surface-container-low border border-outline-variant/30 text-on-surface py-3.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
           >

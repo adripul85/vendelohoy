@@ -15,9 +15,10 @@ interface ProductCardProps {
     product: ItemData & { id: string };
     location?: string;
     isVerified?: boolean;
+    layoutTemplate?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified, layoutTemplate }) => {
 
     const [sellerProfile, setSellerProfile] = React.useState<UserProfile | null>(null);
     const { addToCart } = useCart();
@@ -41,7 +42,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
             image: product.images?.[0] || '',
             sellerId: product.seller?.id || product.sellerId || '',
             sellerName: product.seller?.displayName || product.seller?.name || 'Vendedor'
-        });
+        }, e);
     };
 
     React.useEffect(() => {
@@ -67,10 +68,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
     const isSold = product.status === 'SOLD' || (product.quantity !== undefined && product.quantity <= 0);
 
     return (
-        <motion.div
-            whileHover={isSold ? {} : { y: -10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={`group bg-surface-container-lowest rounded-2xl shadow-premium hover:shadow-2xl transition-all flex flex-col h-full w-full relative overflow-hidden ${isSold ? 'opacity-60 grayscale-[0.3]' : ''}`}
+        <motion.div 
+            whileHover={{ y: layoutTemplate === 'brutalist' ? -4 : -8 }}
+            className={`group bg-surface rounded-[32px] overflow-hidden flex flex-col h-full relative cursor-pointer ${isSold ? 'opacity-60 grayscale-[0.3]' : ''}
+                ${layoutTemplate === 'brutalist' ? 'border-4 border-black rounded-none shadow-[6px_6px_0_0_rgba(0,0,0,1)] hover:shadow-[10px_10px_0_0_rgba(0,0,0,1)] transition-all bg-white' : 
+                  layoutTemplate === 'neumorphic' ? 'bg-[#e0e5ec] rounded-3xl shadow-[8px_8px_16px_#a3b1c6,-8px_-8px_16px_#ffffff] border-none' : 
+                  layoutTemplate === 'glassmorphism' ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)]' : 
+                  'bg-surface-container-lowest shadow-premium hover:shadow-2xl transition-all'}
+            `}
         >
             <Link
                 to={`/product/${product.slug || product.id}`}
@@ -115,7 +120,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                     {!isSold && (
                         <button 
                             onClick={handleAddToCart}
-                            className="absolute bottom-4 right-4 size-12 bg-secondary-container text-on-surface rounded-xl shadow-2xl flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-20 hover:scale-110"
+                            className="absolute bottom-4 right-4 size-12 bg-secondary-container text-on-surface rounded-xl shadow-2xl flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-20 hover:bg-primary hover:text-white hover:scale-110 active:scale-95 hover:shadow-primary/30"
                         >
                             <span className="material-symbols-outlined text-2xl font-black">add_shopping_cart</span>
                         </button>

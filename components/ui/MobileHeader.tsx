@@ -1,6 +1,9 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { useCart } from '../../context/CartContext';
+import { motion } from 'framer-motion';
+import { SparkleBurst } from '../cart/FlyingCartOverlay';
 
 interface MobileHeaderProps {
     variant: 'home' | 'product';
@@ -10,6 +13,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const { user, userProfile, logout } = useAuth();
+    const { cart, isCartBouncing } = useCart();
 
     // Listen for custom event if triggered from elsewhere
     React.useEffect(() => {
@@ -60,7 +64,36 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ variant }) => {
                             Vendelo <span className="text-secondary">Hoy</span>
                         </h1>
                         
-                        <div className="flex items-center gap-2 -mr-2">
+                        <div className="flex items-center gap-1 -mr-2">
+                            <Link 
+                                to="/cart"
+                                id="mobile-header-cart-btn"
+                                className="relative text-on-surface p-2 active:scale-95 transition-transform flex items-center justify-center"
+                                title="Ver Carrito"
+                            >
+                                <motion.div
+                                    animate={isCartBouncing ? {
+                                        scale: [1, 1.4, 0.85, 1.2, 0.95, 1],
+                                        rotate: [0, -14, 12, -6, 2, 0],
+                                        color: ['#10b981', '#10b981', '#1e293b']
+                                    } : { scale: 1, rotate: 0 }}
+                                    transition={{ duration: 0.55 }}
+                                    className="flex items-center justify-center relative"
+                                >
+                                    <span className="material-symbols-outlined font-black">shopping_cart</span>
+                                    <SparkleBurst active={isCartBouncing} />
+                                </motion.div>
+                                {cart.length > 0 && (
+                                    <motion.span
+                                        key={cart.length}
+                                        initial={{ scale: 0.5 }}
+                                        animate={{ scale: 1 }}
+                                        className="absolute top-1 right-1 size-4 bg-secondary-container text-on-surface text-[9px] font-black rounded-full flex items-center justify-center border border-surface shadow-sm"
+                                    >
+                                        {cart.length}
+                                    </motion.span>
+                                )}
+                            </Link>
                             <button className="text-on-surface p-2 active:scale-95 transition-transform">
                                 <span className="material-symbols-outlined font-black">share</span>
                             </button>

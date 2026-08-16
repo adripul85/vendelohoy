@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNotification } from './NotificationContext';
 import { trackEvent } from '../lib/storeEvents';
+import { triggerHaptic } from '../lib/haptics';
+import { FlyingCartOverlay, FlyingItemPayload } from '../components/cart/FlyingCartOverlay';
 
 export interface CartItem {
     id: string;
@@ -14,18 +16,23 @@ export interface CartItem {
     selectedSize?: string | null;
 }
 
+export type FlyOrigin = React.MouseEvent | HTMLElement | { x: number; y: number } | null | undefined;
+
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (item: CartItem) => void;
+    addToCart: (item: CartItem, origin?: FlyOrigin) => void;
     removeFromCart: (itemId: string) => void;
     clearCart: () => void;
     total: number;
+    isCartBouncing: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [flyingItems, setFlyingItems] = useState<FlyingItemPayload[]>([]);
+    const [isCartBouncing, setIsCartBouncing] = useState(false);
     const { notify } = useNotification();
 
     // Load cart from localStorage on init
@@ -45,7 +52,73 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('cart', JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = (item: CartItem) => {
+    const removeFlyingItem = useCallback((id: string) => {
+        setFlyingItems(prev => prev.filter(item => item.id !== id));
+        // Impact landing feedback
+        setIsCartBouncing(true);
+        triggerHaptic('light');
+        setTimeout(() => setIsCartBouncing(false), 600);
+    }, []);
+
+    const triggerFlyAnimation = (image: string, origin?: FlyOrigin) => {
+        if (typeof window === 'undefined') return;
+
+        // 1. Calculate Start Coordinates
+        let startX = window.innerWidth / 2;
+        let startY = window.innerHeight / 2;
+
+        if (origin) {
+            if ('clientX' in origin && 'clientY' in origin) {
+                // MouseEvent / TouchEvent
+                startX = origin.clientX;
+                startY = origin.clientY;
+            } else if ('getBoundingClientRect' in origin) {
+                // HTMLElement
+                const rect = origin.getBoundingClientRect();
+                startX = rect.left + rect.width / 2;
+                startY = rect.top + rect.height / 2;
+            } else if ('x' in origin && 'y' in origin) {
+                startX = origin.x;
+                startY = origin.y;
+            }
+        }
+
+        // 2. Find Target Cart Icon (Desktop or Mobile)
+        const desktopCartBtn = document.getElementById('header-cart-btn');
+        const mobileCartBtn = document.getElementById('mobile-header-cart-btn');
+
+        let targetX = window.innerWidth - 60;
+        let targetY = 32;
+
+        const activeTarget = (desktopCartBtn && desktopCartBtn.offsetParent !== null)
+            ? desktopCartBtn
+            : (mobileCartBtn && mobileCartBtn.offsetParent !== null)
+                ? mobileCartBtn
+                : null;
+
+        if (activeTarget) {
+            const targetRect = activeTarget.getBoundingClientRect();
+            targetX = targetRect.left + targetRect.width / 2;
+            targetY = targetRect.top + targetRect.height / 2;
+        }
+
+        const newFlyId = `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        setFlyingItems(prev => [
+            ...prev,
+            {
+                id: newFlyId,
+                image: image || '',
+                startX,
+                startY,
+                targetX,
+                targetY
+            }
+        ]);
+
+        triggerHaptic('medium');
+    };
+
+    const addToCart = (item: CartItem, origin?: FlyOrigin) => {
         let alreadyInCart = false;
 
         setCart(prev => {
@@ -64,6 +137,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 icon: 'shopping_cart'
             });
         } else {
+            // Trigger the flying animation
+            triggerFlyAnimation(item.image, origin);
+
             // Track add_to_cart event
             trackEvent(item.sellerId, 'add_to_cart', { productId: item.id, productTitle: item.title });
             
@@ -93,8 +169,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const total = cart.reduce((sum, item) => sum + item.price, 0);
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, total }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, total, isCartBouncing }}>
             {children}
+            <FlyingCartOverlay items={flyingItems} onComplete={removeFlyingItem} />
         </CartContext.Provider>
     );
 };
@@ -108,6 +185,7 @@ export const useCart = () => {
             removeFromCart: () => {},
             clearCart: () => {},
             total: 0,
+            isCartBouncing: false,
         };
     }
     return context;
