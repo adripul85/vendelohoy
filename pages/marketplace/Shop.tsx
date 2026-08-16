@@ -12,8 +12,6 @@ import { FaWhatsapp, FaInstagram, FaTiktok, FaGlobe, FaXTwitter, FaFacebook, FaY
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 const TiltCardWrapper = ({ children, isSpatial, layout }: { children: React.ReactNode, isSpatial: boolean, layout?: boolean }) => {
-    if (!isSpatial) return <>{children}</>;
-
     const x = useMotionValue(0);
     const y = useMotionValue(0);
 
@@ -24,6 +22,7 @@ const TiltCardWrapper = ({ children, isSpatial, layout }: { children: React.Reac
     const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        if (!isSpatial) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
@@ -36,9 +35,12 @@ const TiltCardWrapper = ({ children, isSpatial, layout }: { children: React.Reac
     };
 
     const handleMouseLeave = () => {
+        if (!isSpatial) return;
         x.set(0);
         y.set(0);
     };
+
+    if (!isSpatial) return <>{children}</>;
 
     return (
         <motion.div
