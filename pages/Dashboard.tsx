@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { useAuth } from '../lib/auth';
-import { getUserTransactions, TransactionData, TransactionStatus } from '../lib/transactions';
+import { getUserTransactions, TransactionData, TransactionStatus, triggerAutoReleaseEscrow } from '../lib/transactions';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getReviewForTransaction } from '../lib/reviews';
@@ -82,6 +82,9 @@ export default function Dashboard() {
         }
       });
     }
+
+    // Auto-check and release any pending orders that exceeded 48/72hs
+    triggerAutoReleaseEscrow();
 
     const transactionsRef = collection(db, "transactions");
 

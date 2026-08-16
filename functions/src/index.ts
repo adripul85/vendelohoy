@@ -327,27 +327,55 @@ export const submitEvidence = functions.https.onCall(async (request) => {
 });
 
 /**
- * 9. AUTO-RELEASE ESCROW (Scheduled 48h timer)
- * Runs every hour to check for SHIPPED transactions older than 48 hours.
+ * 9. AUTO-RELEASE ESCROW (Scheduled timer)
+ * Runs every hour to check for:
+ *   A) DELIVERED_PENDING_REVIEW where inspectionDeadline has passed (48h after buyer confirmed receipt)
+ *   B) SHIPPED transactions older than 72h where buyer never confirmed receipt
+ *   C) PAID_HELD en_mano/acordar transactions older than 72h (in-person, never confirmed)
  */
 export const autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRun(async (context) => {
     const now = new Date();
+    const results: { id: string; status: string; reason?: string; message?: string }[] = [];
 
-    // Query transactions that are DELIVERED_PENDING_REVIEW and deadline has passed
-    const snapshot = await db.collection('transactions')
+    // --- A) Original: DELIVERED_PENDING_REVIEW where inspectionDeadline has passed ---
+    const reviewSnapshot = await db.collection('transactions')
         .where('status', '==', 'DELIVERED_PENDING_REVIEW')
         .where('inspectionDeadline', '<=', now)
         .get();
 
-    if (snapshot.empty) {
+    // --- B) SHIPPED for more than 72h (buyer never clicked "Confirmar Recepción") ---
+    const cutoff72h = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+    const shippedSnapshot = await db.collection('transactions')
+        .where('status', '==', 'SHIPPED')
+        .where('updatedAt', '<=', cutoff72h)
+        .get();
+
+    // --- C) PAID_HELD en_mano/acordar for more than 72h (in-person, never confirmed) ---
+    const paidHeldSnapshot = await db.collection('transactions')
+        .where('status', '==', 'PAID_HELD')
+        .where('updatedAt', '<=', cutoff72h)
+        .get();
+
+    // Filter PAID_HELD to only in-person delivery methods
+    const paidHeldInPerson = paidHeldSnapshot.docs.filter(doc => {
+        const method = doc.data().deliveryMethod;
+        return method === 'en_mano' || method === 'acordar';
+    });
+
+    const allDocs = [
+        ...reviewSnapshot.docs.map(d => ({ doc: d, reason: 'inspection_deadline_passed' })),
+        ...shippedSnapshot.docs.map(d => ({ doc: d, reason: 'shipped_72h_no_confirmation' })),
+        ...paidHeldInPerson.map(d => ({ doc: d, reason: 'paid_held_72h_in_person' })),
+    ];
+
+    if (allDocs.length === 0) {
         console.log('No transactions to auto-release.');
         return null;
     }
 
-    console.log(`Auto-releasing ${snapshot.size} transactions...`);
+    console.log(`Auto-releasing ${allDocs.length} transactions (${reviewSnapshot.size} reviewed, ${shippedSnapshot.size} shipped, ${paidHeldInPerson.length} paid_held)...`);
 
-    const results = [];
-    for (const doc of snapshot.docs) {
+    for (const { doc, reason } of allDocs) {
         const txId = doc.id;
         const data = doc.data();
 
@@ -356,20 +384,51 @@ export const autoReleaseEscrow = functions.pubsub.schedule('every 1 hours').onRu
             await doc.ref.update({
                 status: 'COMPLETED',
                 escrowReleased: true,
-                autoReleased: true, // Tracking flag
+                autoReleased: true,
+                autoReleaseReason: reason,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
 
             // 2. Distribute funds
             await distributeEscrowFunds(txId, data);
 
-            // 3. Optional: Send notification to buyer and seller
-            // (System notes are added via addEscrowNote if needed, but here we just log)
+            // 3. Notify both parties
+            const notifBatch = db.batch();
 
-            results.push({ id: txId, status: 'success' });
+            // Notify buyer
+            const buyerNotifRef = db.collection('notifications').doc();
+            notifBatch.set(buyerNotifRef, {
+                userId: data.buyerId,
+                title: '✅ Transacción completada automáticamente',
+                message: reason === 'inspection_deadline_passed'
+                    ? `El período de inspección de "${data.itemTitle}" ha finalizado. Los fondos fueron liberados al vendedor.`
+                    : `Han pasado más de 72hs desde el envío de "${data.itemTitle}" sin confirmar recepción. Los fondos fueron liberados automáticamente al vendedor.`,
+                type: 'info',
+                icon: 'schedule',
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                link: `/transaction/${txId}`
+            });
+
+            // Notify seller
+            const sellerNotifRef = db.collection('notifications').doc();
+            notifBatch.set(sellerNotifRef, {
+                userId: data.sellerId,
+                title: '💰 ¡Pago liberado automáticamente!',
+                message: `Los fondos de "${data.itemTitle}" ($${(data.amountProduct || data.amount || 0).toLocaleString()}) fueron acreditados en tu billetera.`,
+                type: 'success',
+                icon: 'payments',
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                link: '/dashboard'
+            });
+
+            await notifBatch.commit();
+
+            results.push({ id: txId, status: 'success', reason });
         } catch (error: any) {
             console.error(`Error auto-releasing transaction ${txId}:`, error);
-            results.push({ id: txId, status: 'error', message: error.message });
+            results.push({ id: txId, status: 'error', reason, message: error.message });
         }
     }
 

@@ -530,3 +530,22 @@ export const submitEvidence = async (transactionId: string, url: string, type: s
         return { success: false, error: error.message };
     }
 };
+
+/**
+ * Trigger server evaluation for auto-releasing pending escrow transactions that exceeded 48/72hs
+ */
+export const triggerAutoReleaseEscrow = async () => {
+    try {
+        const response = await fetch('/api/auto-release-escrow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (err) {
+        console.warn('Auto-release escrow check skipped:', err);
+    }
+    return null;
+};
+

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../lib/auth';
-import { getTransaction, TransactionData, releaseFunds } from '../../lib/transactions';
+import { getTransaction, TransactionData, releaseFunds, triggerAutoReleaseEscrow } from '../../lib/transactions';
 import { useNotification } from '../../context/NotificationContext';
 
 const TransactionDetail = () => {
@@ -23,6 +23,7 @@ const TransactionDetail = () => {
 
     const fetchTransaction = async () => {
         if (!id) return;
+        await triggerAutoReleaseEscrow();
         const data = await getTransaction(id);
         setTransaction(data);
         setLoading(false);

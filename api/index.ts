@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 import adminRefund from '../api-handlers/admin-refund';
+import autoReleaseEscrow from '../api-handlers/auto-release-escrow';
 import bumpItem from '../api-handlers/bump-item';
 import cancelTransaction from '../api-handlers/cancel-transaction';
 import confirmReceipt from '../api-handlers/confirm-receipt';
@@ -23,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     switch (endpoint) {
         case 'admin-refund': return adminRefund(req, res);
+        case 'auto-release-escrow': return autoReleaseEscrow(req, res);
         case 'bump-item': return bumpItem(req, res);
         case 'cancel-transaction': return cancelTransaction(req, res);
         case 'confirm-receipt': return confirmReceipt(req, res);
