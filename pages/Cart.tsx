@@ -187,7 +187,7 @@ const Cart = () => {
 
                     {/* RIGHT COLUMN: Summary */}
                     <div className="lg:col-span-4">
-                        <div className="bg-surface rounded-2xl shadow-lg border-t-4 border-t-[#00b4d8] border-x border-b border-outline-variant/20 sticky top-6 lg:p-24 overflow-hidden">
+                        <div className="bg-surface rounded-2xl shadow-lg border-t-4 border-t-[#00b4d8] border-x border-b border-outline-variant/20 sticky top-6 overflow-hidden">
                             <div className="p-6 lg:p-8">
                                 <h3 className="text-lg font-black text-primary mb-6 uppercase tracking-wider font-headline">Resumen de Compra</h3>
 
