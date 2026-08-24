@@ -20,6 +20,8 @@ const Profile = () => {
   const [targetProfile, setTargetProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<(ItemData & { id: string })[]>([]);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const [activeTab, setActiveTab] = useState<'selling' | 'reviews_seller' | 'reviews_buyer'>('selling');
   const [isFollowing, setIsFollowing] = useState(false);
   const [metrics, setMetrics] = useState({
@@ -131,6 +133,9 @@ const Profile = () => {
 
   const joinDate = targetProfile.createdAt?.toDate ? targetProfile.createdAt.toDate() : new Date();
   const joinYear = joinDate.getFullYear();
+
+  const paginatedProducts = products.slice(0, page * ITEMS_PER_PAGE);
+  const hasMore = paginatedProducts.length < products.length;
 
   return (
     <div className="bg-light-50 min-h-screen pb-32">
@@ -335,11 +340,24 @@ const Profile = () => {
             {activeTab === 'selling' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {products.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {products.map(p => (
-                      <ProductCard key={p.id} product={p} location={targetProfile.location?.city} />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {paginatedProducts.map(p => (
+                        <ProductCard key={p.id} product={p} location={targetProfile.location?.city} />
+                      ))}
+                    </div>
+                    {hasMore && (
+                      <div className="mt-8 flex justify-center">
+                        <button 
+                          onClick={() => setPage(p => p + 1)}
+                          className="px-8 py-3 bg-white border border-light-200 rounded-2xl font-black text-sm uppercase tracking-widest text-primary hover:bg-light-50 hover:border-primary transition-all shadow-sm flex items-center gap-2"
+                        >
+                          <span className="material-symbols-outlined">expand_more</span>
+                          Cargar más productos
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-20 bg-white rounded-[40px] border border-light-200/50 border-dashed">
                     <div className="size-20 bg-light-50 rounded-full flex items-center justify-center mx-auto mb-6">

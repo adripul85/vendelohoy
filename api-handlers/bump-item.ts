@@ -26,77 +26,67 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const userId = decodedToken.uid;
 
         const itemRef = adminDb.collection('items').doc(itemId);
-        const itemSnap = await itemRef.get();
-
-        if (!itemSnap.exists) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
-        }
-
-        const data = itemSnap.data() as any;
-
-        if (data.sellerId !== userId) {
-            return res.status(403).json({ error: 'Prohibido: Solo el vendedor puede destacar.' });
-        }
-
-        // Check user XP level
         const userRef = adminDb.collection('users').doc(userId);
-        const userSnap = await userRef.get();
-        if (!userSnap.exists) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-        
-        const userData = userSnap.data() as any;
-        const trustLevel = userData.trustLevel || 'Bajo';
-        
-        const isPremium = trustLevel === 'Premium' || trustLevel === 'Alto'; // Diamante o Oro
-        const bumpCost = 500;
 
-        const batch = adminDb.batch();
+        await adminDb.runTransaction(async (t) => {
+            const itemSnap = await t.get(itemRef);
+            if (!itemSnap.exists) throw new Error('NOT_FOUND');
 
-        if (!isPremium && !data.isFeatured) {
-            const walletAvailable = userData.wallet?.available || 0;
-            if (walletAvailable < bumpCost) {
-                return res.status(400).json({ error: `Saldo insuficiente. Cuesta $${bumpCost} ARS destacar.` });
-            }
-            // Charge the user
-            batch.update(userRef, {
-                "wallet.available": FieldValue.increment(-bumpCost)
-            });
+            const data = itemSnap.data() as any;
+            if (data.sellerId !== userId) throw new Error('FORBIDDEN');
 
-            // Find admin to credit
-            const usersSnapshot = await adminDb.collection('users').where('role', '==', 'admin').limit(1).get();
-            if (!usersSnapshot.empty) {
-                const adminDoc = usersSnapshot.docs[0];
-                batch.update(adminDoc.ref, {
-                    "wallet.available": FieldValue.increment(bumpCost)
-                });
+            const userSnap = await t.get(userRef);
+            if (!userSnap.exists) throw new Error('USER_NOT_FOUND');
+
+            const userData = userSnap.data() as any;
+            const trustLevel = userData.trustLevel || 'Bajo';
+            const isPremium = trustLevel === 'Premium' || trustLevel === 'Alto';
+            const bumpCost = 500;
+
+            if (!isPremium && !data.isFeatured) {
+                const walletAvailable = userData.wallet?.available || 0;
+                if (walletAvailable < bumpCost) {
+                    throw new Error('INSUFFICIENT_FUNDS');
+                }
                 
-                // Log the payment
-                const logRef = adminDb.collection('financial_logs').doc();
-                batch.set(logRef, {
-                    type: 'bump_fee',
-                    amount: bumpCost,
-                    currency: 'ARS',
-                    relatedUser: userId,
-                    relatedItem: itemId,
-                    timestamp: FieldValue.serverTimestamp()
+                t.update(userRef, {
+                    "wallet.available": FieldValue.increment(-bumpCost)
                 });
+
+                const usersQuery = adminDb.collection('users').where('role', '==', 'admin').limit(1);
+                const usersSnapshot = await t.get(usersQuery);
+                if (!usersSnapshot.empty) {
+                    const adminDoc = usersSnapshot.docs[0];
+                    t.update(adminDoc.ref, {
+                        "wallet.available": FieldValue.increment(bumpCost)
+                    });
+
+                    const logRef = adminDb.collection('financial_logs').doc();
+                    t.set(logRef, {
+                        type: 'bump_fee',
+                        amount: bumpCost,
+                        currency: 'ARS',
+                        relatedUser: userId,
+                        relatedItem: itemId,
+                        timestamp: FieldValue.serverTimestamp()
+                    });
+                }
             }
-        }
 
-        // Apply Bump
-        batch.update(itemRef, {
-            isFeatured: !data.isFeatured, // Toggle if they already had it? Usually bump is a one-time thing to move it to the top. Wait, `isFeatured` is a boolean. Let's toggle it or just set it to true.
-            // Actually, we'll just toggle it for now so they can un-feature it if they want.
-            // If they are un-featuring, we don't charge them again. The charge block already checks `!data.isFeatured`.
-            featuredAt: !data.isFeatured ? FieldValue.serverTimestamp() : null,
-            updatedAt: FieldValue.serverTimestamp()
+            t.update(itemRef, {
+                isFeatured: !data.isFeatured,
+                featuredAt: !data.isFeatured ? FieldValue.serverTimestamp() : null,
+                updatedAt: FieldValue.serverTimestamp()
+            });
         });
-
-        await batch.commit();
 
         return res.status(200).json({ success: true, message: isPremium ? 'Destacado aplicado gratis.' : 'Pago procesado y destacado.' });
     } catch (error: any) {
+        if (error.message === 'NOT_FOUND') return res.status(404).json({ error: 'Producto no encontrado' });
+        if (error.message === 'FORBIDDEN') return res.status(403).json({ error: 'Prohibido: Solo el vendedor puede destacar.' });
+        if (error.message === 'USER_NOT_FOUND') return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (error.message === 'INSUFFICIENT_FUNDS') return res.status(400).json({ error: 'Saldo insuficiente. Cuesta $500 ARS destacar.' });
+
         console.error('Error in bump-item:', error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }

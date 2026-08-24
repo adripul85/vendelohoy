@@ -97,11 +97,15 @@ export default function Dashboard() {
       const hiddenTxs = JSON.parse(localStorage.getItem('hiddenTxs') || '[]');
       const compras = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() as any, type: 'compra' }))
-        .filter(tx => !hiddenTxs.includes(tx.id));
+        .filter((tx: any) => !hiddenTxs.includes(tx.id))
+        .sort((a: any, b: any) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
 
       setTransactions(prev => ({ ...prev, compras }));
-
-      // Check for reviews for these purchases
+      
       const checkReviews = async () => {
         const reviewed = new Set<string>();
         for (const tx of compras) {
@@ -118,8 +122,8 @@ export default function Dashboard() {
       };
       checkReviews();
       setLoading(false);
-    }, (err) => {
-      console.warn("Dashboard unsubBuy error:", err);
+    }, (error) => {
+      console.error("Error in qBuy snapshot:", error);
       setLoading(false);
     });
 
@@ -127,11 +131,16 @@ export default function Dashboard() {
       const hiddenTxs = JSON.parse(localStorage.getItem('hiddenTxs') || '[]');
       const ventas = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() as any, type: 'venta' }))
-        .filter(tx => !hiddenTxs.includes(tx.id));
+        .filter((tx: any) => !hiddenTxs.includes(tx.id))
+        .sort((a: any, b: any) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
       setTransactions(prev => ({ ...prev, ventas }));
       setLoading(false);
-    }, (err) => {
-      console.warn("Dashboard unsubSell error:", err);
+    }, (error) => {
+      console.error("Error in qSell snapshot:", error);
       setLoading(false);
     });
 

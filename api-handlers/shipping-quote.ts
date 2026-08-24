@@ -1,9 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminDb } from '../lib/firebase-admin.js';
+import { checkRateLimit } from './rate-limit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(clientIp, 'shipping-quote', 15, 60000); // 15 requests per minute
+
+    if (!rateLimit.success) {
+        return res.status(429).json({ error: rateLimit.message });
     }
 
     try {

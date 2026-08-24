@@ -1,18 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminDb } from '../lib/firebase-admin.js';
+import { checkRateLimit } from './rate-limit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket?.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(clientIp, 'mp-preference', 5, 60000); // 5 requests per minute per IP
+
+    if (!rateLimit.success) {
+        return res.status(429).json({ error: rateLimit.message });
+    }
+
     const { title, price, quantity, productId, sellerId, transactionId } = req.body;
     console.log(`[MP API] Initiating preference for: Product: ${productId}, Seller: ${sellerId}, Price: ${price}`);
 
     try {
-        if (!sellerId) {
-            console.error("[MP API] Error: Missing sellerId in Request Payload");
-            return res.status(400).json({ error: 'Falta el ID del vendedor' });
+        if (!sellerId || !transactionId) {
+            console.error("[MP API] Error: Missing sellerId or transactionId in Request Payload");
+            return res.status(400).json({ error: 'Faltan datos de la transacción' });
         }
 
         // Validación de Firebase Admin
@@ -21,28 +29,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Fallo interno de servidor: Credenciales de Base de Datos ausentes.' });
         }
 
+        // SECURITY FIX: Buscar la transacción real en Firestore para usar su precio total
+        const txSnap = await adminDb.collection('transactions').doc(transactionId).get();
+        if (!txSnap.exists) {
+            return res.status(404).json({ error: 'Transacción no encontrada en la base de datos' });
+        }
+        
+        const txData = txSnap.data();
+        const realPrice = txData?.amountTotal || txData?.total || Number(price);
+
         if (!process.env.MP_ACCESS_TOKEN) {
             console.error("[MP API] Error: Platform MP_ACCESS_TOKEN not set in environment.");
             return res.status(500).json({ error: 'Falta configurar la pasarela de pagos de la plataforma.' });
         }
 
-        console.log(`[MP API] Seller OK. Using Platform Escrow Token.`);
+        console.log(`[MP API] Seller OK. Using Platform Escrow Token. Real Price: ${realPrice}`);
 
         const isLocalHost = req.headers.host?.includes('localhost');
         
         const mpPayload: any = {
             items: [
                 {
-                    title: title,
-                    unit_price: Number(price),
+                    title: title || txData?.itemTitle || 'Producto',
+                    unit_price: Number(realPrice),
                     quantity: Number(quantity),
                     currency_id: 'ARS'
                 }
             ],
-            external_reference: productId,
+            external_reference: transactionId, // SECURITY FIX: external_reference is usually the transactionId, not productId
             metadata: {
                 seller_id: sellerId,
-                product_id: productId,
+                product_id: productId || txData?.itemId,
                 transaction_id: transactionId
             },
             back_urls: {
@@ -58,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             mpPayload.notification_url = `https://${req.headers.host}/api/mercadopago-webhook`;
         }
 
-        console.log(`[MP API] Sending Payload to Mercado Pago:`, JSON.stringify(mpPayload, null, 2));
+
         
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
@@ -73,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Parse result carefully
         let data;
         const rawRes = await response.text();
-        console.log(`[MP API] Raw MP Response:`, rawRes.substring(0, 300));
+
 
         try {
             data = JSON.parse(rawRes);

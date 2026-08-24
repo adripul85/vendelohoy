@@ -16,11 +16,12 @@ interface ProductCardProps {
     location?: string;
     isVerified?: boolean;
     layoutTemplate?: string;
+    sellerProfile?: UserProfile | null;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified, layoutTemplate }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified, layoutTemplate, sellerProfile: initialSellerProfile }) => {
 
-    const [sellerProfile, setSellerProfile] = React.useState<UserProfile | null>(null);
+    const [sellerProfile, setSellerProfile] = React.useState<UserProfile | null>(initialSellerProfile || null);
     const { addToCart } = useCart();
     const { user } = useAuth();
     const { notify } = useNotification();
@@ -46,10 +47,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
     };
 
     React.useEffect(() => {
-        if (product.sellerId) {
+        if (!initialSellerProfile && product.sellerId) {
             getUserProfile(product.sellerId).then(setSellerProfile);
         }
-    }, [product.sellerId]);
+    }, [product.sellerId, initialSellerProfile]);
 
     // Calcular tiempo transcurrido
     const getRelativeTime = (timestamp: any) => {
@@ -161,4 +162,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
     );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

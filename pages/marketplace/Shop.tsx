@@ -66,6 +66,8 @@ const Shop = () => {
 
     const [seller, setSeller] = useState<UserProfile | null>(null);
     const [products, setProducts] = useState<(ItemData & { id: string })[]>([]);
+    const [page, setPage] = useState(1);
+    const ITEMS_PER_PAGE = 12;
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowHovered, setIsFollowHovered] = useState(false);
@@ -117,6 +119,11 @@ const Shop = () => {
 
         fetchShopData();
     }, [slug, user, navigate, notify]);
+
+    // Reset page on filter changes
+    useEffect(() => {
+        setPage(1);
+    }, [selectedCategory, searchQuery, buyerSort]);
 
     const handleFollow = async () => {
         if (!user) {
@@ -224,6 +231,9 @@ const Shop = () => {
                     return 0;
             }
         });
+
+    const paginatedProducts = processedProducts.slice(0, page * ITEMS_PER_PAGE);
+    const hasMore = paginatedProducts.length < processedProducts.length;
 
     // Category tabs and filtering
     const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
@@ -399,7 +409,7 @@ const Shop = () => {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                            {vipProducts.map(p => <ProductCard key={`vip-${p.id}`} product={p} layoutTemplate={layoutTemplate} />)}
+                            {vipProducts.map(p => <ProductCard key={`vip-${p.id}`} product={p} layoutTemplate={layoutTemplate} sellerProfile={seller} />)}
                         </div>
                     </div>
                 </div>
@@ -524,6 +534,7 @@ const Shop = () => {
                     )}
 
                     {processedProducts.length > 0 ? (
+                        <>
                         <motion.div 
                             layout={layoutTemplate === 'magnetic'}
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
@@ -536,7 +547,7 @@ const Shop = () => {
                             }}
                         >
                             <AnimatePresence mode="popLayout">
-                                {processedProducts.map(p => (
+                                {paginatedProducts.map(p => (
                                     <motion.div 
                                         key={p.id}
                                         layout={layoutTemplate === 'magnetic'}
@@ -549,12 +560,25 @@ const Shop = () => {
                                         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                                     >
                                         <TiltCardWrapper isSpatial={layoutTemplate === 'spatial'} layout={layoutTemplate === 'magnetic'}>
-                                            <ProductCard product={p} layoutTemplate={layoutTemplate} />
+                                            <ProductCard product={p} layoutTemplate={layoutTemplate} sellerProfile={seller} />
                                         </TiltCardWrapper>
                                     </motion.div>
                                 ))}
                             </AnimatePresence>
                         </motion.div>
+                        
+                        {hasMore && (
+                            <div className="mt-12 flex justify-center">
+                                <button 
+                                    onClick={() => setPage(p => p + 1)}
+                                    className="px-8 py-3 bg-surface border border-outline-variant rounded-2xl font-black text-sm uppercase tracking-widest text-primary hover:bg-surface-container-low hover:border-primary transition-all shadow-sm flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined">expand_more</span>
+                                    Cargar más productos
+                                </button>
+                            </div>
+                        )}
+                    </>
                     ) : searchQuery ? (
                         <div className="py-24 text-center bg-surface rounded-[40px] border border-outline-variant/30 p-8">
                             <div className="size-16 bg-surface-container-low rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">

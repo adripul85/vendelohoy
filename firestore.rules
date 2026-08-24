@@ -12,12 +12,19 @@ service cloud.firestore {
 
     // REGLAS PARA TRANSACCIONES
     match /transactions/{transactionId} {
-      // Leer: Comprador, Vendedor o Admin
-      allow read: if request.auth != null && (
-        resource.data.buyerId == request.auth.uid || 
-        resource.data.sellerId == request.auth.uid || 
-        isAdmin()
-      );
+      // SECURITY FIX: Split rules so Firestore query analyzer can match `where("buyerId", "==", uid)` and `where("sellerId", "==", uid)` perfectly.
+      allow read: if request.auth != null && resource.data.buyerId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.sellerId == request.auth.uid;
+      allow read: if isAdmin();
+      // Subcolecciones de la transaccion
+      match /messages/{messageId} {
+        allow read: if request.auth != null && (get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid || isAdmin());
+        allow create: if request.auth != null && (get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid || isAdmin());
+      }
+      match /evidence/{evidenceId} {
+        allow read: if request.auth != null && (get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid || isAdmin());
+        allow create: if request.auth != null && (get(/databases/$(database)/documents/transactions/$(transactionId)).data.buyerId == request.auth.uid || get(/databases/$(database)/documents/transactions/$(transactionId)).data.sellerId == request.auth.uid || isAdmin());
+      }
       
       // Crear: Cualquier usuario autenticado puede iniciar un trato
       allow create: if request.auth != null && request.resource.data.buyerId == request.auth.uid;
@@ -228,7 +235,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /disputes/{document=**} {
-      allow read: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow read: if request.auth != null && resource.data.buyerId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.sellerId == request.auth.uid;
+      allow read: if isAdmin();
       allow create: if request.auth != null;
       allow update: if request.auth != null && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
       allow delete: if isAdmin();

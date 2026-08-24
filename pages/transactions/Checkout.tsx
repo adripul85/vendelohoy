@@ -46,7 +46,7 @@ export default function Checkout() {
   const queryParams = new URLSearchParams(location.search);
   const resumedTxId = queryParams.get('tx') || state.transactionId;
 
-  const [isResuming, setIsResuming] = useState(!!resumedTxId);
+  const isResuming = !!resumedTxId;
   const [resumedTxData, setResumedTxData] = useState<any>(null);
 
   const isCartMode = !state.productId && cart.length > 0 && !resumedTxId;

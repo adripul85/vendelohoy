@@ -18,6 +18,7 @@ import shippingQuote from '../api-handlers/shipping-quote';
 import sitemap from '../api-handlers/sitemap';
 import submitReview from '../api-handlers/submit-review';
 import syncAdminClaim from '../api-handlers/sync-admin-claim';
+import seoProxy from '../api-handlers/seo-proxy';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const endpoint = req.query.endpoint as string;
@@ -41,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'sitemap': return sitemap(req, res);
         case 'submit-review': return submitReview(req, res);
         case 'sync-admin-claim': return syncAdminClaim(req, res);
+        case 'seo-proxy': return seoProxy(req, res);
         default: return res.status(404).json({ error: 'Endpoint not found: ' + endpoint });
     }
 }

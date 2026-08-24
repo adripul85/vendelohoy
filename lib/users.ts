@@ -202,15 +202,29 @@ export const createUserProfile = async (uid: string, data: Partial<UserProfile>)
 };
 
 // Get user profile
+const userProfileCache = new Map<string, { data: UserProfile | null, timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
     try {
+        const now = Date.now();
+        if (userProfileCache.has(uid)) {
+            const cached = userProfileCache.get(uid)!;
+            if (now - cached.timestamp < CACHE_TTL) {
+                return cached.data;
+            }
+        }
+
         const userRef = doc(db, "users", uid);
         const userSnap = await getDoc(userRef);
 
+        let result: UserProfile | null = null;
         if (userSnap.exists()) {
-            return { uid: userSnap.id, ...userSnap.data() } as UserProfile;
+            result = { uid: userSnap.id, ...userSnap.data() } as UserProfile;
         }
-        return null;
+
+        userProfileCache.set(uid, { data: result, timestamp: now });
+        return result;
     } catch (error) {
         console.error("Error fetching user profile:", error);
         return null;

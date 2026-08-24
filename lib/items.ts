@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc, orderBy, limit, startAfter, onSnapshot } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { notifyFavoriteFollowers } from "./interactions";
 
@@ -231,12 +231,23 @@ export const getItems = async () => {
 };
 
 // Fetch items by seller ID (sorted in memory to avoid Firestore composite index requirements)
-export const getItemsBySeller = async (sellerId: string) => {
+export const getItemsBySeller = async (sellerId: string, limitCount?: number, startAfterDoc?: any) => {
     try {
-        const q = query(
+        let q = query(
             collection(db, "items"),
             where("sellerId", "==", sellerId)
         );
+
+        // Si se pasa un límite, aplicarlo. No agregamos orderBy('createdAt') aquí 
+        // para no forzar al usuario a crear un índice compuesto manualmente.
+        if (limitCount) {
+            q = query(q, limit(limitCount));
+        }
+
+        if (startAfterDoc) {
+            q = query(q, startAfter(startAfterDoc));
+        }
+
         const querySnapshot = await getDocs(q);
         const docs = querySnapshot.docs.map(doc => ({
             id: doc.id,

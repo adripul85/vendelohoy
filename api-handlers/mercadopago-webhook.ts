@@ -98,6 +98,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             return; // Ya procesado, no hacemos nada
                         }
 
+                        // SECURITY FIX: Verificar que el monto pagado coincida con el monto total de la transacción
+                        const expectedAmount = tx?.amountTotal || tx?.total || 0;
+                        const paidAmount = paymentData.transaction_amount || 0;
+                        
+                        // Permitimos una diferencia menor a 1 peso por posibles redondeos de MP
+                        if (Math.abs(paidAmount - expectedAmount) > 1) {
+                            console.error(`[CRITICAL] Monto pagado (${paidAmount}) no coincide con el monto esperado (${expectedAmount}) para Tx ${transactionId}.`);
+                            throw new Error('Monto pagado incorrecto. Posible fraude o pago parcial.');
+                        }
+
                         // 2. Actualizar estado del producto
                         try {
                             const itemRef = db.collection('items').doc(productId);

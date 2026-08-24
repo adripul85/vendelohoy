@@ -15,6 +15,14 @@
             "destination": "/api/index?endpoint=:endpoint"
         },
         {
+            "source": "/product/:id",
+            "destination": "/api/index?endpoint=seo-proxy&id=$id"
+        },
+        {
+            "source": "/shop/:slug",
+            "destination": "/api/index?endpoint=seo-proxy&slug=$slug"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
