@@ -17,24 +17,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).send('OK');
     }
 
-    if (signature && requestId && process.env.MP_WEBHOOK_SECRET) {
-        const parts = signature.split(',');
-        let ts = '';
-        let v1 = '';
-        parts.forEach(part => {
-            if (part.startsWith('ts=')) ts = part.substring(3);
-            if (part.startsWith('v1=')) v1 = part.substring(3);
-        });
+    // SECURITY FIX: "fail closed" — si no se puede validar la firma, rechazar
+    if (!process.env.MP_WEBHOOK_SECRET) {
+        console.error("MP_WEBHOOK_SECRET not configured — rejecting webhook");
+        return res.status(500).send('Webhook secret not configured');
+    }
 
-        const manifest = `id:${req.body.data.id};request-id:${requestId};ts:${ts};`;
-        const hmac = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET);
-        hmac.update(manifest);
-        const generatedHash = hmac.digest('hex');
-        
-        if (generatedHash !== v1) {
-            console.error("Invalid Webhook Signature:", { expected: v1, generated: generatedHash });
-            return res.status(401).send('Invalid Signature');
-        }
+    if (!signature || !requestId) {
+        console.error("Missing x-signature or x-request-id headers — rejecting webhook");
+        return res.status(401).send('Missing signature headers');
+    }
+
+    const parts = signature.split(',');
+    let ts = '';
+    let v1 = '';
+    parts.forEach(part => {
+        if (part.startsWith('ts=')) ts = part.substring(3);
+        if (part.startsWith('v1=')) v1 = part.substring(3);
+    });
+
+    const manifest = `id:${req.body.data.id};request-id:${requestId};ts:${ts};`;
+    const hmac = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET);
+    hmac.update(manifest);
+    const generatedHash = hmac.digest('hex');
+    
+    if (generatedHash !== v1) {
+        console.error("Invalid Webhook Signature:", { expected: v1, generated: generatedHash });
+        return res.status(401).send('Invalid Signature');
     }
 
     // Mercado Pago envía notificaciones por query params o body dependiendo del tipo
@@ -148,7 +157,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).send('OK');
     } catch (error: any) {
         console.error("Webhook Error:", error);
-        // Respondemos 200 de todas formas para que MP no reintente infinitamente si es un error de lógica
-        return res.status(200).send('Error but handled');
+        // SECURITY FIX: devolvemos 500 para que MP reintente en caso de error transitorio (ej: Firestore caído)
+        // MP tiene backoff exponencial, no reintenta infinitamente
+        return res.status(500).send('Internal error');
     }
 }
