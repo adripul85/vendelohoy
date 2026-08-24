@@ -67,7 +67,16 @@ service cloud.firestore {
     // REGLAS PARA REVIEWS
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if request.auth != null && (request.resource.data.buyerId == request.auth.uid || request.resource.data.reviewerId == request.auth.uid);
+      // SECURITY FIX: solo se puede crear una review si existe una transacción COMPLETED real
+      // donde el reviewer es el comprador verificado
+      allow create: if request.auth != null && (
+        request.resource.data.buyerId == request.auth.uid || 
+        request.resource.data.reviewerId == request.auth.uid
+      ) && (
+        // Verificar que la transacción referenciada existe, está completada, y el buyer coincide
+        get(/databases/$(database)/documents/transactions/$(request.resource.data.transactionId)).data.status == 'COMPLETED' &&
+        get(/databases/$(database)/documents/transactions/$(request.resource.data.transactionId)).data.buyerId == request.auth.uid
+      );
       allow delete: if isAdmin();
     }
     

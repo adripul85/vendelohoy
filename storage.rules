@@ -43,19 +43,29 @@ service firebase.storage {
     }
     
     // --- Chats ---
-    // Las imágenes se suben a `chats/${selectedChat.id}`
+    // SECURITY FIX: Solo los participantes del chat pueden leer/subir imágenes
     match /chats/{chatId}/{imageId=**} {
-      allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow read: if isAuthenticated() && (
+        request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.participants ||
+        request.auth.token.admin == true
+      );
+      allow write: if isAuthenticated() && isImage() && isLessThan5MB() && (
+        request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.participants
+      );
     }
 
     // --- Escrow / Disputas ---
-    // Las imágenes se suben a `escrow/${id}`
+    // SECURITY FIX: Solo comprador/vendedor de la transacción pueden acceder a evidencia
     match /escrow/{transactionId}/{imageId=**} {
-      // Idealmente, aquí deberíamos validar en Firestore si request.auth.uid pertenece a la transacción.
-      // Como storage rules nativas no leen firestore sin un custom token, la mejor mitigación es
-      // validar el login (ya está) y en el front generar nombres de archivo impredecibles.
-      // Al menos evitamos acceso público no autenticado.
-      allow read, write: if isAuthenticated() && isImage() && isLessThan5MB();
+      allow read: if isAuthenticated() && (
+        request.auth.uid == firestore.get(/databases/(default)/documents/transactions/$(transactionId)).data.buyerId ||
+        request.auth.uid == firestore.get(/databases/(default)/documents/transactions/$(transactionId)).data.sellerId ||
+        request.auth.token.admin == true
+      );
+      allow write: if isAuthenticated() && isImage() && isLessThan5MB() && (
+        request.auth.uid == firestore.get(/databases/(default)/documents/transactions/$(transactionId)).data.buyerId ||
+        request.auth.uid == firestore.get(/databases/(default)/documents/transactions/$(transactionId)).data.sellerId
+      );
     }
 
     // --- Marketing (Heros y Banners) ---
