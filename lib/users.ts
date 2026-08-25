@@ -796,7 +796,7 @@ export const claimDailyLoginXp = async (uid: string): Promise<boolean> => {
 export const getStoreBySlug = async (slug: string): Promise<UserProfile | null> => {
     try {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("store.slug", "==", slug), where("store.isActive", "==", true));
+        const q = query(usersRef, where("store.slug", "==", slug));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {

@@ -428,13 +428,15 @@ export const Favorites: React.FC = () => {
                                         className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all flex items-center justify-between gap-4 group"
                                     >
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <div className="size-16 rounded-2xl bg-gradient-to-tr from-sky-600 to-cyan-600 p-0.5 shrink-0 shadow-md">
-                                                <img
-                                                    src={seller.avatar || 'https://picsum.photos/100/100?avatar'}
-                                                    alt={seller.name}
-                                                    className="w-full h-full object-cover rounded-[14px] bg-white"
-                                                />
-                                            </div>
+                                            <Link to={`/shop/${seller.slug || seller.followedId}`} className="shrink-0">
+                                                <div className="size-16 rounded-2xl bg-gradient-to-tr from-sky-600 to-cyan-600 p-0.5 shadow-md hover:scale-105 transition-transform">
+                                                    <img
+                                                        src={seller.avatar || 'https://picsum.photos/100/100?avatar'}
+                                                        alt={seller.name}
+                                                        className="w-full h-full object-cover rounded-[14px] bg-white"
+                                                    />
+                                                </div>
+                                            </Link>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 mb-1">
                                                     <span className="material-symbols-outlined text-base text-amber-500 font-fill">star</span>
@@ -445,9 +447,11 @@ export const Favorites: React.FC = () => {
                                                         Verificado
                                                     </span>
                                                 </div>
-                                                <h4 className="font-black text-slate-900 text-base truncate group-hover:text-sky-700 transition-colors">
-                                                    {seller.name}
-                                                </h4>
+                                                <Link to={`/shop/${seller.slug || seller.followedId}`}>
+                                                    <h4 className="font-black text-slate-900 text-base truncate hover:text-sky-700 transition-colors cursor-pointer">
+                                                        {seller.name}
+                                                    </h4>
+                                                </Link>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                                     Tienda Oficial
                                                 </p>
