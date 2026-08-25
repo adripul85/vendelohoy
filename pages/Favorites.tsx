@@ -428,7 +428,7 @@ export const Favorites: React.FC = () => {
                                         className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all flex items-center justify-between gap-4 group"
                                     >
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <Link to={`/shop/${seller.slug || seller.followedId}`} className="shrink-0">
+                                            <Link to={`/shop/${seller.followedId}`} className="shrink-0">
                                                 <div className="size-16 rounded-2xl bg-gradient-to-tr from-sky-600 to-cyan-600 p-0.5 shadow-md hover:scale-105 transition-transform">
                                                     <img
                                                         src={seller.avatar || 'https://picsum.photos/100/100?avatar'}
@@ -447,7 +447,7 @@ export const Favorites: React.FC = () => {
                                                         Verificado
                                                     </span>
                                                 </div>
-                                                <Link to={`/shop/${seller.slug || seller.followedId}`}>
+                                                <Link to={`/shop/${seller.followedId}`}>
                                                     <h4 className="font-black text-slate-900 text-base truncate hover:text-sky-700 transition-colors cursor-pointer">
                                                         {seller.name}
                                                     </h4>
@@ -460,7 +460,7 @@ export const Favorites: React.FC = () => {
 
                                         <div className="flex flex-col gap-2 shrink-0">
                                             <Link
-                                                to={`/shop/${seller.slug || seller.followedId}`}
+                                                to={`/shop/${seller.followedId}`}
                                                 className="px-4 py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-center flex items-center justify-center gap-1.5"
                                             >
                                                 <StoreIcon size={16} /> Tienda
