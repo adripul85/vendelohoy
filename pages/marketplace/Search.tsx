@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getItems, ItemData } from '../../lib/items';
 import { CATEGORIES } from '../../lib/constants';
 import { trackUserSearch } from '../../lib/users';
+import { saveSearchAlert } from '../../lib/alerts';
 import { useAuth } from '../../lib/auth';
 import SEO from '../../components/SEO';
 import SkeletonCard from '../../components/SkeletonCard';
@@ -13,6 +14,7 @@ const Search = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { notify } = useNotification();
   const [localSearch, setLocalSearch] = useState('');
   const [allProducts, setAllProducts] = useState<(ItemData & { id: string, img: string, trust: number })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,33 @@ const Search = () => {
   const [activeSubcategory, setActiveSubcategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
+  const [savingAlert, setSavingAlert] = useState(false);
+
+  const handleSaveAlert = async () => {
+    if (!user) {
+        notify({ type: 'warning', title: 'Iniciá Sesión', message: 'Debes iniciar sesión para crear alertas.', icon: 'login' });
+        navigate('/login');
+        return;
+    }
+    if (!query && !activeCategory) {
+        notify({ type: 'warning', title: 'Búsqueda Vacía', message: 'Ingresa al menos un término de búsqueda.', icon: 'search' });
+        return;
+    }
+    
+    setSavingAlert(true);
+    try {
+        await saveSearchAlert({
+            query: query || activeCategory,
+            category: activeCategory,
+            maxPrice: priceRange[1] < 2000000 ? priceRange[1] : undefined,
+            active: true
+        });
+        notify({ type: 'success', title: 'Alerta Creada', message: 'Te enviaremos un correo cuando alguien publique un producto que coincida.', icon: 'notifications_active' });
+    } catch (error: any) {
+        notify({ type: 'error', title: 'Error', message: error.message || 'No se pudo guardar la alerta.', icon: 'error' });
+    }
+    setSavingAlert(false);
+  };
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -343,12 +372,24 @@ const Search = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-surface py-32 text-center rounded-3xl border border-outline-variant/30 shadow-sm">
+            <div className="bg-surface py-32 text-center rounded-3xl border border-outline-variant/30 shadow-sm px-6">
               <div className="size-20 bg-surface-container-low rounded-2xl flex items-center justify-center mx-auto mb-8">
                 <span className="material-symbols-outlined text-4xl text-on-surface-variant">search_off</span>
               </div>
               <h2 className="text-xl font-black text-primary mb-4 uppercase tracking-widest font-headline">No hay resultados</h2>
-              <p className="text-sm text-on-surface-variant max-w-xs mx-auto font-medium">Intentá ajustar los filtros o buscar con otras palabras.</p>
+              <p className="text-[10px] font-bold text-on-surface-variant max-w-sm mx-auto uppercase tracking-widest leading-relaxed mb-10">
+                Aún no hay publicaciones que coincidan con tu búsqueda, ¡pero actualizamos el catálogo todos los días!
+              </p>
+              
+              <button 
+                onClick={handleSaveAlert} 
+                disabled={savingAlert}
+                className="btn-primary mx-auto flex items-center justify-center gap-2 max-w-xs mb-6"
+              >
+                <span className="material-symbols-outlined text-sm">{savingAlert ? 'hourglass_empty' : 'notifications_active'}</span>
+                {savingAlert ? 'Guardando...' : 'Avisarme si aparece algo'}
+              </button>
+
               <button
                 onClick={() => {
                   setPriceRange([0, 2000000]);
@@ -356,7 +397,7 @@ const Search = () => {
                   setActiveCategory('');
                   setActiveSubcategory('');
                 }}
-                className="mt-10 bg-secondary text-on-secondary px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+                className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary underline underline-offset-4"
               >
                 Limpiar Filtros
               </button>

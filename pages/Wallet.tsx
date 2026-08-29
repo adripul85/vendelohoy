@@ -324,119 +324,34 @@ const Wallet = () => {
         <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-6 lg:p-24 h-fit">
           <div className="bg-white p-4 md:p-10 rounded-4xl border-2 border-dark-800 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 size-20 bg-dark-800/5 -mr-5 -mt-5 rounded-full"></div>
-            <h3 className="text-2xl font-black text-dark-800 mb-2">Cobros Automáticos</h3>
+            <h3 className="text-2xl font-black text-dark-800 mb-2">Mi Billetera Vinculada</h3>
             <p className="text-[10px] text-gray-400 font-bold mb-10 leading-relaxed">
-              El dinero de tus ventas se transferirá directamente a esta cuenta.
+              El dinero de tus ventas se acredita directamente en tu Mercado Pago mediante nuestra tecnología de cobros fraccionados (Split Payments).
             </p>
             <div className="space-y-6">
               <div className="pt-4">
-                <label className="block text-[10px] font-black text-gray-400 mb-6 uppercase tracking-widest ml-1">Cuenta de Destino</label>
+                <label className="block text-[10px] font-black text-gray-400 mb-6 uppercase tracking-widest ml-1">Cuenta Receptora</label>
                 <button
-                  onClick={() => setShowBankModal(true)}
-                  className={`w-full py-5 border-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${userProfile?.bankDetails?.cbu ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'border-dashed border-light-200 text-gray-400 hover:bg-light-50'}`}
+                  onClick={() => navigate('/settings?tab=billing')}
+                  className={`w-full py-5 border-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${userProfile?.mercadoPagoOAuth?.accessToken ? 'bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100' : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
                 >
-                  <span className="material-symbols-outlined text-sm">account_balance</span>
-                  {userProfile?.bankDetails?.cbu ? `Cuenta: ${userProfile.bankDetails.bankName} (...${userProfile.bankDetails.cbu.slice(-4)})` : 'Vincular Cuenta (CBU/CVU)'}
+                  <span className="material-symbols-outlined text-sm">handshake</span>
+                  {userProfile?.mercadoPagoOAuth?.accessToken ? `Mercado Pago Vinculado` : 'Vincular Mercado Pago'}
                 </button>
               </div>
 
-              <div className="bg-primary-50/50 p-6 rounded-3xl border border-primary-100/50">
+              <div className="bg-sky-50/50 p-6 rounded-3xl border border-sky-100/50">
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary-vibrant text-xl font-black">autorenew</span>
-                  <p className="text-[10px] font-bold text-primary-800/60 leading-relaxed uppercase">
-                    Cuando el comprador confirma la entrega, el pago se procesa y envía automáticamente. No necesitas solicitar retiros manuales.
+                  <span className="material-symbols-outlined text-sky-600 text-xl font-black">bolt</span>
+                  <p className="text-[10px] font-bold text-sky-900/70 leading-relaxed uppercase">
+                    Las ventas impactan inmediatamente en tu cuenta personal de Mercado Pago. La comisión de la plataforma se separa en tiempo real y no necesitás gestionar retiros de saldo.
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Bank Details Modal */}
-      {showBankModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark-800/80 backdrop-blur-sm p-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[40px] shadow-2xl max-w-md w-full p-4 md:p-10 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-black text-dark-800">Datos Bancarios</h3>
-              <button onClick={() => setShowBankModal(false)} className="size-10 rounded-full bg-light-50 flex items-center justify-center hover:bg-light-100 transition-colors">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="relative">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[10px] font-black text-dark-800 uppercase tracking-widest">CBU / CVU</label>
-                  {isValidating && <div className="size-3 border-2 border-primary-vibrant/20 border-t-primary-vibrant rounded-full animate-spin"></div>}
-                </div>
-                <input className="w-full bg-light-50 border border-light-200 rounded-xl px-4 py-3 font-bold text-dark-800 outline-none focus:ring-2 focus:ring-primary-100 placeholder:opacity-30"
-                  placeholder="22 dígitos"
-                  value={bankForm.cbu}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setBankForm({ ...bankForm, cbu: val, bankName: '', holderName: '' });
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-dark-800 uppercase tracking-widest mb-2">Alias</label>
-                <input className="w-full bg-light-50 border border-light-200 rounded-xl px-4 py-3 font-bold text-dark-800 outline-none focus:ring-2 focus:ring-primary-100 placeholder:opacity-30"
-                  placeholder="nombre.apellido.mp"
-                  value={bankForm.alias}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setBankForm({ ...bankForm, alias: val, bankName: '', holderName: '' });
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="relative">
-                  <label className="block text-[10px] font-black text-dark-800 uppercase tracking-widest mb-2">Banco / Entidad</label>
-                  <input className="w-full bg-light-100 border border-transparent rounded-xl px-4 py-3 font-bold text-dark-800 outline-none read-only:text-gray-500"
-                    placeholder="Sincronizando..."
-                    value={bankForm.bankName}
-                    readOnly
-                  />
-                  {bankForm.bankName && (
-                    <span className="material-symbols-outlined absolute right-3 top-[38px] text-emerald-500 text-sm animate-in zoom-in">verified</span>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-dark-800 uppercase tracking-widest mb-2">Tipo Cuenta</label>
-                  <select className="w-full bg-light-50 border border-light-200 rounded-xl px-4 py-3 font-bold text-dark-800 outline-none focus:ring-2 focus:ring-primary-100"
-                    value={bankForm.accountType} onChange={e => setBankForm({ ...bankForm, accountType: e.target.value })}
-                  >
-                    <option value="CA">Caja de Ahorro</option>
-                    <option value="CC">Cuenta Corriente</option>
-                    <option value="VIRTUAL">Billetera Virtual</option>
-                  </select>
-                </div>
-              </div>
-              <div className="relative">
-                <label className="block text-[10px] font-black text-dark-800 uppercase tracking-widest mb-2">Titular de la Cuenta</label>
-                <input className="w-full bg-light-100 border border-transparent rounded-xl px-4 py-3 font-bold text-dark-800 outline-none read-only:text-gray-500"
-                  placeholder="Confirmando identidad..."
-                  value={bankForm.holderName}
-                  readOnly
-                />
-              </div>
-
-              <button
-                onClick={handleLinkBank}
-                disabled={!bankForm.bankName || isValidating}
-                className="w-full bg-dark-800 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg mt-4 disabled:opacity-50 disabled:grayscale"
-              >
-                {isValidating ? 'Validando...' : 'Guardar Datos'}
-              </button>
-              <p className="text-center text-[10px] text-gray-400 mt-4 leading-relaxed max-w-xs mx-auto">
-                Al guardar, confirmas que eres el titular de la cuenta. Los retiros a terceros serán rechazados.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+     </div>
   );
 };
 

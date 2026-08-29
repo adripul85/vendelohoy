@@ -111,8 +111,12 @@ export default function Messages() {
 
             await sendMessage(selectedChat.id, user.uid, text);
             scrollToBottom();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to send", error);
+            if (error?.message?.includes("MODERATION_ERROR")) {
+                const reason = error.message.split(":")[1] || "Contenido no permitido";
+                alert("Mensaje bloqueado: No se permiten datos de contacto externos ni lenguaje inapropiado. " + reason);
+            }
         }
     };
 

@@ -1,5 +1,6 @@
 import { db, auth } from "./firebase";
 import { getUserProfile } from "./users";
+import { scanContent } from './moderation';
 import {
     collection,
     addDoc,
@@ -88,6 +89,15 @@ export const sendMessage = async (chatId: string, senderId: string, text: string
     try {
         if (!auth.currentUser || auth.currentUser.uid !== senderId) {
             throw new Error("UNAUTHORIZED: You can only send messages as yourself.");
+        }
+
+        // AUTO-MODERATION
+        if (text) {
+            const scan = scanContent(text);
+            if (!scan.isClean) {
+                // Return a specific error string so the UI can display it
+                throw new Error("MODERATION_ERROR:" + scan.reason);
+            }
         }
 
         const messagesRef = collection(db, "chats", chatId, "messages");

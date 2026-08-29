@@ -38,15 +38,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const txData = txSnap.data();
         const realPrice = txData?.amountTotal || txData?.total || Number(price);
 
+        // Obtener datos del Vendedor para OAuth y Comisiones
+        const sellerSnap = await adminDb.collection('users').doc(sellerId).get();
+        if (!sellerSnap.exists) {
+             return res.status(404).json({ error: 'Vendedor no encontrado' });
+        }
+        const sellerData = sellerSnap.data() || {};
+        const mpOAuth = sellerData.mercadoPagoOAuth;
+
         if (!process.env.MP_ACCESS_TOKEN) {
             console.error("[MP API] Error: Platform MP_ACCESS_TOKEN not set in environment.");
             return res.status(500).json({ error: 'Falta configurar la pasarela de pagos de la plataforma.' });
         }
 
-        console.log(`[MP API] Seller OK. Using Platform Escrow Token. Real Price: ${realPrice}`);
-
         const isLocalHost = req.headers.host?.includes('localhost');
         
+        // --- CÁLCULO DE COMISIÓN PARA MARKETPLACE FEE ---
+        const baseSellerProceeds = Number(realPrice);
+        let commissionRate = 0.07; // Base 7%
+        const trustLevel = sellerData.trustLevel || 'Bajo';
+        
+        if (trustLevel === 'Premium' || trustLevel === 'Alto') {
+            commissionRate = 0.05; // 5% para niveles altos
+        }
+        
+        // Si hay cuota mensual gratis (Premium < 3 ventas), sería 0%, pero para simplificar
+        // en el checkout aplicamos la tasa actual. El ajuste fino se hace en payout-logic si difiere.
+        
+        const baseCommission = Math.round(baseSellerProceeds * commissionRate);
+        const buyerPlatformFee = txData?.amountPlatformFee || txData?.platformFee || 0;
+        const featuredCommission = txData?.featuredFeeApplied ? Math.round(baseSellerProceeds * txData.featuredFeeApplied) : 0;
+        const flashSaleCommission = txData?.flashSaleFeeApplied ? Math.round(baseSellerProceeds * txData.flashSaleFeeApplied) : 0;
+
+        const totalMarketplaceFee = buyerPlatformFee + baseCommission + featuredCommission + flashSaleCommission;
+
         const mpPayload: any = {
             items: [
                 {
@@ -56,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     currency_id: 'ARS'
                 }
             ],
-            external_reference: transactionId, // SECURITY FIX: external_reference is usually the transactionId, not productId
+            external_reference: transactionId, 
             metadata: {
                 seller_id: sellerId,
                 product_id: productId || txData?.itemId,
@@ -70,18 +95,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             auto_return: 'approved'
         };
 
+        // Si el vendedor vinculó su cuenta (OAuth), usamos Split Payments
+        if (!mpOAuth || !mpOAuth.accessToken) {
+            console.error(`[MP API] Seller DOES NOT have OAuth. Blocking transaction to prevent centralized escrow.`);
+            return res.status(400).json({ error: 'El vendedor aún no configuró su cuenta para recibir pagos. Por favor, intentá más tarde.' });
+        }
+
+        const accessTokenToUse = mpOAuth.accessToken;
+        mpPayload.marketplace_fee = totalMarketplaceFee;
+        console.log(`[MP API] Seller HAS OAuth. Using Split Payments (Marketplace Fee: ${totalMarketplaceFee})`);
+
         // MercadoPago a menudo bloquea webhooks hacia "localhost" con un error 400.
         if (!isLocalHost) {
             mpPayload.notification_url = `https://${req.headers.host}/api/mercadopago-webhook`;
         }
-
-
         
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
             headers: {
-                // USAMOS EL TOKEN DE LA PLATAFORMA (ESCROW)
-                'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+                'Authorization': `Bearer ${accessTokenToUse}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(mpPayload)

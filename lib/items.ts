@@ -136,7 +136,7 @@ export const publishItem = async (data: ItemData) => {
         });
         const docRef = await addDoc(collection(db, "items"), cleanPayload);
 
-        // Notify followers asynchronously
+        // Notify followers and search alerts asynchronously
         import('./interactions').then(({ notifyFollowersNewProduct }) => {
             notifyFollowersNewProduct(
                 auth.currentUser!.uid,
@@ -144,6 +144,11 @@ export const publishItem = async (data: ItemData) => {
                 docRef.id,
                 data.title
             ).catch(err => console.error("Error notifying followers:", err));
+        });
+        
+        import('./alerts').then(({ notifySearchAlerts }) => {
+            notifySearchAlerts(docRef.id, data.title, data.category, data.price)
+                .catch(err => console.error("Error triggering search alerts:", err));
         });
 
         return { success: true, id: docRef.id };

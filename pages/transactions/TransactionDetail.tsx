@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../lib/auth';
 import { getTransaction, TransactionData, releaseFunds, triggerAutoReleaseEscrow } from '../../lib/transactions';
 import { useNotification } from '../../context/NotificationContext';
+import { startChat } from '../../lib/chat';
 
 const TransactionDetail = () => {
     const { id } = useParams();
@@ -67,6 +68,17 @@ const TransactionDetail = () => {
         setIsGeneratingLabel(false);
     };
 
+    const handleOpenChat = async () => {
+        if (!user || !transaction) return;
+        const targetId = isBuyer ? transaction.sellerId : transaction.buyerId;
+        try {
+            const chatId = await startChat(user.uid, targetId);
+            navigate(`/messages/${chatId}`);
+        } catch (error: any) {
+            notify({ type: 'error', title: 'Error', message: 'No se pudo iniciar el chat.', icon: 'error' });
+        }
+    };
+
     if (loading) return <div className="p-6 md:p-20 text-center"><div className="size-12 border-4 border-primary-vibrant border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-[10px] font-black uppercase tracking-widest text-gray-300">Sincronizando Libro Contable...</p></div>;
     if (!transaction || !user) {
         return (
@@ -120,6 +132,13 @@ const TransactionDetail = () => {
                                     ⚠️ Solo revela este código una vez que hayas inspeccionado y recibido el activo. La validación es irreversible.
                                 </p>
                             </div>
+                            <button
+                                onClick={handleOpenChat}
+                                className="w-full flex items-center justify-center gap-3 py-4 bg-sky-50 text-sky-600 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-sky-100 transition-all"
+                            >
+                                <span className="material-symbols-outlined">chat</span>
+                                Mensaje al Vendedor
+                            </button>
                         </div>
                     )}
 
@@ -157,6 +176,13 @@ const TransactionDetail = () => {
                                     <button onClick={() => setScanMode(false)} className="text-[10px] font-black text-gray-300 uppercase tracking-widest w-full text-center hover:text-dark-800 transition-colors">Abortar Protocolo</button>
                                 </div>
                             )}
+                            <button
+                                onClick={handleOpenChat}
+                                className="w-full flex items-center justify-center gap-3 py-4 bg-sky-50 text-sky-600 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-sky-100 transition-all"
+                            >
+                                <span className="material-symbols-outlined">chat</span>
+                                Mensaje al Comprador
+                            </button>
                             <p className="text-center text-[10px] font-bold text-gray-300 uppercase leading-relaxed tracking-widest px-4">
                                 Validar la clave del comprador confirma la entrega del activo y activa la acreditación inmediata de los fondos.
                             </p>

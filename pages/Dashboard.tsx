@@ -29,9 +29,10 @@ export default function Dashboard() {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
-  const [activeTab, setActiveTab] = useState<'publicaciones' | 'compras' | 'ventas' | 'disputas' | 'perfil'>('publicaciones');
+  const [activeTab, setActiveTab] = useState<'publicaciones' | 'compras' | 'ventas' | 'disputas' | 'perfil' | 'alertas'>('publicaciones');
   const [transactions, setTransactions] = useState<{ compras: any[], ventas: any[] }>({ compras: [], ventas: [] });
   const [userItems, setUserItems] = useState<(ItemData & { id: string })[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -144,12 +145,17 @@ export default function Dashboard() {
       setLoading(false);
     });
 
-    // Fetch User Items (Publications)
     const fetchUserItems = async () => {
       const items = await getItemsBySeller(user.uid);
       setUserItems(items);
     };
     fetchUserItems();
+    
+    // Fetch User Alerts
+    import('../lib/alerts').then(async ({ getUserSearchAlerts }) => {
+        const userAlerts = await getUserSearchAlerts(user.uid);
+        setAlerts(userAlerts);
+    });
 
     return () => {
       unsubBuy();
@@ -528,10 +534,11 @@ export default function Dashboard() {
 
           <div className="flex gap-2 overflow-x-auto snap-x scrollbar-hide hide-scrollbar bg-surface-container-lowest py-2 px-6 md:px-2 md:rounded-[24px] border-y md:border border-outline-variant/50 shadow-premium -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-auto">
             {[
-              { id: 'publicaciones', label: 'Publicaciones', icon: 'inventory_2' },
+              { id: 'publicaciones', label: 'Publicaciones', icon: 'storefront' },
+              { id: 'ventas', label: 'Ventas', icon: 'monitoring', badge: transactions.ventas.filter(t => t.status === 'PAID_HELD').length },
               { id: 'compras', label: 'Compras', icon: 'shopping_bag' },
-              { id: 'ventas', label: 'Ventas', icon: 'payments' },
               { id: 'disputas', label: 'Disputas', icon: 'gavel', badge: [...transactions.compras, ...transactions.ventas].filter(t => t.status === 'DISPUTED').length },
+              { id: 'alertas', label: 'Alertas', icon: 'notifications_active' },
               { id: 'perfil', label: 'Perfil', icon: 'settings', action: () => navigate('/settings') },
             ].map((tab) => (
               <button
@@ -1211,6 +1218,73 @@ export default function Dashboard() {
             </div>
           </div>
         </div >
+        
+        {/* ALERTS TAB CONTENT */}
+        {activeTab === 'alertas' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-10">
+             <div className="bg-surface p-8 md:p-12 rounded-[40px] border border-outline-variant/30 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 size-64 bg-primary/5 blur-3xl rounded-full -mr-20 -mt-20"></div>
+                <h3 className="text-2xl font-black text-primary uppercase tracking-tight mb-2 relative z-10">Mis Alertas de Búsqueda</h3>
+                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest relative z-10 mb-10 max-w-2xl">
+                    Te notificaremos cuando alguien publique un producto que coincida con estas búsquedas.
+                </p>
+
+                {alerts.length === 0 ? (
+                    <div className="text-center py-20 bg-surface-container-lowest rounded-3xl border border-outline-variant/30">
+                        <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">notifications_off</span>
+                        <h4 className="text-sm font-black text-on-surface uppercase tracking-widest">No tienes alertas guardadas</h4>
+                        <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mt-2 max-w-sm mx-auto">
+                            Busca un producto y haz clic en "Avisarme si aparece algo" para crear una alerta.
+                        </p>
+                        <Link to="/search" className="btn-primary mt-6 inline-flex">Buscar Productos</Link>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {alerts.map(alert => (
+                            <div key={alert.id} className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/50 relative group hover:border-primary/50 transition-all">
+                                <button 
+                                    onClick={async () => {
+                                        if (!window.confirm('¿Eliminar esta alerta?')) return;
+                                        const { deleteSearchAlert } = await import('../lib/alerts');
+                                        await deleteSearchAlert(alert.id);
+                                        setAlerts(alerts.filter(a => a.id !== alert.id));
+                                    }}
+                                    className="absolute top-4 right-4 size-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="material-symbols-outlined text-primary">manage_search</span>
+                                    <h4 className="font-black text-on-surface uppercase tracking-widest text-sm line-clamp-1">{alert.query || alert.category}</h4>
+                                </div>
+                                <div className="space-y-2">
+                                    {alert.category && (
+                                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex justify-between">
+                                            <span>Categoría:</span>
+                                            <span className="text-on-surface">{alert.category}</span>
+                                        </p>
+                                    )}
+                                    {alert.maxPrice && (
+                                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex justify-between">
+                                            <span>Precio Max:</span>
+                                            <span className="text-on-surface">${alert.maxPrice.toLocaleString()}</span>
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="mt-6 pt-4 border-t border-outline-variant/30 flex items-center justify-between">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1">
+                                        <div className="size-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        Alerta Activa
+                                    </span>
+                                    <Link to={`/search?q=${alert.query}`} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Ver Resultados</Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+             </div>
+          </div>
+        )}
 
         {/* PROFILE TAB CONTENT REMOVED - NOW IN /SETTINGS */}
       </div >

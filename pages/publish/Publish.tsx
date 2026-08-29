@@ -247,6 +247,22 @@ export default function Publish() {
                 return;
             }
 
+            // AUTO-MODERATION CHECK
+            const { scanContent } = await import('../../lib/moderation');
+            const titleScan = scanContent(form.title);
+            const descScan = scanContent(form.description);
+            
+            if (!titleScan.isClean || !descScan.isClean) {
+                const allFlags = Array.from(new Set([...titleScan.flags, ...descScan.flags]));
+                notify({ 
+                    type: 'error', 
+                    title: 'Publicación Rechazada', 
+                    message: `Se detectaron infracciones: ${allFlags.join(', ')}. Revisá el contenido.`, 
+                    icon: 'gavel' 
+                });
+                return;
+            }
+
             const parsedPrice = parsePrice(form.price);
             if (!parsedPrice) {
                 notify({ type: 'warning', title: 'Precio Inválido', message: 'Ingresa un precio de venta válido.', icon: 'payments' });
