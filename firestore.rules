@@ -5,9 +5,11 @@ service cloud.firestore {
     // Función auxiliar para verificar si el usuario es Admin
     // Primero verifica el Custom Claim (GRATIS), si no está, lee la BD (1 lectura)
     function isAdmin() {
-      return (request.auth.token.admin == true) || 
-             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) || 
-             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      return (request.auth != null) && (
+        (request.auth.token.get('admin', false) == true) || 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true) || 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin')
+      );
     }
 
     // REGLAS PARA TRANSACCIONES
@@ -262,6 +264,17 @@ service cloud.firestore {
       allow create: if true;
       allow read: if request.auth != null && isAdmin();
       allow delete: if isAdmin();
+    }
+    // REGLAS PARA ANALYTICS GLOBALES DEL SITIO
+    match /site_analytics/{dateKey} {
+      allow read: if request.auth != null && isAdmin();
+      // Cualquier visitante puede escribir (merge) datos de analytics
+      allow write: if true;
+
+      // Subcollección de visitantes únicos por día
+      match /visitors/{visitorId} {
+        allow read, write: if true;
+      }
     }
     
     // REGLAS PARA SEGUIDORES Y SEGUIDOS (subcolecciones en users)

@@ -34,6 +34,7 @@ import { MarketingBroadcastManager } from '../components/admin/MarketingBroadcas
 import { MarketingBannerManager } from '../components/admin/MarketingBannerManager';
 import { MarketingNotificationManager } from '../components/admin/MarketingNotificationManager';
 import { MarketingCollectionManager } from '../components/admin/MarketingCollectionManager';
+import AdminAnalytics from '../components/admin/AdminAnalytics';
 
 export default function AdminDashboard() {
     const { user, userProfile } = useAuth();
@@ -45,7 +46,7 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isUpdating, setIsUpdating] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'finance' | 'disputes' | 'reports' | 'marketing' | 'config' | 'operations'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'finance' | 'disputes' | 'reports' | 'marketing' | 'config' | 'operations' | 'analytics'>('users');
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [stats, setStats] = useState<any>(null);
     const [disputes, setDisputes] = useState<any[]>([]);
@@ -402,6 +403,7 @@ export default function AdminDashboard() {
                             { id: 'reports', label: 'Denuncias', icon: 'flag' },
                             { id: 'config', label: 'Configuración', icon: 'settings_suggest' },
                             { id: 'marketing', label: 'Marketing Hub', icon: 'campaign' },
+                            { id: 'analytics', label: 'Analíticas', icon: 'monitoring' },
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1102,6 +1104,10 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
+                </div>
+            ) : activeTab === 'analytics' ? (
+                <div className="animate-in fade-in duration-500">
+                    <AdminAnalytics users={users} />
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-in fade-in duration-500">

@@ -8,6 +8,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { DialogProvider } from './context/DialogContext';
 import { CartProvider } from './context/CartContext';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import NavigationObserver from './components/NavigationObserver';
 import RequireProfile from './components/RequireProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -235,6 +236,7 @@ function App() {
         <CartProvider>
           <BrowserRouter>
             <ScrollToTop />
+            <NavigationObserver />
             <PageProgressBar />
             <div className="flex flex-col min-h-screen relative font-body text-dark-charcoal overflow-x-hidden w-full pb-20 md:pb-0">
               <BroadcastBar />
