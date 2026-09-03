@@ -29,9 +29,10 @@ export default function Dashboard() {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
-  const [activeTab, setActiveTab] = useState<'publicaciones' | 'compras' | 'ventas' | 'disputas' | 'perfil' | 'alertas'>('publicaciones');
+  const [activeTab, setActiveTab] = useState<'publicaciones' | 'compras' | 'ventas' | 'canjes' | 'disputas' | 'perfil' | 'alertas'>('publicaciones');
   const [transactions, setTransactions] = useState<{ compras: any[], ventas: any[] }>({ compras: [], ventas: [] });
   const [userItems, setUserItems] = useState<(ItemData & { id: string })[]>([]);
+  const [trades, setTrades] = useState<{ sent: any[], received: any[] }>({ sent: [], received: [] });
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -155,6 +156,12 @@ export default function Dashboard() {
     import('../lib/alerts').then(async ({ getUserSearchAlerts }) => {
         const userAlerts = await getUserSearchAlerts(user.uid);
         setAlerts(userAlerts);
+    });
+
+    // Fetch User Trades (Canjes)
+    import('../lib/trades').then(async ({ getUserTrades }) => {
+        const userTradesData = await getUserTrades(user.uid);
+        setTrades(userTradesData);
     });
 
     return () => {
@@ -525,10 +532,10 @@ export default function Dashboard() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
           <div>
             <h1 className="text-4xl font-black text-on-surface tracking-tighter mb-1 transition-all">
-              {activeTab === 'compras' ? 'Mis Compras' : activeTab === 'ventas' ? 'Vendedor Mercado' : activeTab === 'publicaciones' ? 'Mis Publicaciones' : activeTab === 'disputas' ? 'Panel de Disputas' : 'Configuración de Perfil'}
+              {activeTab === 'compras' ? 'Mis Compras' : activeTab === 'ventas' ? 'Vendedor Mercado' : activeTab === 'publicaciones' ? 'Mis Publicaciones' : activeTab === 'canjes' ? 'Canjes y Permutas' : activeTab === 'disputas' ? 'Panel de Disputas' : 'Configuración de Perfil'}
             </h1>
             <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest leading-relaxed">
-              {activeTab === 'compras' ? 'Rastrea tus órdenes y administra pagos protegidos.' : activeTab === 'ventas' ? 'Monitorea tus ingresos y optimiza tu rendimiento.' : activeTab === 'publicaciones' ? 'Gestiona tus productos activos en el mercado.' : activeTab === 'disputas' ? 'Gestiona disputas activas y resuelve conflictos.' : 'Mantén actualizada tu seguridad e insignias.'}
+              {activeTab === 'compras' ? 'Rastrea tus órdenes y administra pagos protegidos.' : activeTab === 'ventas' ? 'Monitorea tus ingresos y optimiza tu rendimiento.' : activeTab === 'publicaciones' ? 'Gestiona tus productos activos en el mercado.' : activeTab === 'canjes' ? 'Gestiona tus propuestas de intercambio de artículos usados.' : activeTab === 'disputas' ? 'Gestiona disputas activas y resuelve conflictos.' : 'Mantén actualizada tu seguridad e insignias.'}
             </p>
           </div>
 
@@ -537,6 +544,7 @@ export default function Dashboard() {
               { id: 'publicaciones', label: 'Publicaciones', icon: 'storefront' },
               { id: 'ventas', label: 'Ventas', icon: 'monitoring', badge: transactions.ventas.filter(t => t.status === 'PAID_HELD').length },
               { id: 'compras', label: 'Compras', icon: 'shopping_bag' },
+              { id: 'canjes', label: 'Canjes', icon: 'sync_alt', badge: trades.received.filter(t => t.status === 'PROPOSED').length },
               { id: 'disputas', label: 'Disputas', icon: 'gavel', badge: [...transactions.compras, ...transactions.ventas].filter(t => t.status === 'DISPUTED').length },
               { id: 'alertas', label: 'Alertas', icon: 'notifications_active' },
               { id: 'perfil', label: 'Perfil', icon: 'settings', action: () => navigate('/settings') },
@@ -1280,9 +1288,139 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                     </div>
                 )}
              </div>
+          </div>
+        )}
+
+        {/* CANJES Y PERMUTAS TAB CONTENT */}
+        {activeTab === 'canjes' && (
+          <div className="lg:col-span-9 space-y-8">
+            {/* Header info banner */}
+            <div className="bg-purple-50 border border-purple-200 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="size-12 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-black">
+                  <span className="material-symbols-outlined text-2xl">sync_alt</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-purple-950 uppercase">Canjes y Permutas Protegidas</h3>
+                  <p className="text-xs text-purple-800">Intercambiá artículos usados con garantía de custodia y doble validación QR.</p>
+                </div>
+              </div>
+              <Link to="/trades-info" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0">
+                ¿Cómo funciona?
+              </Link>
+            </div>
+
+            {/* Propuestas Recibidas */}
+            <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/50 shadow-premium">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-purple-600">move_to_inbox</span>
+                  Propuestas Recibidas ({trades.received.length})
+                </h3>
+              </div>
+
+              {trades.received.length === 0 ? (
+                <div className="p-8 text-center bg-surface-container-low rounded-3xl">
+                  <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">sync_disabled</span>
+                  <p className="text-xs font-bold text-on-surface-variant">No tenés propuestas de canje recibidas actualmente.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {trades.received.map(trade => (
+                    <div key={trade.id} className="p-5 rounded-3xl border border-outline-variant/50 bg-surface flex flex-col justify-between gap-4 hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-purple-600">
+                            De: {trade.initiatorName || 'Usuario'}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                            trade.status === 'PROPOSED' ? 'bg-amber-100 text-amber-800 animate-pulse' :
+                            trade.status === 'FEE_PAID' ? 'bg-purple-100 text-purple-800' :
+                            trade.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {trade.status === 'PROPOSED' ? 'Por Responder' : trade.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <img src={trade.targetItem?.images?.[0] || 'https://picsum.photos/80/80'} alt="" className="size-14 rounded-xl object-cover border" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-500">Por tu producto:</p>
+                            <h4 className="text-xs font-black text-on-surface truncate">{trade.targetItem?.title || 'Producto'}</h4>
+                            {trade.cashDifference !== 0 && (
+                              <p className="text-[11px] font-black text-emerald-600 mt-0.5">
+                                {trade.cashDifference > 0 ? `+ $${trade.cashDifference.toLocaleString()} a tu favor` : `Diferencia: $${Math.abs(trade.cashDifference).toLocaleString()}`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Link 
+                        to={`/trade/${trade.id}`}
+                        className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-center font-black text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm"
+                      >
+                        <span>Abrir Sala de Canje</span>
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Propuestas Enviadas */}
+            <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/50 shadow-premium">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-purple-600">outbox</span>
+                  Propuestas Enviadas ({trades.sent.length})
+                </h3>
+              </div>
+
+              {trades.sent.length === 0 ? (
+                <div className="p-8 text-center bg-surface-container-low rounded-3xl">
+                  <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">swap_horiz</span>
+                  <p className="text-xs font-bold text-on-surface-variant">No has enviado ninguna propuesta de canje todavía.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {trades.sent.map(trade => (
+                    <div key={trade.id} className="p-5 rounded-3xl border border-outline-variant/50 bg-surface flex flex-col justify-between gap-4 hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            Para: {trade.receiverName || 'Vendedor'}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                            trade.status === 'PROPOSED' ? 'bg-amber-100 text-amber-800' :
+                            trade.status === 'FEE_PAID' ? 'bg-purple-100 text-purple-800' :
+                            trade.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {trade.status === 'PROPOSED' ? 'Esperando Respuesta' : trade.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <img src={trade.targetItem?.images?.[0] || 'https://picsum.photos/80/80'} alt="" className="size-14 rounded-xl object-cover border" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-500">Querés conseguir:</p>
+                            <h4 className="text-xs font-black text-on-surface truncate">{trade.targetItem?.title || 'Producto'}</h4>
+                          </div>
+                        </div>
+                      </div>
+                      <Link 
+                        to={`/trade/${trade.id}`}
+                        className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-center font-black text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>Ver Estado del Trato</span>
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

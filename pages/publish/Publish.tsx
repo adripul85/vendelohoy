@@ -83,7 +83,9 @@ export default function Publish() {
         shippingAvailable: true,
         deliveryMethods: ['en_mano'] as string[],
         isFeatured: false,
-        isFlashSale: false
+        isFlashSale: false,
+        acceptsTrade: false,
+        tradePreferences: ''
     });
 
     const [settings, setSettings] = useState<PlatformSettings | null>(null);
@@ -141,6 +143,8 @@ export default function Publish() {
                         deliveryMethods: item.deliveryMethods || ['en_mano'],
                         isFeatured: item.isFeatured || false,
                         isFlashSale: item.isFlashSale || false,
+                        acceptsTrade: item.acceptsTrade || false,
+                        tradePreferences: item.tradePreferences || '',
                     });
                     setExistingImages(item.images || []);
                     setPreviews(item.images || []);
@@ -251,9 +255,10 @@ export default function Publish() {
             const { scanContent } = await import('../../lib/moderation');
             const titleScan = scanContent(form.title);
             const descScan = scanContent(form.description);
+            const tradePrefScan = scanContent(form.tradePreferences || '');
             
-            if (!titleScan.isClean || !descScan.isClean) {
-                const allFlags = Array.from(new Set([...titleScan.flags, ...descScan.flags]));
+            if (!titleScan.isClean || !descScan.isClean || !tradePrefScan.isClean) {
+                const allFlags = Array.from(new Set([...titleScan.flags, ...descScan.flags, ...tradePrefScan.flags]));
                 notify({ 
                     type: 'error', 
                     title: 'Publicación Rechazada', 
@@ -348,6 +353,8 @@ export default function Publish() {
                 dimensions: { length: form.length, width: form.width, height: form.height },
                 images: finalImages.length > 0 ? finalImages : ["https://picsum.photos/400/400?random=1"],
                 isFlashSale: form.isFlashSale,
+                acceptsTrade: form.acceptsTrade,
+                tradePreferences: form.tradePreferences || '',
                 ...(sellerLocation && { location: sellerLocation })
             };
 
@@ -1221,6 +1228,44 @@ export default function Publish() {
                                     />
                                     <span className="text-sm font-bold text-slate-700">Participar de Ofertas Relámpago</span>
                                 </label>
+                            </Card>
+
+                            <Card title="🔄 Canjes y Permutas Protegidas">
+                                <p className="text-xs text-slate-500 mb-4">
+                                    Permití que otros usuarios te propongan intercambiar este artículo por otros productos usados con la garantía de Compra Protegida de la plataforma.
+                                </p>
+                                <label className="flex items-center gap-3 cursor-pointer select-none mb-4">
+                                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${form.acceptsTrade ? 'bg-purple-600' : 'bg-slate-200'}`}>
+                                        <div className={`bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${form.acceptsTrade ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        name="acceptsTrade" 
+                                        checked={form.acceptsTrade}
+                                        onChange={(e) => setForm({ ...form, acceptsTrade: e.target.checked })}
+                                        className="hidden" 
+                                    />
+                                    <span className="text-sm font-bold text-slate-800">Aceptar propuestas de Canje / Permuta</span>
+                                </label>
+
+                                {form.acceptsTrade && (
+                                    <div className="pt-4 border-t border-slate-100 animate-in fade-in duration-300">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                                            ¿Qué te gustaría recibir a cambio? (Opcional)
+                                        </label>
+                                        <input 
+                                            name="tradePreferences" 
+                                            type="text" 
+                                            value={form.tradePreferences} 
+                                            onChange={handleChange} 
+                                            placeholder="Ej: Busco iPhone 12, Notebook i5, o Bici R29"
+                                            className="w-full bg-white border border-slate-300 rounded-xl py-3 px-4 font-medium text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" 
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-1.5">
+                                            Orientá a los compradores sobre qué cosas te interesan o si aceptás diferencia en dinero.
+                                        </p>
+                                    </div>
+                                )}
                             </Card>
 
                             <Card title="Instagram y Google Shopping">

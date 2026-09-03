@@ -321,8 +321,8 @@ const Wallet = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-6 lg:p-24 h-fit">
-          <div className="bg-white p-4 md:p-10 rounded-4xl border-2 border-dark-800 shadow-2xl relative overflow-hidden">
+        <div className="lg:col-span-12 xl:col-span-4 xl:sticky xl:top-6 h-fit mt-10 xl:mt-0">
+          <div className="bg-white p-6 md:p-10 rounded-4xl border border-light-200 shadow-premium relative overflow-hidden">
             <div className="absolute top-0 right-0 size-20 bg-dark-800/5 -mr-5 -mt-5 rounded-full"></div>
             <h3 className="text-2xl font-black text-dark-800 mb-2">Mi Billetera Vinculada</h3>
             <p className="text-[10px] text-gray-400 font-bold mb-10 leading-relaxed">

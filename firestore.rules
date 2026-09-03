@@ -265,6 +265,24 @@ service cloud.firestore {
       allow read: if request.auth != null && isAdmin();
       allow delete: if isAdmin();
     }
+    // REGLAS PARA ALERTAS DE BUSQUEDA
+    match /search_alerts/{alertId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    // REGLAS PARA NOTIFICACIONES GLOBALES
+    match /notifications/{notificationId} {
+      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
+    }
+    // REGLAS PARA CANJES Y PERMUTAS PROTEGIDAS
+    match /trades/{tradeId} {
+      allow read: if request.auth != null && (resource == null || resource.data.initiatorId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.initiatorId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.initiatorId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
     // REGLAS PARA ANALYTICS GLOBALES DEL SITIO
     match /site_analytics/{dateKey} {
       allow read: if request.auth != null && isAdmin();

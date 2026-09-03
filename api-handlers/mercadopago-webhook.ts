@@ -157,9 +157,92 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             createdAt: new Date(),
                             status: 'COMPLETED'
                         });
+
+                        // 5. Notificar al Vendedor
+                        const notificationRef = db.collection('notifications').doc();
+                        t.set(notificationRef, {
+                            userId: sellerId,
+                            title: '¡Vendiste un producto!',
+                            message: `El comprador ya pagó por ${tx.itemTitle}. Entra aquí para coordinar la entrega.`,
+                            link: `/transaction/${transactionId}`,
+                            read: false,
+                            createdAt: new Date(),
+                            type: 'SALE',
+                            icon: 'storefront'
+                        });
+
+                        // 6. Registrar Comisión de la Plataforma en el Libro Mayor (financial_logs)
+                        const platformFeeAmount = tx.amountPlatformFee || tx.platformFee || Math.round((amountProduct) * 0.07);
+                        if (platformFeeAmount > 0) {
+                            const financialLogRef = db.collection('financial_logs').doc();
+                            t.set(financialLogRef, {
+                                transactionId: transactionId,
+                                type: 'platform_fee',
+                                amount: platformFeeAmount,
+                                currency: 'ARS',
+                                relatedUser: sellerId,
+                                timestamp: new Date()
+                            });
+                        }
                     });
 
                     console.log(`✅ Pago MP Escrow aprobado. Transacción ${transactionId} y producto ${productId} actualizados.`);
+                }
+
+                // 2. Manejo de Pagos de Fee para Canjes y Permutas Protegidas
+                const extRef = paymentData.external_reference || '';
+                if (extRef.startsWith('TRADE_')) {
+                    const parts = extRef.split('_'); // ['TRADE', tradeId, 'INITIATOR'|'RECEIVER']
+                    const tradeId = parts[1];
+                    const role = parts[2];
+
+                    if (tradeId) {
+                        const tradeRef = adminDb.collection('trades').doc(tradeId);
+                        await adminDb.runTransaction(async (t) => {
+                            const tradeSnap = await t.get(tradeRef);
+                            if (!tradeSnap.exists) return;
+                            const trade = tradeSnap.data() as any;
+
+                            const isInit = role === 'INITIATOR';
+                            const updateField = isInit ? { initiatorFeePaid: true } : { receiverFeePaid: true };
+                            const bothPaid = (isInit && trade.receiverFeePaid) || (!isInit && trade.initiatorFeePaid);
+
+                            t.update(tradeRef, {
+                                ...updateField,
+                                ...(bothPaid ? { status: 'FEE_PAID' } : {}),
+                                updatedAt: new Date()
+                            });
+
+                            // Registrar el fee en el Libro Mayor
+                            const finLogRef = adminDb.collection('financial_logs').doc();
+                            t.set(finLogRef, {
+                                transactionId: `TRADE_${tradeId}`,
+                                type: 'platform_fee',
+                                amount: trade.protectionFeePerUser || 2000,
+                                currency: 'ARS',
+                                relatedUser: isInit ? trade.initiatorId : trade.receiverId,
+                                timestamp: new Date()
+                            });
+
+                            // Notificar a ambas partes si se desbloqueó el canje
+                            if (bothPaid) {
+                                for (const uid of [trade.initiatorId, trade.receiverId]) {
+                                    const notifRef = adminDb.collection('users').doc(uid).collection('notifications').doc();
+                                    t.set(notifRef, {
+                                        title: '🎉 ¡Garantía de Canje Activada!',
+                                        message: 'Ambas partes pagaron el Fee de Protección. Ya pueden ver los códigos QR y coordinar la entrega.',
+                                        link: `/trade/${tradeId}`,
+                                        read: false,
+                                        type: 'success',
+                                        icon: 'verified_user',
+                                        createdAt: new Date()
+                                    });
+                                }
+                            }
+                        });
+
+                        console.log(`✅ Fee de Canje pagado para ${tradeId} (${role}).`);
+                    }
                 }
             }
         }

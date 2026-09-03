@@ -61,6 +61,8 @@ const Favorites = lazy(() => import('./pages/Favorites'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
+const TradeDetail = lazy(() => import('./pages/trades/TradeDetail').then(m => ({ default: m.TradeDetail })));
+const ProtectedTradesInfo = lazy(() => import('./pages/info/ProtectedTradesInfo'));
 
 const PageFallback = () => (
   <div className="w-full min-h-[60vh] flex flex-col items-center justify-center py-20">
@@ -154,6 +156,7 @@ const Footer = () => (
           <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Ayuda</h4>
           <ul className="space-y-4">
             <li><Link to="/ayuda" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Ayuda</Link></li>
+            <li><Link to="/trades-info" className="text-sm font-bold text-purple-600 hover:text-purple-700 transition-colors flex items-center gap-1.5"><span className="material-symbols-outlined text-sm font-black">sync_alt</span> Canjes Protegidos</Link></li>
             <li><Link to="/resolution-center" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Centro de Resolución</Link></li>
             <li><Link to="/escrow-info" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">¿Cómo funciona?</Link></li>
             <li><Link to="/security" className="text-sm font-bold text-on-surface-variant hover:text-secondary transition-colors">Consejos de Seguridad</Link></li>
@@ -278,6 +281,8 @@ function App() {
                       <Route path="/payment/failure" element={<PaymentFailure />} />
                       <Route path="/payment/pending" element={<PaymentSuccess />} />
                       <Route path="/dispute/:transactionId" element={<Dispute />} />
+                      <Route path="/trade/:id" element={<RequireProfile><TradeDetail /></RequireProfile>} />
+                      <Route path="/trades-info" element={<ProtectedTradesInfo />} />
                       <Route path="/verification" element={<Verification />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/escrow-info" element={<EscrowInfo />} />

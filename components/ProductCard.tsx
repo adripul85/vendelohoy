@@ -104,7 +104,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, location, isVerified
                     </div>
 
                     {/* High-End Badges */}
-                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 items-start pointer-events-none">
+                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 items-start pointer-events-none">
+                        {product.acceptsTrade && (
+                            <span className="bg-purple-600 text-white px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider shadow-xl flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[11px] font-black">sync_alt</span>
+                                Permuta
+                            </span>
+                        )}
                         {product.condition === 'new' && (
                             <span className="bg-secondary-container text-on-surface px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-xl">
                                 Nuevo

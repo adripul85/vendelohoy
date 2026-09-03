@@ -35,6 +35,7 @@ import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
 import { getItems, getEffectivePrice } from '../../lib/items';
 import { decodeHtmlEntities, stripHtmlAndDecode } from '../../lib/textUtils';
+import { TradeProposalModal } from '../../components/trades/TradeProposalModal';
 
 const SizeGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [guideTab, setGuideTab] = useState<'ropa' | 'calzado' | 'bebe' | 'pantalones'>('ropa');
@@ -231,6 +232,7 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'shipping'>('specs');
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
@@ -526,6 +528,13 @@ const ProductDetail = () => {
         onSubmit={handleReportSubmit}
         targetName={product.title}
       />
+      {product && (
+        <TradeProposalModal 
+          isOpen={isTradeModalOpen} 
+          onClose={() => setIsTradeModalOpen(false)} 
+          targetProduct={product as any} 
+        />
+      )}
 
       {/* Floating Chat Modal */}
       <AnimatePresence>
@@ -711,6 +720,45 @@ const ProductDetail = () => {
                     {product.quantity} disponibles
                   </span>
                 </div>
+              </div>
+            )}
+
+            {/* Canjes y Permutas Protegidas Banner & CTA */}
+            {product.acceptsTrade && product.status === 'AVAILABLE' && (
+              <div className="mb-4 p-4 rounded-2xl bg-purple-50 border border-purple-200 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-purple-950 font-black text-xs uppercase tracking-wider">
+                    <span className="material-symbols-outlined text-purple-600 text-lg">sync_alt</span>
+                    <span>Acepta Canjes / Permutas</span>
+                  </div>
+                  <Link to="/trades-info" className="text-[10px] font-bold text-purple-600 hover:underline flex items-center gap-0.5">
+                    ¿Cómo funciona?
+                  </Link>
+                </div>
+                {product.tradePreferences && (
+                  <p className="text-xs font-bold text-purple-900 bg-white/80 p-2.5 rounded-xl border border-purple-100/80 leading-relaxed">
+                    <strong className="text-purple-950">Busca a cambio:</strong> {product.tradePreferences}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      notify({ type: 'warning', title: 'Iniciar Sesión', message: 'Iniciá sesión para proponer un canje.', icon: 'lock' });
+                      navigate('/login');
+                      return;
+                    }
+                    if (user.uid === product.sellerId) {
+                      notify({ type: 'error', title: 'Operación Inválida', message: 'No podés proponer un canje sobre tu propio producto.', icon: 'block' });
+                      return;
+                    }
+                    setIsTradeModalOpen(true);
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 active:scale-98"
+                >
+                  <span className="material-symbols-outlined text-base font-black">sync_alt</span>
+                  Proponer Canje Protegido
+                </button>
               </div>
             )}
 

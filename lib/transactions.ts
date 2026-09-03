@@ -535,6 +535,9 @@ export const submitEvidence = async (transactionId: string, url: string, type: s
  * Trigger server evaluation for auto-releasing pending escrow transactions that exceeded 48/72hs
  */
 export const triggerAutoReleaseEscrow = async () => {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return null;
+    }
     try {
         const response = await fetch('/api/auto-release-escrow', {
             method: 'POST',

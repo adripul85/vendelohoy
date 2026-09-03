@@ -45,7 +45,8 @@ export interface ItemData {
     tags?: string[];
     seoTitle?: string;
     seoDescription?: string;
-    slug?: string;
+    acceptsTrade?: boolean;
+    tradePreferences?: string;
     flashSaleFeeApplied?: number;
     flashSaleExpiresAt?: any;
     createdAt?: any;

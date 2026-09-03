@@ -19,6 +19,7 @@ import sitemap from '../api-handlers/sitemap';
 import submitReview from '../api-handlers/submit-review';
 import syncAdminClaim from '../api-handlers/sync-admin-claim';
 import seoProxy from '../api-handlers/seo-proxy';
+import mpTradeFee from '../api-handlers/mp-trade-fee';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const endpoint = req.query.endpoint as string;
@@ -35,6 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         case 'mercadopago-oauth': return mercadopagoOauth(req, res);
         case 'mercadopago-webhook': return mercadopagoWebhook(req, res);
         case 'mp-preference': return mpPreference(req, res);
+        case 'mp-trade-fee': return mpTradeFee(req, res);
         case 'process-payout': return processPayout(req, res);
         case 'release-funds': return releaseFunds(req, res);
         case 'request-courier': return requestCourier(req, res);
