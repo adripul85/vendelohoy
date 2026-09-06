@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
@@ -25,6 +25,8 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
     const [differenceAmount, setDifferenceAmount] = useState<string>('');
     const [deliveryMethod, setDeliveryMethod] = useState<'en_mano' | 'correo_argentino'>('en_mano');
     const [notes, setNotes] = useState('');
+    const [customItemTitle, setCustomItemTitle] = useState('');
+    const [showCustomInput, setShowCustomInput] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -49,14 +51,37 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
-            notify({ type: 'warning', title: 'Iniciar Sesion', message: 'Debes iniciar sesion para enviar una propuesta de canje.', icon: 'lock' });
+            notify({ type: 'warning', title: 'Iniciar Sesión', message: 'Debes iniciar sesión para enviar una propuesta de canje.', icon: 'lock' });
             navigate('/login');
             return;
         }
 
-        if (selectedItemIds.length === 0 && differenceType === 'none') {
-            notify({ type: 'error', title: 'Oferta Vacia', message: 'Selecciona al menos un producto de tu inventario o una diferencia en dinero.', icon: 'warning' });
-            return;
+        const offeredCustomItems: any[] = [];
+        if (customItemTitle.trim()) {
+            offeredCustomItems.push({
+                title: customItemTitle.trim(),
+                description: 'Artículo propuesto por el usuario',
+                estimatedValue: 0,
+                photos: []
+            });
+        } else if (selectedItemIds.length === 0 && differenceType === 'none') {
+            // Si el usuario no seleccionó un producto pero detalló qué tiene en el mensaje (ej: "Tengo una campera Celeste")
+            if (notes.trim().length >= 3) {
+                offeredCustomItems.push({
+                    title: notes.trim(),
+                    description: 'Artículo propuesto en el mensaje',
+                    estimatedValue: 0,
+                    photos: []
+                });
+            } else {
+                notify({ 
+                    type: 'error', 
+                    title: 'Falta indicar el producto', 
+                    message: 'Por favor seleccioná el producto que ofrecés haciendo clic sobre él, o escribí qué artículo tenés.', 
+                    icon: 'touch_app' 
+                });
+                return;
+            }
         }
 
         const rawDiff = parseFloat(differenceAmount.replace(/[^0-9.]/g, '')) || 0;
@@ -69,6 +94,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
             targetItemId: targetProduct.id,
             receiverId: targetProduct.sellerId,
             offeredItemIds: selectedItemIds,
+            offeredCustomItems,
             cashDifference: finalCashDiff,
             notes,
             deliveryMethod
@@ -142,11 +168,40 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* 1. Seleccionar productos del inventario */}
+                        {/* 1. Seleccionar productos del inventario o artículo no publicado */}
                         <div>
-                            <label className="block text-xs font-black text-slate-800 uppercase tracking-wider mb-3">
-                                1. Selecciona que ofreces a cambio (de tus publicaciones)
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                                    1. Selecciona qué ofreces a cambio
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCustomInput(!showCustomInput)}
+                                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">{showCustomInput ? 'remove_circle_outline' : 'add_circle_outline'}</span>
+                                    {showCustomInput ? 'Quitar artículo no publicado' : '+ Ofrecer artículo no publicado'}
+                                </button>
+                            </div>
+
+                            {showCustomInput && (
+                                <div className="bg-purple-50/70 border-2 border-purple-200 p-4 rounded-2xl mb-4 animate-in fade-in duration-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="material-symbols-outlined text-purple-600 text-lg">checkroom</span>
+                                        <label className="text-[11px] font-black text-purple-900 uppercase tracking-wider">
+                                            Artículo particular (No publicado en la web)
+                                        </label>
+                                    </div>
+                                    <input 
+                                        type="text"
+                                        value={customItemTitle}
+                                        onChange={(e) => setCustomItemTitle(e.target.value)}
+                                        placeholder="Ej: Campera celeste talle M en excelente estado"
+                                        className="w-full bg-white border border-purple-300 rounded-xl py-2.5 px-3.5 text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/20"
+                                    />
+                                    <p className="text-[10px] text-purple-700 mt-1.5 font-medium">Podrás coordinar detalles y fotos directamente en la sala de negociación.</p>
+                                </div>
+                            )}
 
                             {loadingInventory ? (
                                 <div className="p-8 text-center bg-slate-50 rounded-2xl">
@@ -154,32 +209,40 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
                                     <p className="text-xs font-bold text-slate-400 mt-2">Cargando tus productos...</p>
                                 </div>
                             ) : userInventory.length === 0 ? (
-                                <div className="p-6 text-center bg-amber-50 rounded-2xl border border-amber-200">
-                                    <span className="material-symbols-outlined text-amber-500 text-3xl mb-1">inventory_2</span>
-                                    <p className="text-xs font-bold text-amber-900">No tienes productos publicados para ofrecer.</p>
-                                    <p className="text-[11px] text-amber-700 mt-1">Puedes publicar un articulo primero o proponer un ajuste en dinero.</p>
-                                </div>
+                                !showCustomInput && (
+                                    <div className="p-6 text-center bg-amber-50 rounded-2xl border border-amber-200">
+                                        <span className="material-symbols-outlined text-amber-500 text-3xl mb-1">inventory_2</span>
+                                        <p className="text-xs font-bold text-amber-900">No tienes productos publicados para ofrecer.</p>
+                                        <p className="text-[11px] text-amber-700 mt-1">Podés hacer clic en "+ Ofrecer artículo no publicado" arriba o proponer un ajuste en dinero.</p>
+                                    </div>
+                                )
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-1">
-                                    {userInventory.map(item => {
-                                        const isSelected = selectedItemIds.includes(item.id);
-                                        return (
-                                            <div 
-                                                key={item.id}
-                                                onClick={() => handleToggleItem(item.id)}
-                                                className={`p-3 rounded-2xl border-2 flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'border-purple-600 bg-purple-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'}`}
-                                            >
-                                                <img src={item.images?.[0] || 'https://picsum.photos/60/60'} alt={item.title} className="size-12 rounded-xl object-cover" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-black text-slate-900 truncate">{item.title}</p>
-                                                    <p className="text-[11px] font-bold text-slate-500">${item.price.toLocaleString()}</p>
+                                <div>
+                                    <p className="text-[11px] font-bold text-slate-500 mb-2.5 flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-sm text-purple-600">touch_app</span>
+                                        Hacé clic sobre tu producto para marcarlo:
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-1">
+                                        {userInventory.map(item => {
+                                            const isSelected = selectedItemIds.includes(item.id);
+                                            return (
+                                                <div 
+                                                    key={item.id}
+                                                    onClick={() => handleToggleItem(item.id)}
+                                                    className={`p-3 rounded-2xl border-2 flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'border-purple-600 bg-purple-50/60 shadow-md scale-[1.01]' : 'border-slate-200 hover:border-purple-300 hover:bg-slate-50'}`}
+                                                >
+                                                    <img src={item.images?.[0] || 'https://picsum.photos/60/60'} alt={item.title} className="size-12 rounded-xl object-cover border border-slate-100" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-black text-slate-900 truncate">{item.title}</p>
+                                                        <p className="text-[11px] font-bold text-slate-500">${item.price.toLocaleString()}</p>
+                                                    </div>
+                                                    <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-purple-600 bg-purple-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                                        {isSelected && <span className="material-symbols-outlined text-xs font-black">check</span>}
+                                                    </div>
                                                 </div>
-                                                <div className={`size-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-purple-600 bg-purple-600 text-white' : 'border-slate-300'}`}>
-                                                    {isSelected && <span className="material-symbols-outlined text-xs font-black">check</span>}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </div>

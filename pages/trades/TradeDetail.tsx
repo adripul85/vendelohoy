@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../lib/auth';
@@ -263,14 +263,26 @@ export const TradeDetail: React.FC = () => {
                     {/* Items Ofrecidos (Initiator) */}
                     <div className="md:col-span-5 bg-white p-6 rounded-[28px] border border-slate-200 shadow-sm relative">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Ofrecido a Cambio:</span>
-                        {trade.offeredItems && trade.offeredItems.length > 0 ? (
+                        {((trade.offeredItems && trade.offeredItems.length > 0) || (trade.offeredCustomItems && trade.offeredCustomItems.length > 0)) ? (
                             <div className="space-y-3">
-                                {trade.offeredItems.map(item => (
+                                {trade.offeredItems?.map(item => (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <img src={item.images?.[0] || 'https://picsum.photos/120/120'} alt={item.title} className="size-16 rounded-2xl object-cover border border-slate-200 shrink-0" />
                                         <div className="min-w-0">
                                             <h4 className="text-sm font-black text-slate-900 truncate">{item.title}</h4>
                                             <p className="text-xs font-black text-slate-600">${item.price.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {trade.offeredCustomItems?.map((cItem, cIdx) => (
+                                    <div key={cIdx} className="flex items-center gap-4 bg-purple-50/70 p-3 rounded-2xl border border-purple-100">
+                                        <div className="size-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-black shrink-0">
+                                            <span className="material-symbols-outlined text-2xl">checkroom</span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-[9px] font-black uppercase text-purple-600 tracking-wider">Artículo del Usuario</span>
+                                            <h4 className="text-sm font-black text-slate-900 truncate">{cItem.title}</h4>
+                                            {cItem.description && <p className="text-xs text-slate-500 truncate">{cItem.description}</p>}
                                         </div>
                                     </div>
                                 ))}
