@@ -8,6 +8,7 @@ import {
     query, 
     where, 
     orderBy, 
+    onSnapshot,
     serverTimestamp, 
     Timestamp 
 } from "firebase/firestore";
@@ -40,6 +41,9 @@ export interface TradeProposal {
     receiverName?: string;
     receiverAvatar?: string;
     targetItemId: string;           // ID del producto publicado objetivo
+    targetItemTitle?: string;
+    targetItemImage?: string;
+    targetItemPrice?: number;
     targetItem?: ItemData & { id: string };
     offeredItemIds?: string[];      // IDs de productos publicados del iniciador
     offeredItems?: (ItemData & { id: string })[];
@@ -89,11 +93,53 @@ export const createTradeProposal = async (data: {
         const initiatorQrToken = 'TRD-INI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
         const receiverQrToken = 'TRD-REC-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
+        // Obtener datos del iniciador, receptor y producto para snapshot
+        let initiatorName = 'Usuario';
+        let initiatorAvatar = '';
+        let receiverName = 'Usuario';
+        let receiverAvatar = '';
+        let targetItemTitle = '';
+        let targetItemImage = '';
+        let targetItemPrice = 0;
+
+        try {
+            const [initSnap, recSnap, itemSnap] = await Promise.all([
+                getDoc(doc(db, "users", initiatorId)),
+                getDoc(doc(db, "users", data.receiverId)),
+                getDoc(doc(db, "items", data.targetItemId))
+            ]);
+            if (initSnap.exists()) {
+                const u = initSnap.data();
+                initiatorName = u.displayName || 'Usuario';
+                initiatorAvatar = u.photoURL || '';
+            }
+            if (recSnap.exists()) {
+                const u = recSnap.data();
+                receiverName = u.displayName || 'Usuario';
+                receiverAvatar = u.photoURL || '';
+            }
+            if (itemSnap.exists()) {
+                const it = itemSnap.data();
+                targetItemTitle = it.title || 'Producto';
+                targetItemImage = it.images?.[0] || '';
+                targetItemPrice = it.price || 0;
+            }
+        } catch (e) {
+            console.warn("Could not snapshot metadata for trade proposal:", e);
+        }
+
         const tradesRef = collection(db, "trades");
         const docRef = await addDoc(tradesRef, {
             initiatorId,
+            initiatorName,
+            initiatorAvatar,
             receiverId: data.receiverId,
+            receiverName,
+            receiverAvatar,
             targetItemId: data.targetItemId,
+            targetItemTitle,
+            targetItemImage,
+            targetItemPrice,
             offeredItemIds: data.offeredItemIds || [],
             offeredCustomItems: data.offeredCustomItems || [],
             cashDifference: data.cashDifference || 0,
@@ -185,7 +231,91 @@ export const getTradeProposal = async (tradeId: string): Promise<TradeProposal |
 };
 
 /**
- * Obtener todos los canjes donde el usuario participa
+ * Helper para hidratar productos y nombres de un canje si faltan
+ */
+export const hydrateTradeData = async (trade: TradeProposal): Promise<TradeProposal> => {
+    try {
+        const hydrated = { ...trade };
+
+        // 1. Target item
+        if (!hydrated.targetItem && hydrated.targetItemId) {
+            if (hydrated.targetItemTitle) {
+                hydrated.targetItem = {
+                    id: hydrated.targetItemId,
+                    title: hydrated.targetItemTitle,
+                    images: hydrated.targetItemImage ? [hydrated.targetItemImage] : [],
+                    price: hydrated.targetItemPrice || 0
+                } as any;
+            } else {
+                try {
+                    const snap = await getDoc(doc(db, "items", hydrated.targetItemId));
+                    if (snap.exists()) {
+                        hydrated.targetItem = { id: snap.id, ...snap.data() } as any;
+                    }
+                } catch (e) {
+                    console.warn("Could not fetch target item:", e);
+                }
+            }
+        }
+
+        // 2. Offered items
+        if ((!hydrated.offeredItems || hydrated.offeredItems.length === 0) && hydrated.offeredItemIds && hydrated.offeredItemIds.length > 0) {
+            try {
+                const items: any[] = [];
+                for (const id of hydrated.offeredItemIds) {
+                    const snap = await getDoc(doc(db, "items", id));
+                    if (snap.exists()) {
+                        items.push({ id: snap.id, ...snap.data() });
+                    }
+                }
+                hydrated.offeredItems = items;
+            } catch (e) {
+                console.warn("Could not fetch offered items:", e);
+            }
+        }
+
+        // 3. Initiator profile
+        if (!hydrated.initiatorName && hydrated.initiatorId) {
+            try {
+                const snap = await getDoc(doc(db, "users", hydrated.initiatorId));
+                if (snap.exists()) {
+                    const u = snap.data();
+                    hydrated.initiatorName = u?.displayName || 'Usuario';
+                    hydrated.initiatorAvatar = u?.photoURL || '';
+                }
+            } catch (e) {
+                console.warn("Could not fetch initiator:", e);
+            }
+        }
+
+        // 4. Receiver profile
+        if (!hydrated.receiverName && hydrated.receiverId) {
+            try {
+                const snap = await getDoc(doc(db, "users", hydrated.receiverId));
+                if (snap.exists()) {
+                    const u = snap.data();
+                    hydrated.receiverName = u?.displayName || 'Usuario';
+                    hydrated.receiverAvatar = u?.photoURL || '';
+                }
+            } catch (e) {
+                console.warn("Could not fetch receiver:", e);
+            }
+        }
+
+        return hydrated;
+    } catch (err) {
+        return trade;
+    }
+};
+
+const sortTradesByDate = (a: any, b: any) => {
+    const aTime = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : (typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() / 1000 : 0));
+    const bTime = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : (typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() / 1000 : 0));
+    return bTime - aTime;
+};
+
+/**
+ * Obtener todos los canjes donde el usuario participa (con hidratación de datos)
  */
 export const getUserTrades = async (uid: string): Promise<{ sent: TradeProposal[], received: TradeProposal[] }> => {
     if (!uid) return { sent: [], received: [] };
@@ -200,19 +330,72 @@ export const getUserTrades = async (uid: string): Promise<{ sent: TradeProposal[
             getDocs(qReceived)
         ]);
 
-        const sortByDate = (a: any, b: any) => {
-            const aTime = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : 0);
-            const bTime = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : 0);
-            return bTime - aTime;
-        };
+        const rawSent = sentSnap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal)).sort(sortTradesByDate);
+        const rawReceived = receivedSnap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal)).sort(sortTradesByDate);
 
-        const sent = sentSnap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal)).sort(sortByDate);
-        const received = receivedSnap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal)).sort(sortByDate);
+        const [sent, received] = await Promise.all([
+            Promise.all(rawSent.map(t => hydrateTradeData(t))),
+            Promise.all(rawReceived.map(t => hydrateTradeData(t)))
+        ]);
 
         return { sent, received };
     } catch (error: any) {
         console.warn("Could not fetch user trades:", error?.message || error);
         return { sent: [], received: [] };
+    }
+};
+
+/**
+ * Suscripción en tiempo real a los canjes del usuario
+ */
+export const subscribeUserTrades = (
+    uid: string, 
+    callback: (data: { sent: TradeProposal[], received: TradeProposal[] }) => void
+): (() => void) => {
+    if (!uid) {
+        callback({ sent: [], received: [] });
+        return () => {};
+    }
+
+    try {
+        const tradesRef = collection(db, "trades");
+        const qSent = query(tradesRef, where("initiatorId", "==", uid));
+        const qReceived = query(tradesRef, where("receiverId", "==", uid));
+
+        let currentSent: TradeProposal[] = [];
+        let currentReceived: TradeProposal[] = [];
+
+        const notify = async () => {
+            const [sent, received] = await Promise.all([
+                Promise.all(currentSent.map(t => hydrateTradeData(t))),
+                Promise.all(currentReceived.map(t => hydrateTradeData(t)))
+            ]);
+            sent.sort(sortTradesByDate);
+            received.sort(sortTradesByDate);
+            callback({ sent, received });
+        };
+
+        const unsubSent = onSnapshot(qSent, (snap) => {
+            currentSent = snap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal));
+            notify();
+        }, (err) => {
+            console.warn("Error in qSent trades snapshot:", err);
+        });
+
+        const unsubReceived = onSnapshot(qReceived, (snap) => {
+            currentReceived = snap.docs.map(d => ({ id: d.id, ...d.data() } as TradeProposal));
+            notify();
+        }, (err) => {
+            console.warn("Error in qReceived trades snapshot:", err);
+        });
+
+        return () => {
+            unsubSent();
+            unsubReceived();
+        };
+    } catch (err) {
+        console.warn("Could not subscribe to trades:", err);
+        return () => {};
     }
 };
 

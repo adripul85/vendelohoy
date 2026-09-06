@@ -156,13 +156,11 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
                 {/* Contenedor que centra verticalmente y captura el scroll natural de la rueda del mouse */}
                 <div 
                     onClick={onClose}
-                    data-lenis-prevent
                     data-lenis-prevent="true"
                     className="flex min-h-full items-center justify-center p-4 sm:p-6"
                 >
                     <motion.div 
                         onClick={(e) => e.stopPropagation()}
-                        data-lenis-prevent
                         data-lenis-prevent="true"
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
