@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
@@ -39,6 +40,30 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
             }).catch(() => setLoadingInventory(false));
         }
     }, [isOpen, user, targetProduct.id]);
+
+    // Bloquear el scroll de la página de fondo y pausar Lenis de manera absoluta mientras el modal esté abierto
+    useEffect(() => {
+        if (isOpen) {
+            // Pausar Lenis Smooth Scroll para que no secuestre los eventos de la rueda del ratón
+            const lenis = (window as any).lenis;
+            if (lenis && typeof lenis.stop === 'function') {
+                lenis.stop();
+            }
+
+            const originalBodyOverflow = document.body.style.overflow;
+            const originalHtmlOverflow = document.documentElement.style.overflow;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+
+            return () => {
+                if (lenis && typeof lenis.start === 'function') {
+                    lenis.start();
+                }
+                document.body.style.overflow = originalBodyOverflow;
+                document.documentElement.style.overflow = originalHtmlOverflow;
+            };
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -116,30 +141,49 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
         }
     };
 
-    return (
+    const modalContent = (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <div data-lenis-prevent data-lenis-prevent="true" className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain">
+                {/* Backdrop oscurecido con blur */}
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-white rounded-[32px] max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-100 my-8 max-h-[90vh] overflow-y-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose}
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                />
+
+                {/* Contenedor que centra verticalmente y captura el scroll natural de la rueda del mouse */}
+                <div 
+                    onClick={onClose}
+                    data-lenis-prevent
+                    data-lenis-prevent="true"
+                    className="flex min-h-full items-center justify-center p-4 sm:p-6"
                 >
-                    {/* Header */}
-                    <div className="flex items-center justify-between pb-6 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                            <div className="size-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center font-black">
-                                <span className="material-symbols-outlined text-2xl">sync_alt</span>
+                    <motion.div 
+                        onClick={(e) => e.stopPropagation()}
+                        data-lenis-prevent
+                        data-lenis-prevent="true"
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="relative w-full max-w-2xl bg-white rounded-[32px] p-6 md:p-8 shadow-2xl border border-slate-100 my-8 z-10"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="size-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center font-black">
+                                    <span className="material-symbols-outlined text-2xl">sync_alt</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Proponer Canje Protegido</h3>
+                                    <p className="text-xs font-bold text-slate-400">Intercambio respaldado con garantia de plataforma</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Proponer Canje Protegido</h3>
-                                <p className="text-xs font-bold text-slate-400">Intercambio respaldado con garantia de plataforma</p>
-                            </div>
+                            <button onClick={onClose} className="size-9 bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full flex items-center justify-center transition-colors">
+                                <span className="material-symbols-outlined text-xl">close</span>
+                            </button>
                         </div>
-                        <button onClick={onClose} className="size-9 bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full flex items-center justify-center transition-colors">
-                            <span className="material-symbols-outlined text-xl">close</span>
-                        </button>
-                    </div>
 
                     {/* Target Product Summary */}
                     <div className="bg-slate-50 p-4 rounded-2xl my-6 flex items-center gap-4 border border-slate-200">
@@ -364,6 +408,9 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({ isOpen, 
                     </form>
                 </motion.div>
             </div>
-        </AnimatePresence>
+        </div>
+    </AnimatePresence>
     );
+
+    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };

@@ -227,7 +227,10 @@ function App() {
       touchMultiplier: 2,
     });
 
+    (window as any).lenis = lenis;
+
     return () => {
+      delete (window as any).lenis;
       lenis.destroy();
     };
   }, []);
