@@ -135,19 +135,28 @@ export const TradeDetail: React.FC = () => {
             if (response.ok && data.url) {
                 window.location.href = data.url;
             } else {
-                // Fallback para testing local
+                // Manejo de entorno de desarrollo local vs Producción
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    notify({ type: 'warning', title: 'Simulación Local', message: 'Simulando pago de fee de garantía en localhost...', icon: 'developer_mode' });
-                    const { updateDoc, doc: fDoc, serverTimestamp } = await import('firebase/firestore');
-                    const updateField = isInitiator ? { initiatorFeePaid: true } : { receiverFeePaid: true };
-                    const bothPaid = (isInitiator && trade.receiverFeePaid) || (isReceiver && trade.initiatorFeePaid);
-                    await updateDoc(fDoc(db, 'trades', tradeId), {
-                        ...updateField,
-                        ...(bothPaid ? { status: 'FEE_PAID' } : {}),
-                        updatedAt: serverTimestamp()
-                    });
+                    const confirmSim = window.confirm(
+                        "🧪 MODO DESARROLLO (localhost):\n\n" +
+                        "La conexión con Mercado Pago oficial opera en los servidores de producción (Vercel).\n\n" +
+                        "¿Deseas SIMULAR que abonaste el fee de garantía ($2.000) para probar el desbloqueo de los Códigos QR en tu computadora?"
+                    );
+                    if (confirmSim) {
+                        notify({ type: 'warning', title: 'Simulación de Desarrollo', message: 'Simulando pago de fee de garantía para pruebas locales...', icon: 'developer_mode' });
+                        const { updateDoc, doc: fDoc, serverTimestamp } = await import('firebase/firestore');
+                        const updateField = isInitiator ? { initiatorFeePaid: true } : { receiverFeePaid: true };
+                        const bothPaid = (isInitiator && trade.receiverFeePaid) || (isReceiver && trade.initiatorFeePaid);
+                        await updateDoc(fDoc(db, 'trades', tradeId), {
+                            ...updateField,
+                            ...(bothPaid ? { status: 'FEE_PAID' } : {}),
+                            updatedAt: serverTimestamp()
+                        });
+                    } else {
+                        return;
+                    }
                 } else {
-                    throw new Error(data.error || 'No se pudo generar el checkout de Mercado Pago.');
+                    throw new Error(data.error || 'No se pudo generar el checkout de Mercado Pago. Verifica la conexión del servidor.');
                 }
             }
         } catch (error: any) {
